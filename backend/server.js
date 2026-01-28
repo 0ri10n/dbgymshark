@@ -1,3 +1,7 @@
+console.log ("Prueba de conexión")
+
+//------------ Conexión a la base de datos ------------//
+
 const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
