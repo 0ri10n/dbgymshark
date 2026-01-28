@@ -1,0 +1,2 @@
+PORT=4000
+MONGO_URI=mongodb+srv://salazarsebastiani02221_db_user:Mollete0221@dfs.tuxew2r.mongodb.net/?retryWrites=true&w=majority
