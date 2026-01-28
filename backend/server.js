@@ -1,4 +1,4 @@
-console.log ("Prueba de conexión")
+
 
 //------------ Conexión a la base de datos ------------//
 
