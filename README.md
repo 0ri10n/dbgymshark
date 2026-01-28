@@ -1,4 +1,4 @@
-# Base del Proyecto - Izak
+# Base del Proyecto - 
 
 ## Instalación
 1. Clonar el repositorio
