@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap');
 
 :root {
     --bg-color: #0f0f15; 
@@ -7,12 +7,13 @@
     --accent-color: #6a6a6a;
 }
 
+/* 1. ESTILOS GLOBALES Y CUERPO */
 body {
     margin: 0;
     padding: 0;
     font-family: 'Poppins', sans-serif;
     background-color: var(--bg-color);
-    background-image: radial-gradient(circle at 50% -20%, #2a2a35, var(--bg-color) 60%);
+    background-image: radial-gradient(circle at 50% -20%, rgba(42, 42, 53, 0.8), var(--bg-color) 80%);
     height: 100vh;
     display: flex;
     justify-content: center;
@@ -21,47 +22,143 @@ body {
     overflow: hidden;
 }
 
-.login-container {
-    background: var(--glass-bg);
-    backdrop-filter: blur(15px); 
+/* 2. FONDO DE RAYOS DE LUZ */
+#light-rays-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+/* 3. TEXTO MAKIA Y BOTÓN PRINCIPAL */
+.brand-background {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    width: 100%;
+    z-index: 1;
+    pointer-events: none;
+    user-select: none;
+}
+
+.brand-title {
+    font-size: 10rem;
+    font-weight: 800;
+    margin: 0;
+    color: rgba(255, 255, 255, 0.07);
+    text-transform: uppercase;
+    letter-spacing: 20px;
+    line-height: 1;
+    animation: revealTitle 2.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.brand-subtitle {
+    font-size: 1.2rem;
+    font-weight: 300;
+    color: rgba(255, 255, 255, 0.4);
+    letter-spacing: 5px;
+    margin-top: 10px;
+    opacity: 0;
+    animation: revealSubtitle 2s ease-out 1.2s forwards;
+}
+
+.btn-main-action {
+    margin-top: 40px;
+    padding: 15px 40px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    color: white;
+    background: transparent;
+    border: 2px solid white;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.4s ease;
+    opacity: 0;
+    animation: revealSubtitle 2s ease-out 1.8s forwards;
+    pointer-events: all;
+}
+
+.btn-main-action:hover {
+    background: white;
+    color: black;
+    box-shadow: 0 0 25px rgba(255, 255, 255, 0.4);
+    transform: scale(1.05);
+}
+
+/* 4. WRAPPER DEL LOGIN (CAPA SUPERIOR) */
+.login-wrapper {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(15px);
     -webkit-backdrop-filter: blur(15px);
+    z-index: 100;
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.login-wrapper.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: scale(1.1);
+}
+
+/* 5. CONTENEDOR DEL FORMULARIO */
+.login-container {
+    background: rgba(15, 15, 21, 0.6);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    padding: 40px;
-    border-radius: 20px;
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
-    width: 320px;
+    padding: 45px 40px;
+    border-radius: 25px;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+    width: 340px;
     text-align: center;
     display: flex;
     flex-direction: column;
     align-items: center;
+    position: relative;
 }
 
 .user-icon-container {
-    background: rgba(255, 255, 255, 0.2);
-    width: 80px;
-    height: 80px;
+    background: rgba(255, 255, 255, 0.1);
+    width: 70px;
+    height: 70px;
     border-radius: 50%;
     display: flex;
     justify-content: center;
     align-items: center;
-    margin-bottom: 30px;
-    font-size: 40px;
+    margin-bottom: 35px;
+    font-size: 30px;
 }
 
+/* 6. ELEMENTOS DEL FORMULARIO */
 .input-group {
     position: relative;
-    margin-bottom: 25px;
+    margin-bottom: 30px;
     width: 100%;
     text-align: left;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .input-group i {
     position: absolute;
     left: 0;
     top: 10px;
-    color: var(--text-color);
-    font-size: 18px;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 16px;
 }
 
 .input-group input {
@@ -72,115 +169,118 @@ body {
     color: white;
     padding: 10px 10px 10px 30px; 
     font-size: 14px;
+    box-sizing: border-box;
 }
 
 .input-group input::placeholder {
-    color: rgba(255, 255, 255, 0.5);
+    color: rgba(255, 255, 255, 0.3);
 }
 
 .forgot-pass {
     display: block;
     text-align: right;
     width: 100%;
-    font-size: 12px;
-    color: rgba(255, 255, 255, 0.6);
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.5);
     text-decoration: none;
-    margin-bottom: 20px;
+    margin-bottom: 25px;
+    transition: 0.3s;
+}
+
+.forgot-pass:hover {
+    color: white;
 }
 
 .btn-login {
     width: 100%;
-    padding: 12px;
-    background: rgba(255, 255, 255, 0.2);
+    padding: 14px;
+    background: white;
     border: none;
-    border-radius: 25px;
-    color: white;
-    font-size: 16px;
+    border-radius: 30px;
+    color: black;
+    font-size: 15px;
+    font-weight: 600;
     cursor: pointer;
-    transition: 0.3s;
+    transition: 0.4s;
 }
 
 .btn-login:hover {
-    background: rgba(255, 255, 255, 0.4);
+    background: #e0e0e0;
+    transform: translateY(-2px);
 }
 
 .link-register {
-    margin-top: 20px;
-    font-size: 14px;
+    margin-top: 25px;
+    font-size: 13px;
     color: rgba(255, 255, 255, 0.4);
     text-decoration: none;
+    transition: 0.3s;
 }
 
-.theme-switch-wrapper {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    display: flex;
-    align-items: center;
-    background: white;
-    padding: 5px 10px;
-    border-radius: 20px;
-    color: black;
-    font-size: 12px;
+.link-register:hover {
+    color: white;
 }
 
-.theme-switch {
-    display: inline-block;
-    height: 20px;
-    position: relative;
-    width: 40px;
-    margin-left: 10px;
-}
-
-.theme-switch input {
-    display: none;
-}
-
-.slider {
-    background-color: #ccc;
-    bottom: 0;
-    cursor: pointer;
-    left: 0;
-    position: absolute;
-    right: 0;
-    top: 0;
-    transition: .4s;
-    border-radius: 34px;
-}
-
-.slider:before {
-    background-color: white; 
-    bottom: 2px;
-    content: "";
-    height: 16px;
-    left: 2px;
-    position: absolute;
-    transition: .4s;
-    width: 16px;
-    border-radius: 50%;
-    background-color: black;
-}
-
-input:checked + .slider:before {
-    transform: translateX(20px);
-}
-
+/* 7. BOTÓN MOSTRAR/OCULTAR CONTRASEÑA */
 #togglePassword {
     position: absolute;
-    left: auto !important; 
-    right: 10px !important; 
-    top: 50%;
-    transform: translateY(-50%);
+    right: 5px !important; 
+    left: auto !important;
+    top: 10px;
     cursor: pointer;
+    color: rgba(255, 255, 255, 0.5);
+    transition: 0.3s;
+}
+
+#togglePassword:hover {
     color: white;
-    z-index: 10;
-    width: 20px;
-    height: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }
 
 .input-pass-padding {
-    padding-right: 40px !important;
+    padding-right: 35px !important;
+}
+
+/* 8. ANIMACIONES KEYFRAMES */
+@keyframes revealTitle {
+    0% {
+        letter-spacing: 40px;
+        filter: blur(20px);
+        opacity: 0;
+        transform: scale(1.1);
+    }
+    100% {
+        letter-spacing: 15px;
+        filter: blur(0);
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes revealSubtitle {
+    0% {
+        opacity: 0;
+        transform: translateY(20px);
+        filter: blur(10px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+        filter: blur(0);
+    }
+}
+
+/* 9. RESPONSIVE */
+@media (max-width: 768px) {
+    .brand-title {
+        font-size: 4rem;
+        letter-spacing: 10px;
+    }
+    .brand-subtitle {
+        font-size: 0.9rem;
+        letter-spacing: 2px;
+    }
+    .login-container {
+        width: 85%;
+        padding: 30px;
+    }
 }

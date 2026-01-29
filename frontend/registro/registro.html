@@ -8,6 +8,101 @@
 </head>
 <body>
 
+    <div id="light-rays-background"></div>
+
+    <script type="module">
+        import { Renderer, Program, Triangle, Mesh } from 'https://cdn.skypack.dev/ogl';
+        
+        const container = document.getElementById('light-rays-background');
+        const hexToRgb = hex => {
+            const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return m ? [parseInt(m[1], 16) / 255, parseInt(m[2], 16) / 255, parseInt(m[3], 16) / 255] : [1, 1, 1];
+        };
+
+        const renderer = new Renderer({ dpr: Math.min(window.devicePixelRatio, 2), alpha: true });
+        const gl = renderer.gl;
+        container.appendChild(gl.canvas);
+
+        const vert = `attribute vec2 position; varying vec2 vUv; void main() { vUv = position * 0.5 + 0.5; gl_Position = vec4(position, 0.0, 1.0); }`;
+        const frag = `
+            precision highp float;
+            uniform float iTime; uniform vec2 iResolution; uniform vec2 rayPos; uniform vec2 rayDir;
+            uniform vec3 raysColor; uniform float raysSpeed; uniform float lightSpread;
+            uniform float rayLength; uniform vec2 mousePos; uniform float mouseInfluence;
+            varying vec2 vUv;
+            float rayStrength(vec2 raySource, vec2 rayRefDirection, vec2 coord, float seedA, float seedB, float speed) {
+                vec2 sourceToCoord = coord - raySource;
+                vec2 dirNorm = normalize(sourceToCoord);
+                float cosAngle = dot(dirNorm, rayRefDirection);
+                float spreadFactor = pow(max(cosAngle, 0.0), 1.0 / max(lightSpread, 0.001));
+                float distance = length(sourceToCoord);
+                float maxDistance = iResolution.x * rayLength;
+                float lengthFalloff = clamp((maxDistance - distance) / maxDistance, 0.0, 1.0);
+                float baseStrength = clamp((0.45 + 0.15 * sin(cosAngle * seedA + iTime * speed)) + (0.3 + 0.2 * cos(-cosAngle * seedB + iTime * speed)), 0.0, 1.0);
+                return baseStrength * lengthFalloff * spreadFactor;
+            }
+            void main() {
+                vec2 coord = vec2(gl_FragCoord.x, iResolution.y - gl_FragCoord.y);
+                vec2 finalRayDir = rayDir;
+                if (mouseInfluence > 0.0) {
+                    vec2 mouseScreenPos = mousePos * iResolution.xy;
+                    vec2 mouseDirection = normalize(mouseScreenPos - rayPos);
+                    finalRayDir = normalize(mix(rayDir, mouseDirection, mouseInfluence));
+                }
+                float r1 = rayStrength(rayPos, finalRayDir, coord, 36.2214, 21.11349, 1.5 * raysSpeed);
+                float r2 = rayStrength(rayPos, finalRayDir, coord, 22.3991, 18.0234, 1.1 * raysSpeed);
+                vec3 color = (r1 * 0.5 + r2 * 0.4) * raysColor;
+                float brightness = 1.0 - (coord.y / iResolution.y);
+                color.x *= 0.1 + brightness * 0.8;
+                color.y *= 0.3 + brightness * 0.6;
+                color.z *= 0.5 + brightness * 0.5;
+                gl_FragColor = vec4(color, 1.0);
+            }
+        `;
+
+        const uniforms = {
+            iTime: { value: 0 },
+            iResolution: { value: [0, 0] },
+            rayPos: { value: [0, 0] },
+            rayDir: { value: [0, 1] },
+            raysColor: { value: hexToRgb('#ffffff') },
+            raysSpeed: { value: 1 },
+            lightSpread: { value: 0.5 },
+            rayLength: { value: 3 },
+            mousePos: { value: [0.5, 0.5] },
+            mouseInfluence: { value: 0.1 }
+        };
+
+        const mesh = new Mesh(gl, { 
+            geometry: new Triangle(gl), 
+            program: new Program(gl, { vertex: vert, fragment: frag, uniforms }) 
+        });
+
+        function resize() {
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+            renderer.setSize(w, h);
+            uniforms.iResolution.value = [w * renderer.dpr, h * renderer.dpr];
+            // Posicionamos el origen en la parte superior central
+            uniforms.rayPos.value = [w * renderer.dpr * 0.5, -h * renderer.dpr * 0.2];
+        }
+
+        window.addEventListener('resize', resize);
+        window.addEventListener('mousemove', e => {
+            uniforms.mousePos.value = [e.clientX / window.innerWidth, e.clientY / window.innerHeight];
+        });
+
+        function update(t) {
+            uniforms.iTime.value = t * 0.001;
+            renderer.render({ scene: mesh });
+            requestAnimationFrame(update);
+        }
+
+        resize();
+        requestAnimationFrame(update);
+    </script>
+    <script src="registro.js"></script>
+
     <div class="registro-container">
         <h2>REGISTRAR CUENTA</h2>
         <div class="divider"></div>
