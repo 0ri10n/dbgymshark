@@ -6,8 +6,10 @@ const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
 const connectDB = require('./config/db');
-
 const path = require('path');
+
+const authRoutes = require('./routes/authRoutes'); 
+
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 // Conectar a la Base de Datos //
@@ -18,7 +20,9 @@ const app = express();
 
 // Middlewares //
 app.use(cors());
-app.use(express.json());
+app.use(express.json()); 
+
+app.use('/api/auth', authRoutes); 
 
 //  Ruta de prueba /
 app.get('/', (req, res) => {
