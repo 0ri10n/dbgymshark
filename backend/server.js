@@ -1,7 +1,3 @@
-
-
-
-
 const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
@@ -34,3 +30,9 @@ const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
     console.log(`Servidor corriendo en el puerto ${PORT}`);
 });
+
+// ... importaciones previas
+const productRoutes = require('./routes/productRoutes');
+
+// Usar las rutas
+app.use('/api/productos', productRoutes);
