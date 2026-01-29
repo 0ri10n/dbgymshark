@@ -22,6 +22,13 @@ const UsuarioSchema = mongoose.Schema({
         type: String,
         required: true 
     },
+    
+    rol: {
+        type: String,
+        default: 'cliente',
+        enum: ['cliente', 'admin']
+    },
+
     registro: {
         type: Date,
         default: Date.now 
