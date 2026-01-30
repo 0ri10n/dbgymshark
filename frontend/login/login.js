@@ -1,9 +1,9 @@
-document.getElementById('loginForm').addEventListener('submit', async function(e) {
-    e.preventDefault(); 
+document.getElementById('loginForm').addEventListener('submit', async function (e) {
+    e.preventDefault();
 
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
-    
+
     const btn = document.querySelector('.btn-login');
     const textoOriginal = btn.innerText;
     btn.innerText = 'Cargando...';
@@ -21,9 +21,8 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
 
         if (respuesta.ok) {
             localStorage.setItem('token', data.token);
-            
-            alert('¡Login Exitoso! Token guardado.');
-            // window.location.href = 'dashboard.html'; // Descomentar esto cuando tengas el dashboard
+
+            window.location.href = '../adminview/admin.html';
         } else {
             alert(data.msg || 'Error al iniciar sesión');
         }
@@ -42,6 +41,23 @@ const passwordInput = document.querySelector('#password');
 togglePassword.addEventListener('click', function () {
     const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
     passwordInput.setAttribute('type', type);
-    
+
     this.classList.toggle('fa-eye-slash');
+});
+
+const showLoginBtn = document.getElementById('show-login-btn');
+const loginWrapper = document.getElementById('login-wrapper');
+
+showLoginBtn.addEventListener('click', () => {
+    loginWrapper.classList.remove('hidden');
+    showLoginBtn.style.opacity = '0';
+    showLoginBtn.style.pointerEvents = 'none';
+});
+
+loginWrapper.addEventListener('click', (e) => {
+    if (e.target === loginWrapper) {
+        loginWrapper.classList.add('hidden');
+        showLoginBtn.style.opacity = '1';
+        showLoginBtn.style.pointerEvents = 'all';
+    }
 });
