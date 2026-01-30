@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Store - MAKIA</title>
+    <link rel="stylesheet" href="client.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+
+<body>
+    <header class="client-header">
+        <div class="logo">MAKIA</div>
+        <div class="header-icons">
+            <div class="cart-wrapper" id="openCart">
+                <i class="fas fa-shopping-bag"></i>
+                <span id="cartCount">0</span>
+            </div>
+            <div class="user-menu-container">
+                <i class="far fa-user" id="userIcon"></i>
+                <div class="user-dropdown" id="userDropdown">
+                    <button id="logoutBtn">Cerrar Sesión</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="hero-banner">
+        <img src="hero-banner-client.jpg" alt="Banner Hero">
+    </div>
+
+    <div class="store-layout">
+        <aside class="filters-sidebar">
+            <h2 class="sidebar-title">Filtros</h2>
+
+            <div class="filter-section">
+                <h3>Talla</h3>
+                <div class="size-grid" id="sizeFilters">
+                    <button>XS</button><button>S</button><button>M</button>
+                    <button>L</button><button>XL</button><button>2X</button>
+                </div>
+            </div>
+
+            <div class="filter-section">
+                <h3>Disponibilidad</h3>
+                <label><input type="checkbox" id="checkAvailable"> Availability (<span
+                        id="countAvailable">0</span>)</label>
+                <label><input type="checkbox" id="checkOutOfStock"> Out Of Stack (<span
+                        id="countOutOfStock">0</span>)</label>
+            </div>
+
+            <nav class="accordion">
+                <div class="acc-item">Categorias <i class="fas fa-chevron-right"></i></div>
+                <div class="acc-item">Colores <i class="fas fa-chevron-right"></i></div>
+                <div class="acc-item">Price Range <i class="fas fa-chevron-right"></i></div>
+            </nav>
+        </aside>
+
+        <main class="shop-content">
+            <div class="shop-controls">
+                <div class="search-bar">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchInput" placeholder="Search">
+                </div>
+                <span class="view-all" style="cursor: pointer; text-decoration: underline;">Ver todo</span>
+            </div>
+
+            <div class="products-grid" id="productsGrid">
+            </div>
+        </main>
+    </div>
+
+    <script src="client.js"></script>
+</body>
+
+</html>

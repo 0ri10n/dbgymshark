@@ -37,3 +37,5 @@ app.listen(PORT, () => {
 });
 
 app.use('/api/admin', require('./routes/adminRoutes'));
+app.get('/api/productos', require('./controllers/productController').obtenerProductos);
+
