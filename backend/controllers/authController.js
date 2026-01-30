@@ -18,7 +18,12 @@ exports.registrarUsuario = async (req, res) => {
 
         await usuario.save();
 
-        const payload = { usuario: { id: usuario.id } };
+        const payload = { 
+            usuario: { 
+                id: usuario.id,
+                rol: usuario.rol 
+            } 
+        };
         
         jwt.sign(
             payload, 
@@ -50,7 +55,12 @@ exports.iniciarSesion = async (req, res) => {
             return res.status(400).json({ msg: 'Contraseña incorrecta' });
         }
 
-        const payload = { usuario: { id: usuario.id } };
+        const payload = { 
+            usuario: { 
+                id: usuario.id,
+                rol: usuario.rol 
+            } 
+        };
 
         jwt.sign(
             payload, 

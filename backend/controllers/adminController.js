@@ -1,24 +1,98 @@
 const mongoose = require('mongoose');
+const Product = require('../models/Productos');
+const { ObjectId } = require('mongoose').Types; // Usa el de Mongoose
 
-// Obtener todas las bases de datos vinculadas
+// FUNCIÓN 1: Listar DBs
 exports.obtenerBasesDeDatos = async (req, res) => {
     try {
-        const admin = mongoose.connection.getSiblingDB('admin');
-        const dbs = await admin.adminCommand({ listDatabases: 1 });
-        res.json(dbs.databases.map(db => db.name));
+        const admin = mongoose.connection.db.admin();
+        const dbs = await admin.listDatabases();
+        const nombres = dbs.databases
+            .map(db => db.name)
+            .filter(n => n !== 'admin' && n !== 'local' && n !== 'config');
+        res.json(nombres);
     } catch (error) {
-        res.status(500).json({ msg: 'Error al obtener bases de datos' });
+        res.status(500).json({ msg: 'Error al obtener DBs' });
     }
 };
 
-// Obtener tablas de la DB
+// FUNCIÓN 2: Listar Tablas (Asegúrate que el nombre sea "obtenerTablas")
 exports.obtenerTablas = async (req, res) => {
     try {
-        const dbName = req.params.dbName;
-        const db = mongoose.connection.useDb(dbName);
-        const collections = await db.db.listCollections().toArray();
-        res.json(collections.map(col => col.name));
+        const { dbName } = req.params;
+        const db = mongoose.connection.client.db(dbName);
+        const collections = await db.listCollections().toArray();
+        res.json(collections.map(c => c.name));
     } catch (error) {
         res.status(500).json({ msg: 'Error al obtener tablas' });
+    }
+};
+
+// FUNCIÓN 3: Obtener Datos (La usaremos para llenar la tabla)
+exports.obtenerDatosTabla = async (req, res) => {
+    try {
+        const { dbName, tableName } = req.params;
+        const db = mongoose.connection.client.db(dbName);
+        const collection = db.collection(tableName);
+        const datos = await collection.find({}).limit(50).toArray();
+        res.json(datos);
+    } catch (error) {
+        res.status(500).json({ msg: 'Error al obtener datos' });
+    }
+};
+
+
+// ELIMINAR REGISTRO UNIVERSAL
+exports.eliminarDatoUniversal = async (req, res) => {
+    try {
+        const { dbName, tableName, id } = req.params;
+        const db = mongoose.connection.client.db(dbName);
+        const coleccion = db.collection(tableName);
+        
+        // El cambio importante es aquí:
+        const resultado = await coleccion.deleteOne({ _id: new ObjectId(id) });
+
+        if (resultado.deletedCount === 1) {
+            res.json({ msg: `Registro eliminado de ${tableName}` });
+        } else {
+            res.status(404).json({ msg: 'No se encontró el registro' });
+        }
+    } catch (error) {
+        console.error('Error CRUD:', error); // Aquí es donde viste el error de BSON
+        res.status(500).json({ msg: 'Error de versiones en la base de datos' });
+    }
+};
+
+// CREAR REGISTRO UNIVERSAL
+exports.crearDatoUniversal = async (req, res) => {
+    try {
+        const { dbName, tableName } = req.params;
+        const db = mongoose.connection.client.db(dbName);
+        const coleccion = db.collection(tableName);
+        
+        // Inserta el cuerpo del JSON enviado desde el frontend
+        const resultado = await coleccion.insertOne(req.body);
+        res.status(201).json({ msg: 'Registro creado', id: resultado.insertedId });
+    } catch (error) {
+        res.status(500).json({ msg: 'Error al crear el registro' });
+    }
+};
+
+// backend/controllers/adminController.js
+exports.editarDatoUniversal = async (req, res) => {
+    try {
+        const { dbName, tableName, id } = req.params;
+        const datosActualizados = req.body;
+        delete datosActualizados._id; // Por seguridad, no intentamos cambiar el ID de MongoDB
+
+        const db = mongoose.connection.client.db(dbName);
+        const resultado = await db.collection(tableName).updateOne(
+            { _id: new ObjectId(id) },
+            { $set: datosActualizados }
+        );
+
+        res.json({ msg: "Actualizado correctamente", resultado });
+    } catch (error) {
+        res.status(500).json({ msg: "Error al actualizar" });
     }
 };
