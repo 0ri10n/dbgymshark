@@ -17,7 +17,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function loadProducts(query = '', ignoreSize = false) {
         if (!grid) return;
-        grid.innerHTML = '<div style="color:white; padding:20px;">Cargando catálogo...</div>';
         
         const tallaParaEnviar = ignoreSize ? '' : selectedSize;
 
@@ -37,30 +36,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Renderizamos las tarjetas (He añadido la estructura básica para que se vean)
             // Dentro de loadProducts en client.js
-            grid.innerHTML = listaProductos.map(p => {
-    // 1. Extraemos el texto sucio de IMAGE_SRC
-    const rawImages = p.IMAGE_SRC || p.image_principal || "";
-    
-    // 2. LIMPIEZA: Separamos por comas, quitamos espacios y nos quedamos con la primera
-    // Esto convierte "url1, url2" en solo "url1"
-    const cleanImage = rawImages.split(',')[0].trim();
+            // Dentro de la función loadProducts en client.js
+grid.innerHTML = listaProductos.map(p => {
+    // 1. Extraemos la imagen usando el nombre exacto de tu DB: IMAGE_SRC
+    const rawImages = p.IMAGE_SRC || ""; 
+    // Limpiamos las comas y espacios para tomar solo la primera URL
+    const imagenFinal = rawImages.split(',')[0].trim() || 'https://placehold.co/400x400?text=Sin+Imagen';
 
-    // 3. Mapeo de datos (Compatibilidad con tus campos en MAYÚSCULAS)
-    const nombre = p.TITLE || p.title || 'Producto Gymshark';
-    const precio = p.PRICE || (p.price_range ? p.price_range.min : 0);
-
-    // 4. Verificamos que la URL empiece por http para evitar errores de carga
-    const finalSrc = (cleanImage.startsWith('http')) 
-        ? cleanImage 
-        : 'https://placehold.co/400x400?text=Sin+Imagen';
+    // 2. Extraemos el título y el precio usando MAYÚSCULAS
+    const nombre = p.TITLE || "Producto Gymshark";
+    const precio = p.PRICE || 0;
 
     return `
         <div class="product-card">
             <div class="product-image-container">
-                <img src="${finalSrc}" 
+                <img src="${imagenFinal}" 
                      alt="${nombre}" 
-                     loading="lazy"
-                     onerror="this.onerror=null; this.src='https://placehold.co/400x400?text=Error+Carga';">
+                     onerror="this.src='https://placehold.co/400x400?text=Error+Link';">
             </div>
             <div class="product-info">
                 <h3>${nombre}</h3>
