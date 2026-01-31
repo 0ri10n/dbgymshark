@@ -7,6 +7,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     const currentTableNameElem = document.getElementById('currentTableName');
     const token = localStorage.getItem('token');
     const logoutBtn = document.getElementById('logoutBtn');
+    const paginationButtons = document.querySelectorAll('.btn-nav');
+    const prevBtn = paginationButtons[0];
+    const nextBtn = paginationButtons[1];
+    let currentPage = 1;
+    const limit = 20;
+    let totalPages = 1;
+    let currentDB = null;
+    let currentTable = null;
     const estructuras = {
     productos: ['nombre', 'precio', 'categoria', 'stock', 'descripcion'],
     usuarios: ['nombre', 'email', 'registro']
@@ -94,7 +102,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
 // 2. Aquí la función que carga los datos sin romperse
-async function loadTableData(dbName, tableName) {
+async function loadTableData(dbName, tableName, page = 1) {
     const currentTableNameElem = document.getElementById('currentTableName');
     const tableBody = document.getElementById('adminTableBody');
     const tableHead = document.getElementById('adminTableHead');
@@ -103,10 +111,13 @@ async function loadTableData(dbName, tableName) {
     tableBody.innerHTML = '<tr><td colspan="10" style="text-align:center;">Cargando...</td></tr>';
 
     try {
-        const respuesta = await fetch(`https://dbgymshark.onrender.com/api/admin/datos/${dbName}/${tableName}`, {
+        const respuesta = await fetch(`https://dbgymshark.onrender.com/api/admin/datos/${dbName}/${tableName}?page=${page}&limit=${limit}`, {
             headers: { 'x-auth-token': localStorage.getItem('token') }
         });
-        const documentos = await respuesta.json();
+        const payload = await respuesta.json();
+        const documentos = Array.isArray(payload) ? payload : payload.data || [];
+        totalPages = payload.totalPages || 1;
+        currentPage = payload.page || page;
 
         let todasLasLlaves = new Set();
 
@@ -176,6 +187,9 @@ async function loadTableData(dbName, tableName) {
         const selectedDB = e.target.value;
         tablesNav.innerHTML = '';
         if (!selectedDB) return;
+        currentDB = selectedDB;
+        currentTable = null;
+        currentPage = 1;
         try {
             const respuesta = await fetch(`https://dbgymshark.onrender.com/api/admin/tablas/${selectedDB}`, {
                 headers: { 'x-auth-token': token }
@@ -189,7 +203,9 @@ async function loadTableData(dbName, tableName) {
                     event.preventDefault();
                     document.querySelectorAll('.sidebar-menu a').forEach(a => a.classList.remove('active'));
                     link.classList.add('active');
-                    loadTableData(selectedDB, tableName);
+                    currentTable = tableName;
+                    currentPage = 1;
+                    loadTableData(selectedDB, tableName, currentPage);
                 };
                 tablesNav.appendChild(link);
             });
@@ -305,6 +321,28 @@ async function loadTableData(dbName, tableName) {
             }
         } catch (error) { alert("Error en el servidor"); }
     };
+
+    // PAGINACIÓN
+    if (prevBtn) {
+        prevBtn.addEventListener('click', () => {
+            if (!currentDB || !currentTable) return;
+            if (currentPage > 1) {
+                currentPage -= 1;
+                loadTableData(currentDB, currentTable, currentPage);
+                console.log(`Página ${currentPage}/${totalPages}`);
+            }
+        });
+    }
+    if (nextBtn) {
+        nextBtn.addEventListener('click', () => {
+            if (!currentDB || !currentTable) return;
+            if (currentPage < totalPages) {
+                currentPage += 1;
+                loadTableData(currentDB, currentTable, currentPage);
+                console.log(`Página ${currentPage}/${totalPages}`);
+            }
+        });
+    }
 
     // LOGOUT
     if (logoutBtn) {

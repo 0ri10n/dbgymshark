@@ -1,25 +1,16 @@
 const mongoose = require('mongoose');
 const Product = require('../models/Productos');
 
-// 1. OBTENER productos (filtros optimizados por variantes)
+// 1. OBTENER productos (filtros optimizados + mapeo robusto de campos importados)
 exports.obtenerProductos = async (req, res) => {
     try {
         const { talla, search, stock } = req.query;
         const match = {};
 
-        if (search && search.trim() !== '') {
-            match.$text = { $search: search.trim() };
-        }
-
-        if (talla && talla.trim() !== '') {
-            match.sizes_available = talla.trim();
-        }
-
-        if (stock === 'true') {
-            match.variants = { $elemMatch: { inventory_quantity: { $gt: 0 } } };
-        } else if (stock === 'false') {
-            match.variants = { $not: { $elemMatch: { inventory_quantity: { $gt: 0 } } } };
-        }
+        if (search && search.trim() !== '') match.$text = { $search: search.trim() };
+        if (talla && talla.trim() !== '') match.sizes_available = talla.trim();
+        if (stock === 'true') match.variants = { $elemMatch: { inventory_quantity: { $gt: 0 } } };
+        else if (stock === 'false') match.variants = { $not: { $elemMatch: { inventory_quantity: { $gt: 0 } } } };
 
         const pipeline = [
             { $match: match },
@@ -53,9 +44,43 @@ exports.obtenerProductos = async (req, res) => {
             { $project: { __v: 0 } }
         ];
 
-        const productos = await Product.aggregate(pipeline);
+        const collectionName = process.env.PRODUCT_COLLECTION || Product.collection.collectionName;
+        const collection = mongoose.connection.db.collection(collectionName);
+        const raw = await collection.aggregate(pipeline).toArray();
 
-        const countsAgg = await Product.aggregate([
+        // Mapeo de campos importados a las claves esperadas por el frontend
+        const mapProduct = (p) => {
+            const nombre =
+                p.nombre ||
+                p.title ||
+                p['Product Name'] ||
+                p.product_name ||
+                (p.activeVariant && p.activeVariant.title);
+
+            const precio =
+                p.precio ??
+                p.price ??
+                p.Price ??
+                (p.activeVariant && p.activeVariant.price);
+
+            const imagenUrl =
+                p.imagenUrl ||
+                p.image_src ||
+                p.image_principal ||
+                p['Image URL'] ||
+                p['Imagen URL'];
+
+            return {
+                ...p,
+                nombre,
+                precio,
+                imagenUrl
+            };
+        };
+
+        const productos = raw.map(mapProduct);
+
+        const countsAgg = await collection.aggregate([
             { $unwind: '$variants' },
             {
                 $group: {
