@@ -1,166 +1,191 @@
 const mongoose = require('mongoose');
-const Product = require('../models/Productos');
 
-// 1. OBTENER productos (filtros optimizados + mapeo robusto de campos importados)
+const DEFAULT_DB = process.env.PRODUCT_DB || 'DB';
+const DEFAULT_COLLECTION = process.env.PRODUCT_COLLECTION || 'productos'; // usa el nombre real de tu colección
+
+// Helpers
+const getCollection = () => mongoose.connection.client.db(DEFAULT_DB).collection(DEFAULT_COLLECTION);
+const mapProducto = (p) => ({
+  ...p,
+  nombre: p.nombre || p.title || p.product_name,
+  precio: p.precio ?? p.price ?? p.Price,
+  imagenUrl: p.imagenUrl || p.image_src || p.image_principal || p['Image URL'],
+});
+
+// 1. OBTENER productos con agregación (agrupa variantes y pagina)
 exports.obtenerProductos = async (req, res) => {
-    try {
-        const { talla, search, stock } = req.query;
-        const match = {};
+  try {
+    const collection = getCollection();
+    const { talla, search, stock, page = 1, limit = 20 } = req.query;
 
-        if (search && search.trim() !== '') match.$text = { $search: search.trim() };
-        if (talla && talla.trim() !== '') match.sizes_available = talla.trim();
-        if (stock === 'true') match.variants = { $elemMatch: { inventory_quantity: { $gt: 0 } } };
-        else if (stock === 'false') match.variants = { $not: { $elemMatch: { inventory_quantity: { $gt: 0 } } } };
+    const pageNum = Math.max(parseInt(page, 10) || 1, 1);
+    const limitNum = Math.max(parseInt(limit, 10) || 20, 1);
+    const skip = (pageNum - 1) * limitNum;
 
-        const pipeline = [
-            { $match: match },
-            {
-                $addFields: {
-                    total_stock: { $sum: '$variants.inventory_quantity' },
-                    activeVariant: talla && talla.trim()
-                        ? {
-                            $let: {
-                                vars: {
-                                    matches: {
-                                        $filter: {
-                                            input: '$variants',
-                                            as: 'v',
-                                            cond: { $eq: ['$$v.size', talla.trim()] }
-                                        }
-                                    }
-                                },
-                                in: {
-                                    $cond: [
-                                        { $gt: [{ $size: '$$matches' }, 0] },
-                                        { $arrayElemAt: ['$$matches', 0] },
-                                        { $arrayElemAt: ['$variants', 0] }
-                                    ]
-                                }
-                            }
-                        }
-                        : { $arrayElemAt: ['$variants', 0] }
-                }
-            },
-            { $project: { __v: 0 } }
-        ];
+    const pipeline = [];
 
-        const dbName = process.env.PRODUCT_DB || 'DB';
-        const collectionName = process.env.PRODUCT_COLLECTION || Product.collection.collectionName || 'productos';
-        const collection = mongoose.connection.client.db(dbName).collection(collectionName);
-        const raw = await collection.aggregate(pipeline).toArray();
-
-        // Mapeo de campos importados a las claves esperadas por el frontend
-        const mapProduct = (p) => {
-            const nombre =
-                p.nombre ||
-                p.title ||
-                p['Product Name'] ||
-                p.product_name ||
-                (p.activeVariant && p.activeVariant.title);
-
-            const precio =
-                p.precio ??
-                p.price ??
-                p.Price ??
-                (p.activeVariant && p.activeVariant.price);
-
-            const imagenUrl =
-                p.imagenUrl ||
-                p.image_src ||
-                p.image_principal ||
-                p['Image URL'] ||
-                p['Imagen URL'];
-
-            return {
-                ...p,
-                nombre,
-                precio,
-                imagenUrl
-            };
-        };
-
-        const productos = raw.map(mapProduct);
-
-        const countsAgg = await collection.aggregate([
-            { $unwind: '$variants' },
-            {
-                $group: {
-                    _id: null,
-                    totalDisponible: {
-                        $sum: {
-                            $cond: [
-                                { $gt: ['$variants.inventory_quantity', 0] },
-                                '$variants.inventory_quantity',
-                                0
-                            ]
-                        }
-                    },
-                    totalAgotado: {
-                        $sum: {
-                            $cond: [
-                                { $lte: ['$variants.inventory_quantity', 0] },
-                                '$variants.inventory_quantity',
-                                0
-                            ]
-                        }
-                    }
-                }
-            }
-        ]);
-
-        const counts = {
-            totalDisponible: countsAgg[0]?.totalDisponible || 0,
-            totalAgotado: Math.abs(countsAgg[0]?.totalAgotado || 0)
-        };
-
-        res.json({ productos, counts });
-    } catch (error) {
-        console.error('Error en obtenerProductos:', error);
-        res.status(500).json({ msg: 'Hubo un error al obtener los productos' });
+    // MATCH temprano para aprovechar índices
+    if (search && search.trim()) {
+      const regex = new RegExp(search.trim(), 'i');
+      pipeline.push({
+        $match: {
+          $or: [
+            { title: regex },
+            { nombre: regex },
+            { product_name: regex },
+            { handle: regex },
+            { vendor: regex },
+            { tags: regex },
+          ],
+        },
+      });
     }
+
+    // GROUP por handle (fallback a title)
+    pipeline.push({
+      $group: {
+        _id: { $ifNull: ['$handle', '$title'] },
+        handle: { $first: '$handle' },
+        title: { $first: '$title' },
+        nombre: { $first: '$nombre' },
+        price: { $first: '$price' },
+        precio: { $first: '$precio' },
+        image_src: { $first: '$image_src' },
+        imagenUrl: { $first: '$imagenUrl' },
+        image_principal: { $first: '$image_principal' },
+        vendor: { $first: '$vendor' },
+        tags: { $first: '$tags' },
+        variantes: {
+          $push: {
+            talla: '$variant_title',
+            sku: '$sku',
+            id: '$_id',
+            inventory: '$inventory_quantity',
+          },
+        },
+        tallas_disponibles: { $addToSet: '$variant_title' },
+        totalInventory: { $sum: '$inventory_quantity' },
+      },
+    });
+
+    // MATCH posterior (talla y stock)
+    const postMatch = {};
+    if (talla && talla.trim()) postMatch.tallas_disponibles = talla.trim();
+    if (stock === 'true') postMatch.totalInventory = { $gt: 0 };
+    if (stock === 'false') postMatch.totalInventory = { $lte: 0 };
+    if (Object.keys(postMatch).length) pipeline.push({ $match: postMatch });
+
+    // FACET para paginación
+    pipeline.push({
+      $facet: {
+        metadata: [{ $count: 'total' }],
+        data: [{ $skip: skip }, { $limit: limitNum }],
+      },
+    });
+
+    const agg = await collection.aggregate(pipeline).toArray();
+    const facet = agg[0] || { metadata: [], data: [] };
+    const total = facet.metadata[0]?.total || 0;
+    const pages = Math.max(Math.ceil(total / limitNum), 1);
+    const productos = facet.data.map(mapProducto);
+
+    res.json({
+      productos,
+      pagination: {
+        page: pageNum,
+        pages,
+        total,
+      },
+    });
+  } catch (error) {
+    console.error('Error en obtenerProductos (pipeline):', error);
+    res.status(500).json({ msg: 'Hubo un error al obtener los productos' });
+  }
 };
 
-// 2. CREAR un nuevo producto
+// 2. CREAR un documento (útil para importaciones)
 exports.crearProducto = async (req, res) => {
-    try {
-        const producto = await Product.create(req.body);
-        res.status(201).json({ msg: 'Producto creado', id: producto._id });
-    } catch (error) {
-        res.status(400).json({ msg: 'No se pudo crear el producto', error });
-    }
+  try {
+    const collection = getCollection();
+    const resultado = await collection.insertOne(req.body);
+    res.status(201).json({ msg: 'Producto creado', id: resultado.insertedId });
+  } catch (error) {
+    res.status(400).json({ msg: 'No se pudo crear el producto', error });
+  }
 };
 
-// 3. BUSCAR producto por handle
+// 3. BUSCAR producto por handle (agrupado)
 exports.obtenerProductoPorHandle = async (req, res) => {
-    try {
-        const producto = await Product.findOne({ handle: req.params.handle });
-        if (!producto) return res.status(404).json({ msg: 'Producto no encontrado' });
-        res.json(producto);
-    } catch (error) {
-        res.status(500).json({ msg: 'Error en el servidor' });
-    }
+  try {
+    const collection = getCollection();
+    const handle = req.params.handle;
+
+    const doc = await collection
+      .aggregate([
+        { $match: { handle } },
+        {
+          $group: {
+            _id: '$handle',
+            handle: { $first: '$handle' },
+            title: { $first: '$title' },
+            nombre: { $first: '$nombre' },
+            price: { $first: '$price' },
+            precio: { $first: '$precio' },
+            image_src: { $first: '$image_src' },
+            imagenUrl: { $first: '$imagenUrl' },
+            image_principal: { $first: '$image_principal' },
+            vendor: { $first: '$vendor' },
+            tags: { $first: '$tags' },
+            variantes: {
+              $push: {
+                talla: '$variant_title',
+                sku: '$sku',
+                id: '$_id',
+                inventory: '$inventory_quantity',
+              },
+            },
+            tallas_disponibles: { $addToSet: '$variant_title' },
+            totalInventory: { $sum: '$inventory_quantity' },
+          },
+        },
+        { $limit: 1 },
+      ])
+      .toArray();
+
+    if (!doc.length) return res.status(404).json({ msg: 'Producto no encontrado' });
+    res.json(mapProducto(doc[0]));
+  } catch (error) {
+    res.status(500).json({ msg: 'Error en el servidor' });
+  }
 };
 
-// 4. ACTUALIZAR producto
+// 4. ACTUALIZAR (sobre documento plano)
 exports.actualizarProducto = async (req, res) => {
-    try {
-        const producto = await Product.findByIdAndUpdate(
-            req.params.id,
-            req.body,
-            { new: true, runValidators: true }
-        );
-        res.json(producto);
-    } catch (error) {
-        res.status(500).json({ msg: 'Error al actualizar' });
-    }
+  try {
+    const { ObjectId } = require('mongoose').Types;
+    const collection = getCollection();
+    const datosActualizados = { ...req.body };
+    delete datosActualizados._id;
+
+    const producto = await collection.findOneAndUpdate(
+      { _id: new ObjectId(req.params.id) },
+      { $set: datosActualizados },
+      { returnDocument: 'after' }
+    );
+    res.json(producto);
+  } catch (error) {
+    res.status(500).json({ msg: 'Error al actualizar' });
+  }
 };
 
-// 5. ELIMINAR producto
+// 5. ELIMINAR
 exports.eliminarProducto = async (req, res) => {
-    try {
-        await Product.findByIdAndDelete(req.params.id);
-        res.json({ msg: 'Producto eliminado correctamente' });
-    } catch (error) {
-        res.status(500).json({ msg: 'Error al eliminar' });
-    }
+  try {
+    const { ObjectId } = require('mongoose').Types;
+    const collection = getCollection();
+    await collection.deleteOne({ _id: new ObjectId(req.params.id) });
+    res.json({ msg: 'Producto eliminado correctamente' });
+  } catch (error) {
+    res.status(500).json({ msg: 'Error al eliminar' });
+  }
 };
