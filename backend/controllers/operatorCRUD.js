@@ -44,8 +44,9 @@ exports.obtenerProductos = async (req, res) => {
             { $project: { __v: 0 } }
         ];
 
-        const collectionName = process.env.PRODUCT_COLLECTION || Product.collection.collectionName;
-        const collection = mongoose.connection.db.collection(collectionName);
+        const dbName = process.env.PRODUCT_DB || 'DB';
+        const collectionName = process.env.PRODUCT_COLLECTION || Product.collection.collectionName || 'productos';
+        const collection = mongoose.connection.client.db(dbName).collection(collectionName);
         const raw = await collection.aggregate(pipeline).toArray();
 
         // Mapeo de campos importados a las claves esperadas por el frontend
