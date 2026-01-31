@@ -38,28 +38,38 @@ document.addEventListener('DOMContentLoaded', () => {
             // Renderizamos las tarjetas (He añadido la estructura básica para que se vean)
             // Dentro de loadProducts en client.js
             grid.innerHTML = listaProductos.map(p => {
-                // 1. Extraemos el campo de imagen (probamos mayúsculas y minúsculas)
-                const rawImages = p.IMAGE_SRC || p.image_principal || '';
+    // 1. Extraemos el texto sucio de IMAGE_SRC
+    const rawImages = p.IMAGE_SRC || p.image_principal || "";
     
-                // 2. Si hay varias imágenes separadas por coma, tomamos solo la primera
-                const firstImage = rawImages.split(',')[0].trim();
-    
-                // 3. Mapeo de otros campos (aseguramos compatibilidad con tus datos en MAYÚSCULAS)
-                const nombre = p.TITLE || p.title || 'Gymshark Product';
-                const precio = p.PRICE || (p.price_range ? p.price_range.min : 0);
-                const imagenFinal = firstImage || 'https://via.placeholder.com/200';
+    // 2. LIMPIEZA: Separamos por comas, quitamos espacios y nos quedamos con la primera
+    // Esto convierte "url1, url2" en solo "url1"
+    const cleanImage = rawImages.split(',')[0].trim();
 
-                return `
-                <div class="product-card">
-                <img src="${imagenFinal}" alt="${nombre}" onerror="this.src='https://via.placeholder.com/200'">
-                <div class="product-info">
-                        <h3>${nombre}</h3>
-                        <p class="price">$${precio}</p>
-                    <button onclick="agregarAlCarrito('${nombre}', ${precio})">Agregar a la bolsa</button>
-                    </div>
-                </div>
-            `;
-        }).join('');
+    // 3. Mapeo de datos (Compatibilidad con tus campos en MAYÚSCULAS)
+    const nombre = p.TITLE || p.title || 'Producto Gymshark';
+    const precio = p.PRICE || (p.price_range ? p.price_range.min : 0);
+
+    // 4. Verificamos que la URL empiece por http para evitar errores de carga
+    const finalSrc = (cleanImage.startsWith('http')) 
+        ? cleanImage 
+        : 'https://placehold.co/400x400?text=Sin+Imagen';
+
+    return `
+        <div class="product-card">
+            <div class="product-image-container">
+                <img src="${finalSrc}" 
+                     alt="${nombre}" 
+                     loading="lazy"
+                     onerror="this.onerror=null; this.src='https://placehold.co/400x400?text=Error+Carga';">
+            </div>
+            <div class="product-info">
+                <h3>${nombre}</h3>
+                <p class="price">$${precio}</p>
+                <button onclick="agregarAlCarrito('${nombre}', ${precio})">Agregar a la bolsa</button>
+            </div>
+        </div>
+    `;
+}).join('');
 
         } catch (err) {
             console.error("Error en fetch:", err);
