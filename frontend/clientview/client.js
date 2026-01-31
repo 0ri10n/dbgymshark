@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const tallaParaEnviar = ignoreSize ? '' : selectedSize;
 
         try {
-            const res = await fetch(`https://dbgymshark.onrender.com/api/productos?search=${query}&talla=${tallaParaEnviar}&stock=${filterStock}`);
+            const res = await fetch(`/api/productos?search=${query}&talla=${tallaParaEnviar}&stock=${filterStock}`);
             const data = await res.json();
 
             if (countAvailable) countAvailable.innerText = data.counts.totalDisponible;
