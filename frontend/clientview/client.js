@@ -31,19 +31,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // RENDERIZADO DE TARJETAS
             grid.innerHTML = listaProductos.map(p => {
-// 1. LIMPIEZA DE IMAGEN (Ajuste de Prefijo CDN)
-const rawImages = p.IMAGE_SRC || p.image_principal || ""; 
-let imagenFinal = rawImages.split(',')[0].trim();
+// 1. LIMPIEZA DE IMAGEN
+const rawImages = p.IMAGE_SRC || p.image_src || p.image_principal || ""; 
+let imagenFinal = "";
+
+if (Array.isArray(rawImages)) {
+    imagenFinal = rawImages[0];
+} else {
+    imagenFinal = rawImages.split(',')[0].trim();
+}
 
 if (!imagenFinal) {
     imagenFinal = 'https://placehold.co/400x500?text=Sin+Imagen';
 } 
-else if (!imagenFinal.startsWith('http') && !imagenFinal.startsWith('//')) {
-    // Probamos con el prefijo estándar de Shopify CDN para archivos subidos
-    imagenFinal = `https://cdn.shopify.com/s/files/1/0098/8822/files/${imagenFinal}`;
-} 
+else if (imagenFinal.startsWith('http')) {
+    // Si ya es una URL completa, la dejamos así
+    imagenFinal = imagenFinal;
+}
 else if (imagenFinal.startsWith('//')) {
     imagenFinal = 'https:' + imagenFinal;
+}
+else {
+    // Si solo es el nombre del archivo (ej: "botella.png")
+    // Gymshark suele usar este formato para sus imágenes:
+    imagenFinal = `https://cdn.shopify.com/s/files/1/0156/6146/products/${imagenFinal}`;
 }
                 // 2. DATOS (Usando MAYÚSCULAS según tu DB)
                 const nombre = p.TITLE || p.title || "Producto Gymshark";
