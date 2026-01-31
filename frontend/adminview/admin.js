@@ -21,34 +21,41 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Estilos mejorados para modal e inputs (inyectados para no depender de CSS externo)
     const modalStyle = document.createElement('style');
-    modalStyle.textContent = `
+modalStyle.textContent = `
     #dynamicModal .modal-content {
         background: #111826;
         color: #e5e7eb;
-        width: min(600px, 95%); /* Un poco más ancho */
-        margin: 2% auto; /* Menos margen arriba para ganar espacio */
+        width: min(550px, 95%);
+        margin: 5vh auto;
         padding: 24px;
-        border-radius: 14px;
-        box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-        max-height: 85vh; /* <--- IMPORTANTE: No deja que el modal crezca más que la pantalla */
-        overflow-y: auto;  /* <--- IMPORTANTE: Activa el scroll interno */
+        border-radius: 12px;
+        /* --- SOLUCIÓN AL CORTE --- */
+        max-height: 85vh;    /* No deja que el modal sea más alto que la pantalla */
+        overflow-y: auto;   /* Activa el scroll vertical */
         position: relative;
     }
+
     #dynamicModal .modal-actions {
         display: flex;
         justify-content: flex-end;
-        gap: 10px;
+        gap: 12px;
         margin-top: 20px;
-        position: sticky; /* <--- Botones siempre visibles al final */
-        bottom: -24px;
+        /* --- BOTONES FIJOS --- */
+        position: sticky;
+        bottom: -24px;      /* Se pega al fondo del modal al hacer scroll */
         background: #111826;
         padding: 15px 0;
         border-top: 1px solid #243349;
     }
-    /* Estilo para que los campos no se vean tan amontonados */
-    .modal-field { margin-bottom: 12px; }
+
+    .modal-field {
+        margin-bottom: 15px;
+        display: flex;
+        flex-direction: column;
+    }
 `;
-    document.head.appendChild(modalStyle);
+document.head.appendChild(modalStyle);
+
 
     // Variables de estado para el Modal
     let editMode = false;

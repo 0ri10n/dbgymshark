@@ -38,22 +38,28 @@ document.addEventListener('DOMContentLoaded', () => {
             // Renderizamos las tarjetas (He añadido la estructura básica para que se vean)
             // Dentro de loadProducts en client.js
             grid.innerHTML = listaProductos.map(p => {
-                // Mapeo manual porque los nombres en la DB son en inglés (Modelo Producto.js)
-                const nombre = p.title || p.nombre || "Producto sin nombre"; 
-                const precio = p.price_range?.min || (p.variants?.[0]?.price) || 0;
-                const imagen = p.image_principal || p.imagen || 'https://via.placeholder.com/200';
+                // 1. Extraemos el campo de imagen (probamos mayúsculas y minúsculas)
+                const rawImages = p.IMAGE_SRC || p.image_principal || '';
+    
+                // 2. Si hay varias imágenes separadas por coma, tomamos solo la primera
+                const firstImage = rawImages.split(',')[0].trim();
+    
+                // 3. Mapeo de otros campos (aseguramos compatibilidad con tus datos en MAYÚSCULAS)
+                const nombre = p.TITLE || p.title || 'Gymshark Product';
+                const precio = p.PRICE || (p.price_range ? p.price_range.min : 0);
+                const imagenFinal = firstImage || 'https://via.placeholder.com/200';
 
                 return `
                 <div class="product-card">
-                <img src="${imagen}" alt="${nombre}" onerror="this.src='https://via.placeholder.com/200'">
+                <img src="${imagenFinal}" alt="${nombre}" onerror="this.src='https://via.placeholder.com/200'">
                 <div class="product-info">
                         <h3>${nombre}</h3>
                         <p class="price">$${precio}</p>
-                        <button onclick="agregarAlCarrito('${nombre}', ${precio})">Agregar a la bolsa</button>
+                    <button onclick="agregarAlCarrito('${nombre}', ${precio})">Agregar a la bolsa</button>
                     </div>
                 </div>
-                `;
-            }).join('');
+            `;
+        }).join('');
 
         } catch (err) {
             console.error("Error en fetch:", err);
