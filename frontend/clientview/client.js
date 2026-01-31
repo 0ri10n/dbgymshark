@@ -35,35 +35,29 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             grid.innerHTML = listaProductos.map(p => {
-                // TRUCO: Buscamos el campo sin importar si es P.IMAGE_SRC o p.image_src
-                const rawImages = p.IMAGE_SRC || p.image_principal || p.image_src || "";
-                
-                // Limpieza de URLs múltiples
-                const imagenFinal = rawImages.split(',')[0].trim();
-                
-                // Si la URL no tiene protocolo (Shopify a veces usa //cdn...), se lo agregamos
-                let srcFixed = imagenFinal;
-                if (srcFixed.startsWith('//')) srcFixed = 'https:' + srcFixed;
-                if (!srcFixed.startsWith('http')) srcFixed = 'https://placehold.co/400x400?text=Sin+Imagen';
+                    // 1. Limpieza de Imagen (Mixed Content y Protocolos)
+                    const rawImages = p.IMAGE_SRC || "";
+                    let imagenFinal = rawImages.split(',')[0].trim();
+                    if (imagenFinal.startsWith('//')) imagenFinal = 'https:' + imagenFinal;
+                    if (!imagenFinal.startsWith('http')) imagenFinal = 'https://placehold.co/400x400?text=No+URL';
 
-                const nombre = p.TITLE || p.title || "Producto";
-                const precio = p.PRICE || (p.price_range ? p.price_range.min : 0) || 0;
+                    // Dentro del .map de listaProductos
+const nombre = p.TITLE || p.title || "Gymshark Item";
+const precio = p.PRICE || p.price || 0; // Busca PRICE en mayúsculas primero
 
-                return `
-                    <div class="product-card">
-                        <div class="product-image-container">
-                            <img src="${srcFixed}" 
-                                 alt="${nombre}" 
-                                 loading="lazy"
-                                 onerror="this.src='https://placehold.co/400x400?text=Error+Link';">
-                        </div>
-                        <div class="product-info">
-                            <h3>${nombre}</h3>
-                            <p class="price">$${precio}</p>
-                            <button onclick="agregarAlCarrito('${nombre}', ${precio})">Agregar a la bolsa</button>
-                        </div>
-                    </div>
-                `;
+// Asegúrate de que el HTML que genera el JS use la clase 'price'
+return `
+    <div class="product-card">
+        <div class="product-image-container">
+            <img src="${srcFixed}" alt="${nombre}" onerror="this.src='https://placehold.co/400x500?text=Error+Imagen';">
+        </div>
+        <div class="product-info">
+            <h3>${nombre}</h3>
+            <p class="price">$${precio}</p> 
+            <button onclick="agregarAlCarrito('${nombre.replace(/'/g, "\\'")}', ${precio})">Agregar a la bolsa</button>
+        </div>
+    </div>
+`;
             }).join('');
 
         } catch (err) {
