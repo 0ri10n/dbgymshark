@@ -7,7 +7,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const currentTableNameElem = document.getElementById('currentTableName');
     const token = localStorage.getItem('token');
     const estructuras = {
-    productos: ['nombre', 'precio', 'categoria', 'stock', 'descripcion'],
     usuarios: ['nombre', 'email', 'registro']
     // Si agregas más tablas a tu DB, solo pon el nombre aquí
 };
