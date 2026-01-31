@@ -16,55 +16,38 @@ document.addEventListener('DOMContentLoaded', async () => {
     let currentDB = null;
     let currentTable = null;
     const estructuras = {
-    productos: ['nombre', 'precio', 'categoria', 'stock', 'descripcion'],
-    usuarios: ['nombre', 'email', 'registro']
-    // Si agregas más tablas a tu DB, solo pon el nombre aquí
+
 };
 
     // Estilos mejorados para modal e inputs (inyectados para no depender de CSS externo)
     const modalStyle = document.createElement('style');
     modalStyle.textContent = `
-        #dynamicModal .modal-content {
-            background: #111826;
-            color: #e5e7eb;
-            width: min(540px, 90%);
-            margin: 8% auto;
-            padding: 24px;
-            border-radius: 14px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.35);
-        }
-        #dynamicModal .modal-field {
-            margin-bottom: 16px;
-        }
-        #dynamicModal .modal-label {
-            display: block;
-            margin-bottom: 6px;
-            font-size: 0.9rem;
-            color: #cbd5e1;
-            letter-spacing: 0.02em;
-        }
-        #dynamicModal .modal-input {
-            width: 100%;
-            padding: 10px 12px;
-            box-sizing: border-box;
-            border-radius: 10px;
-            border: 1px solid #243349;
-            background: #0f172a;
-            color: #e2e8f0;
-            transition: border-color 0.2s, box-shadow 0.2s;
-        }
-        #dynamicModal .modal-input:focus {
-            outline: none;
-            border-color: #38bdf8;
-            box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2);
-        }
-        #dynamicModal .modal-actions {
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-            margin-top: 10px;
-        }
-    `;
+    #dynamicModal .modal-content {
+        background: #111826;
+        color: #e5e7eb;
+        width: min(600px, 95%); /* Un poco más ancho */
+        margin: 2% auto; /* Menos margen arriba para ganar espacio */
+        padding: 24px;
+        border-radius: 14px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        max-height: 85vh; /* <--- IMPORTANTE: No deja que el modal crezca más que la pantalla */
+        overflow-y: auto;  /* <--- IMPORTANTE: Activa el scroll interno */
+        position: relative;
+    }
+    #dynamicModal .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 20px;
+        position: sticky; /* <--- Botones siempre visibles al final */
+        bottom: -24px;
+        background: #111826;
+        padding: 15px 0;
+        border-top: 1px solid #243349;
+    }
+    /* Estilo para que los campos no se vean tan amontonados */
+    .modal-field { margin-bottom: 12px; }
+`;
     document.head.appendChild(modalStyle);
 
     // Variables de estado para el Modal

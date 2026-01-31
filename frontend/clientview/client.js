@@ -36,15 +36,24 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // Renderizamos las tarjetas (He añadido la estructura básica para que se vean)
-            grid.innerHTML = listaProductos.map(p => `
+            // Dentro de loadProducts en client.js
+            grid.innerHTML = listaProductos.map(p => {
+                // Mapeo manual porque los nombres en la DB son en inglés (Modelo Producto.js)
+                const nombre = p.title || p.nombre || "Producto sin nombre"; 
+                const precio = p.price_range?.min || (p.variants?.[0]?.price) || 0;
+                const imagen = p.image_principal || p.imagen || 'https://via.placeholder.com/200';
+
+                return `
                 <div class="product-card">
-                    <img src="${p.imagen || 'https://via.placeholder.com/200'}" alt="${p.nombre}">
-                    <h3>${p.nombre}</h3>
-                    <p class="price">$${p.precio}</p>
-                    <p class="category">${p.categoria || ''}</p>
-                    <button onclick="agregarAlCarrito('${p.nombre}', ${p.precio})">Agregar a la bolsa</button>
+                <img src="${imagen}" alt="${nombre}" onerror="this.src='https://via.placeholder.com/200'">
+                <div class="product-info">
+                        <h3>${nombre}</h3>
+                        <p class="price">$${precio}</p>
+                        <button onclick="agregarAlCarrito('${nombre}', ${precio})">Agregar a la bolsa</button>
+                    </div>
                 </div>
-            `).join('');
+                `;
+            }).join('');
 
         } catch (err) {
             console.error("Error en fetch:", err);
