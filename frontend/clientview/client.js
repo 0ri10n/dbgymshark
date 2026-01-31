@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // RENDERIZADO DE TARJETAS
             grid.innerHTML = listaProductos.map(p => {
 // 1. LIMPIEZA DE IMAGEN
-const rawImages = p.IMAGE_SRC || p.image_src || p.image_principal || ""; 
+const rawImages = p.IMAGE_SRC || p.image_src || p.image_principal || p.imagen || "";
 let imagenFinal = "";
 
 if (Array.isArray(rawImages)) {
