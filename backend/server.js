@@ -10,40 +10,52 @@ dotenv.config({ path: path.resolve(__dirname, '../.env') });
 // 2. Conectar a la Base de Datos
 connectDB();
 
-// 3. Inicializar Express
 const app = express();
 
-// 4. Middlewares Globales
+// 3. Middlewares Globales
 app.use(cors());
 app.use(express.json());
 
-// --- NUEVO: Servir archivos estáticos ---
-// Esto permite que se carguen tus CSS, JS e imágenes de la carpeta frontend
+// --- SERVIR ARCHIVOS ESTÁTICOS ---
+// Usamos path.join para evitar errores de barras diagonales entre Windows y Linux
 app.use(express.static(path.join(__dirname, '../frontend')));
 
-// 5. Importar Rutas
+// 4. Importar Rutas
 const authRoutes = require('./routes/authRoutes'); 
 const productRoutes = require('./routes/productRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 
-// 6. Usar Rutas de la API
+// 5. Usar Rutas de la API
 app.use('/api/auth', authRoutes); 
 app.use('/api/productos', productRoutes);
 app.use('/api/admin', adminRoutes);
 
-// --- CORRECCIÓN: Rutas para el Frontend ---
-// Esta ruta sustituye a la "Ruta de prueba" antigua
+// --- RUTAS DEL FRONTEND ---
+
+// Ruta raíz: Envía al login
 app.get('/', (req, res) => {
-    res.sendFile(path.resolve(__dirname, '../frontend/login/login.html'));
+    res.sendFile(path.join(__dirname, '../frontend/login/login.html'));
 });
 
-// Ruta para entrar directo a admin (https://dbgymshark.onrender.com/admin)
+// Ruta de la tienda (Cliente)
+app.get('/store', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/clientview/client.html'));
+});
+
+// Ruta del Panel de Administración
 app.get('/admin', (req, res) => {
-    res.sendFile(path.resolve(__dirname, '../frontend/adminview/admin.html'));
+    res.sendFile(path.join(__dirname, '../frontend/adminview/admin.html'));
 });
 
-// 8. Arrancar el servidor
+// --- MANEJO DE ERRORES 404 (Opcional pero recomendado) ---
+// Si alguien busca una ruta que no existe, le mandamos al login o una página 404
+app.use((req, res) => {
+    res.status(404).send('Página no encontrada');
+});
+
+// 6. Arrancar el servidor
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
     console.log(`Servidor corriendo en el puerto ${PORT}`);
+    console.log(`Frontend servido desde: ${path.join(__dirname, '../frontend')}`);
 });
