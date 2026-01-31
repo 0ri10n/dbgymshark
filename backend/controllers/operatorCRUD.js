@@ -1,68 +1,113 @@
 const mongoose = require('mongoose');
 const Product = require('../models/Productos');
 
-// 1. OBTENER productos (Filtros para Tienda + Lista para Admin)
-exports.obtenerProductos = async (req, res) => { // Asegúrate que diga 'async'
+// 1. OBTENER productos (filtros optimizados por variantes)
+exports.obtenerProductos = async (req, res) => {
     try {
         const { talla, search, stock } = req.query;
-        let query = {};
+        const match = {};
 
-        if (search && search.trim() !== "") {
-            query.nombre = { $regex: search, $options: 'i' };
+        if (search && search.trim() !== '') {
+            match.$text = { $search: search.trim() };
         }
 
-        if (talla && talla.trim() !== "") {
-            query.tallas = talla;
+        if (talla && talla.trim() !== '') {
+            match.sizes_available = talla.trim();
         }
 
         if (stock === 'true') {
-            query.inventory_quantity = { $gt: 0 };
+            match.variants = { $elemMatch: { inventory_quantity: { $gt: 0 } } };
         } else if (stock === 'false') {
-            query.inventory_quantity = 0;
+            match.variants = { $not: { $elemMatch: { inventory_quantity: { $gt: 0 } } } };
         }
-        
-        const db = mongoose.connection.useDb('DB');
-        
-        // El await debe estar DENTRO de la función async
-        const productosBrutos = await db.collection('productos').find(query).toArray();
 
-        // Mapeo para compatibilidad con client.js
-        const productos = productosBrutos.map(p => ({
-            ...p,
-            nombre: p.nombre || p.title,
-            precio: p.precio || p.price,
-            imagenUrl: p.imagenUrl || p.image_src
-        }));
+        const pipeline = [
+            { $match: match },
+            {
+                $addFields: {
+                    total_stock: { $sum: '$variants.inventory_quantity' },
+                    activeVariant: talla && talla.trim()
+                        ? {
+                            $let: {
+                                vars: {
+                                    matches: {
+                                        $filter: {
+                                            input: '$variants',
+                                            as: 'v',
+                                            cond: { $eq: ['$$v.size', talla.trim()] }
+                                        }
+                                    }
+                                },
+                                in: {
+                                    $cond: [
+                                        { $gt: [{ $size: '$$matches' }, 0] },
+                                        { $arrayElemAt: ['$$matches', 0] },
+                                        { $arrayElemAt: ['$variants', 0] }
+                                    ]
+                                }
+                            }
+                        }
+                        : { $arrayElemAt: ['$variants', 0] }
+                }
+            },
+            { $project: { __v: 0 } }
+        ];
 
-        const totalDisponible = await db.collection('productos').countDocuments({ inventory_quantity: { $gt: 0 } });
-        const totalAgotado = await db.collection('productos').countDocuments({ inventory_quantity: 0 });
+        const productos = await Product.aggregate(pipeline);
 
-        res.json({
-            productos,
-            counts: { totalDisponible, totalAgotado }
-        });
+        const countsAgg = await Product.aggregate([
+            { $unwind: '$variants' },
+            {
+                $group: {
+                    _id: null,
+                    totalDisponible: {
+                        $sum: {
+                            $cond: [
+                                { $gt: ['$variants.inventory_quantity', 0] },
+                                '$variants.inventory_quantity',
+                                0
+                            ]
+                        }
+                    },
+                    totalAgotado: {
+                        $sum: {
+                            $cond: [
+                                { $lte: ['$variants.inventory_quantity', 0] },
+                                '$variants.inventory_quantity',
+                                0
+                            ]
+                        }
+                    }
+                }
+            }
+        ]);
+
+        const counts = {
+            totalDisponible: countsAgg[0]?.totalDisponible || 0,
+            totalAgotado: Math.abs(countsAgg[0]?.totalAgotado || 0)
+        };
+
+        res.json({ productos, counts });
     } catch (error) {
-        console.error("Error en obtenerProductos:", error);
+        console.error('Error en obtenerProductos:', error);
         res.status(500).json({ msg: 'Hubo un error al obtener los productos' });
     }
 };
 
-// 2. CREAR un nuevo producto (CREATE)
+// 2. CREAR un nuevo producto
 exports.crearProducto = async (req, res) => {
     try {
-        const db = mongoose.connection.useDb('DB');
-        const resultado = await db.collection('productos').insertOne(req.body);
-        res.status(201).json({ msg: 'Producto creado', id: resultado.insertedId });
+        const producto = await Product.create(req.body);
+        res.status(201).json({ msg: 'Producto creado', id: producto._id });
     } catch (error) {
         res.status(400).json({ msg: 'No se pudo crear el producto', error });
     }
 };
 
-// 3. BUSCAR producto por su Handle (URL)
+// 3. BUSCAR producto por handle
 exports.obtenerProductoPorHandle = async (req, res) => {
     try {
-        const db = mongoose.connection.useDb('DB');
-        const producto = await db.collection('productos').findOne({ handle: req.params.handle });
+        const producto = await Product.findOne({ handle: req.params.handle });
         if (!producto) return res.status(404).json({ msg: 'Producto no encontrado' });
         res.json(producto);
     } catch (error) {
@@ -70,18 +115,13 @@ exports.obtenerProductoPorHandle = async (req, res) => {
     }
 };
 
-// 4. ACTUALIZAR un producto (UPDATE)
+// 4. ACTUALIZAR producto
 exports.actualizarProducto = async (req, res) => {
     try {
-        const { ObjectId } = require('mongoose').Types;
-        const db = mongoose.connection.useDb('DB');
-        const datosActualizados = req.body;
-        delete datosActualizados._id; // Seguridad
-
-        const producto = await db.collection('productos').findOneAndUpdate(
-            { _id: new ObjectId(req.params.id) }, 
-            { $set: datosActualizados }, 
-            { returnDocument: 'after' }
+        const producto = await Product.findByIdAndUpdate(
+            req.params.id,
+            req.body,
+            { new: true, runValidators: true }
         );
         res.json(producto);
     } catch (error) {
@@ -89,12 +129,10 @@ exports.actualizarProducto = async (req, res) => {
     }
 };
 
-// 5. ELIMINAR un producto (DELETE)
+// 5. ELIMINAR producto
 exports.eliminarProducto = async (req, res) => {
     try {
-        const { ObjectId } = require('mongoose').Types;
-        const db = mongoose.connection.useDb('DB');
-        await db.collection('productos').deleteOne({ _id: new ObjectId(req.params.id) });
+        await Product.findByIdAndDelete(req.params.id);
         res.json({ msg: 'Producto eliminado correctamente' });
     } catch (error) {
         res.status(500).json({ msg: 'Error al eliminar' });

@@ -38,6 +38,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         #dynamicModal .modal-input {
             width: 100%;
             padding: 10px 12px;
+            box-sizing: border-box;
             border-radius: 10px;
             border: 1px solid #243349;
             background: #0f172a;
@@ -227,7 +228,7 @@ async function loadTableData(dbName, tableName) {
         const dbName = dbSelector.value;
         const tableName = currentTableNameElem.textContent.trim();
         if (!dbName || tableName === "NombreTabla1") return alert("Selecciona una tabla");
-        abrirModal("➕ Nuevo Registro", false);
+        abrirModal("Nuevo Registro", false);
     };
 
     // EDITAR
@@ -246,7 +247,7 @@ async function loadTableData(dbName, tableName) {
         });
 
         currentEditId = seleccionado.value;
-        abrirModal("✏️ Editar Registro", true, datosPrevios);
+        abrirModal("Editar Registro", true, datosPrevios);
     };
 
     // ELIMINAR
