@@ -6,9 +6,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     const tableHead = document.getElementById('adminTableHead');
     const currentTableNameElem = document.getElementById('currentTableName');
     const token = localStorage.getItem('token');
+    const searchInput = document.getElementById('searchInput'); // Nuevo selector
+    let datosGlobales = []; // Aquí guardaremos la copia para el filtro
     const estructuras = {
-    usuarios: ['nombre', 'email', 'registro']
-    // Si agregas más tablas a tu DB, solo pon el nombre aquí
+    productos: ['title', 'product_type', 'price', 'inventory_quantity', 'variant_title'], 
+    usuarios: ['nombre', 'email', 'registro'],
+    ventas: ['_id', 'total', 'estado', 'createdAt']
 };
 
     // Variables de estado para el Modal
@@ -59,6 +62,8 @@ async function loadTableData(dbName, tableName) {
             headers: { 'x-auth-token': localStorage.getItem('token') }
         });
         const documentos = await respuesta.json();
+
+        datosGlobales = documentos;
 
         let todasLasLlaves = new Set();
 
@@ -259,6 +264,48 @@ async function loadTableData(dbName, tableName) {
             }
         } catch (error) { alert("Error en el servidor"); }
     };
+    // --- LÓGICA DEL FILTRO (BUSCADOR) ---
+    if(searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            const texto = e.target.value.toLowerCase();
+            
+            // 1. Filtramos sobre la copia global que guardamos arriba
+            const filtrados = datosGlobales.filter(item => {
+                return Object.values(item).some(val => 
+                    String(val).toLowerCase().includes(texto)
+                );
+            });
 
+            // 2. Volvemos a pintar la tabla manualmente con los resultados
+            const tableName = currentTableNameElem.textContent.toLowerCase();
+            // Detectamos qué columnas usar (si es productos, usuarios, etc)
+            let columnas = estructuras[tableName] || ['nombre']; 
+            
+            // Generamos el HTML de las filas filtradas
+            if (filtrados.length > 0) {
+                tableBody.innerHTML = filtrados.map(doc => `
+                    <tr>
+                        <td><input type="checkbox" value="${doc._id}"></td>
+                        ${columnas.map(col => {
+                            // Mapeo manual para campos que cambian de nombre en Gymshark
+                            let val = doc[col];
+                            if(val === undefined && col === 'stock') val = doc['inventory_quantity'];
+                            if(col === 'price') val = '$' + val;
+                            
+                            // Si el valor no existe, ponemos vacío
+                            let displayVal = val !== undefined ? val : '';
+                            
+                            // Si es un ID lo cortamos
+                            if (col === '_id') displayVal = '<code>' + String(displayVal).substring(0, 8) + '...</code>';
+                            
+                            return '<td>' + displayVal + '</td>';
+                        }).join('')}
+                    </tr>
+                `).join('');
+            } else {
+                tableBody.innerHTML = '<tr><td colspan="10" style="text-align:center;">No se encontraron coincidencias 🔍</td></tr>';
+            }
+        });
+    }
     cargarDBs();
 });

@@ -42,11 +42,18 @@
         <main class="main-content">
             <h1 class="main-title" id="currentTableName">NombreTabla1</h1>
             
-            <div class="top-actions">
-                <button class="btn-primary">AGREGAR</button>
-                <button class="btn-primary">EDITAR</button>
-                <button class="btn-primary">ELIMINAR</button>
-            </div>
+           <div class="top-actions" style="display: flex; justify-content: space-between; align-items: center;">
+    <div class="buttons-group">
+        <button class="btn-primary">AGREGAR</button>
+        <button class="btn-primary">EDITAR</button>
+        <button class="btn-primary">ELIMINAR</button>
+    </div>
+    
+    <div class="search-container">
+        <input type="text" id="searchInput" placeholder="🔍 Buscar..." 
+               style="padding: 10px; border-radius: 5px; border: 1px solid #444; background: #222; color: white; width: 250px;">
+        </div>
+    </div>
 
             <div class="table-section">
                 <div class="table-header-tools">
