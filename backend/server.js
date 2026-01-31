@@ -15,15 +15,32 @@ const app = express();
 
 // 4. Middlewares Globales (IMPORTANTE: Primero estos)
 app.use(cors());
-app.use(express.json()); 
+app.use(express.json());
+
+// 1. Servir archivos estáticos (CSS, JS, Imágenes)
+app.use(express.static(path.join(__dirname, '../frontend')));
+
+// 2. Ruta para el Login (puedes elegir cuál sea tu página principal)
+app.get('/', (req, res) => {
+    res.sendFile(path.resolve(__dirname, '../frontend', 'login', 'login.html'));
+});
+
+// 3. Rutas manuales para que funcionen las otras vistas en el navegador
+app.get('/registro', (req, res) => {
+    res.sendFile(path.resolve(__dirname, '../frontend', 'registro', 'registro.html'));
+});
+
+app.get('/admin', (req, res) => {
+    res.sendFile(path.resolve(__dirname, '../frontend', 'adminview', 'admin.html'));
+});
 
 // 5. Importar Rutas
-const authRoutes = require('./routes/authRoutes'); 
+const authRoutes = require('./routes/authRoutes');
 const productRoutes = require('./routes/productRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 
 // 6. Usar Rutas
-app.use('/api/auth', authRoutes); 
+app.use('/api/auth', authRoutes);
 app.use('/api/productos', productRoutes);
 app.use('/api/admin', adminRoutes);
 

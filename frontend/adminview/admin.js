@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     async function cargarDBs() {
         try {
-            const respuesta = await fetch('http://localhost:4000/api/admin/dbs', {
+            const respuesta = await fetch('https://dbgymshark.onrender.com/api/admin/dbs', {
                 headers: { 'x-auth-token': token }
             });
 
@@ -56,7 +56,7 @@ async function loadTableData(dbName, tableName) {
     tableBody.innerHTML = '<tr><td colspan="10" style="text-align:center;">Cargando...</td></tr>';
 
     try {
-        const respuesta = await fetch(`http://localhost:4000/api/admin/datos/${dbName}/${tableName}`, {
+        const respuesta = await fetch(`https://dbgymshark.onrender.com/api/admin/datos/${dbName}/${tableName}`, {
             headers: { 'x-auth-token': localStorage.getItem('token') }
         });
         const documentos = await respuesta.json();
@@ -130,7 +130,7 @@ async function loadTableData(dbName, tableName) {
         tablesNav.innerHTML = '';
         if (!selectedDB) return;
         try {
-            const respuesta = await fetch(`http://localhost:4000/api/admin/tablas/${selectedDB}`, {
+            const respuesta = await fetch(`https://dbgymshark.onrender.com/api/admin/tablas/${selectedDB}`, {
                 headers: { 'x-auth-token': token }
             });
             const tablas = await respuesta.json();
@@ -216,7 +216,7 @@ async function loadTableData(dbName, tableName) {
         if (confirm(`¿Eliminar ${seleccionados.length} elementos?`)) {
             try {
                 for (let id of seleccionados) {
-                    await fetch(`http://localhost:4000/api/admin/eliminar/${dbName}/${tableName}/${id}`, {
+                    await fetch(`https://dbgymshark.onrender.com/api/admin/eliminar/${dbName}/${tableName}/${id}`, {
                         method: 'DELETE',
                         headers: { 'x-auth-token': token }
                     });
@@ -241,8 +241,8 @@ async function loadTableData(dbName, tableName) {
         });
 
         const url = editMode 
-            ? `http://localhost:4000/api/admin/editar/${dbName}/${tableName}/${currentEditId}`
-            : `http://localhost:4000/api/admin/crear/${dbName}/${tableName}`;
+            ? `https://dbgymshark.onrender.com/api/admin/editar/${dbName}/${tableName}/${currentEditId}`
+            : `https://dbgymshark.onrender.com/api/admin/crear/${dbName}/${tableName}`;
         
         const metodo = editMode ? 'PUT' : 'POST';
 

@@ -20,7 +20,7 @@ exports.obtenerProductos = async (req, res) => { // Asegúrate que diga 'async'
         } else if (stock === 'false') {
             query.inventory_quantity = 0;
         }
-
+        
         const db = mongoose.connection.useDb('DB');
         
         // El await debe estar DENTRO de la función async
