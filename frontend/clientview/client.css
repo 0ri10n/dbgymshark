@@ -226,21 +226,3 @@ body {
     width: 100%;
     color: #333;
 }
-
-.cerrar-sesion-btn {
-    background: transparent;
-    color: var(--muted-text);
-    border: 1px solid var(--border-color);
-    padding: 5px 12px;
-    font-size: 11px;
-    text-transform: uppercase;
-    cursor: pointer;
-    transition: 0.3s;
-    margin-left: 10px;
-}
-
-.cerrar-sesion-btn:hover {
-    background: white;
-    color: black;
-    border-color: white;
-}

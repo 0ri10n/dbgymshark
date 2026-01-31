@@ -31,16 +31,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // RENDERIZADO DE TARJETAS
             grid.innerHTML = listaProductos.map(p => {
-// 1. LIMPIEZA DE IMAGEN (Construcción de URL de Shopify)
+// 1. LIMPIEZA DE IMAGEN (Ajuste de Prefijo CDN)
 const rawImages = p.IMAGE_SRC || p.image_principal || ""; 
 let imagenFinal = rawImages.split(',')[0].trim();
 
 if (!imagenFinal) {
     imagenFinal = 'https://placehold.co/400x500?text=Sin+Imagen';
 } 
-// Si la imagen es solo un nombre de archivo, le ponemos el prefijo de Shopify
 else if (!imagenFinal.startsWith('http') && !imagenFinal.startsWith('//')) {
-    imagenFinal = 'https://cdn.shopify.com/s/files/1/0098/8822/files/' + imagenFinal;
+    // Probamos con el prefijo estándar de Shopify CDN para archivos subidos
+    imagenFinal = `https://cdn.shopify.com/s/files/1/0098/8822/files/${imagenFinal}`;
 } 
 else if (imagenFinal.startsWith('//')) {
     imagenFinal = 'https:' + imagenFinal;
@@ -89,13 +89,16 @@ else if (imagenFinal.startsWith('//')) {
         searchInput.oninput = (e) => loadProducts(e.target.value, e.target.value.trim() !== "");
     }
     // Abrir el carrito al hacer clic en la bolsita
-    if (btnAbrirBolsa) {
-        btnAbrirBolsa.addEventListener('click', () => {
-        // Aquí va tu lógica para mostrar el modal del carrito
-        // Por ahora, un ejemplo rápido:
-        alert("Tu bolsa tiene " + carrito.length + " productos.");
-        // Si tienes un modal con ID 'cartModal', usa: 
-        // document.getElementById('cartModal').classList.add('active');
+    // Abrir el carrito al hacer clic en la bolsita (CORREGIDO)
+if (btnAbrirBolsa) {
+    btnAbrirBolsa.addEventListener('click', () => {
+        if (carrito.length === 0) {
+            alert("Tu bolsa está vacía.");
+        } else {
+            const detalle = carrito.map((p, index) => `${index + 1}. ${p.nombre} - $${p.precio}`).join('\n');
+            const total = carrito.reduce((sum, p) => sum + p.precio, 0);
+            alert(`Artículos en tu bolsa:\n\n${detalle}\n\nTotal a pagar: $${total.toFixed(2)}`);
+        }
     });
 }
     // Carga inicial
