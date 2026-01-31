@@ -6,11 +6,57 @@ document.addEventListener('DOMContentLoaded', async () => {
     const tableHead = document.getElementById('adminTableHead');
     const currentTableNameElem = document.getElementById('currentTableName');
     const token = localStorage.getItem('token');
+    const logoutBtn = document.getElementById('logoutBtn');
     const estructuras = {
     productos: ['nombre', 'precio', 'categoria', 'stock', 'descripcion'],
     usuarios: ['nombre', 'email', 'registro']
     // Si agregas más tablas a tu DB, solo pon el nombre aquí
 };
+
+    // Estilos mejorados para modal e inputs (inyectados para no depender de CSS externo)
+    const modalStyle = document.createElement('style');
+    modalStyle.textContent = `
+        #dynamicModal .modal-content {
+            background: #111826;
+            color: #e5e7eb;
+            width: min(540px, 90%);
+            margin: 8% auto;
+            padding: 24px;
+            border-radius: 14px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+        }
+        #dynamicModal .modal-field {
+            margin-bottom: 16px;
+        }
+        #dynamicModal .modal-label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 0.9rem;
+            color: #cbd5e1;
+            letter-spacing: 0.02em;
+        }
+        #dynamicModal .modal-input {
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1px solid #243349;
+            background: #0f172a;
+            color: #e2e8f0;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        #dynamicModal .modal-input:focus {
+            outline: none;
+            border-color: #38bdf8;
+            box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2);
+        }
+        #dynamicModal .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 10px;
+        }
+    `;
+    document.head.appendChild(modalStyle);
 
     // Variables de estado para el Modal
     let editMode = false;
@@ -166,11 +212,9 @@ async function loadTableData(dbName, tableName) {
         headers.forEach(header => {
             const valor = datosPrevios ? (datosPrevios[header.toLowerCase()] || '') : '';
             fieldsContainer.innerHTML += `
-                <div style="margin-bottom:15px;">
-                    <label style="display:block; color:#aaa; font-size:0.8rem;">${header.toUpperCase()}</label>
-                    <input type="text" id="field_${header}" class="form-control" 
-                           value="${valor}"
-                           style="width:100%; background:#222; color:white; border:1px solid #444; padding:8px;">
+                <div class="modal-field">
+                    <label class="modal-label">${header.toUpperCase()}</label>
+                    <input type="text" id="field_${header}" class="modal-input" value="${valor}">
                 </div>`;
         });
         document.getElementById('dynamicModal').style.display = 'block';
@@ -260,6 +304,14 @@ async function loadTableData(dbName, tableName) {
             }
         } catch (error) { alert("Error en el servidor"); }
     };
+
+    // LOGOUT
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', () => {
+            localStorage.removeItem('token');
+            window.location.href = '../login/login.html';
+        });
+    }
 
     cargarDBs();
 });

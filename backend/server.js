@@ -55,8 +55,6 @@ app.get('/client', (req, res) => {
     res.sendFile(path.resolve(__dirname, '../frontend/clientview/client.html'));
 });
 
-// ---------------------------------------------------------
-
 // 8. Arrancar el servidor
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {

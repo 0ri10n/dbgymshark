@@ -31,7 +31,7 @@ exports.registrarUsuario = async (req, res) => {
             { expiresIn: '1h' }, 
             (error, token) => {
                 if (error) throw error;
-                res.json({ token }); 
+                res.json({ token, role: usuario.rol });
             }
         );
 
@@ -68,7 +68,7 @@ exports.iniciarSesion = async (req, res) => {
             { expiresIn: '1h' }, 
             (error, token) => {
                 if (error) throw error;
-                res.json({ token });
+                res.json({ token, role: usuario.rol });
             }
         );
 

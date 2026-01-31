@@ -22,14 +22,21 @@ document.getElementById('loginForm').addEventListener('submit', async function (
         if (respuesta.ok) {
             localStorage.setItem('token', data.token);
 
-            window.location.href = '../adminview/admin.html';
+            if (data.role === 'admin') {
+                window.location.href = '../adminview/admin.html';
+            } else if (data.role === 'cliente') {
+                window.location.href = '../clientview/client.html';
+            } else {
+                alert('Rol de usuario no reconocido. Contacta al administrador.');
+                localStorage.removeItem('token');
+            }
         } else {
-            alert(data.msg || 'Error al iniciar sesi√≥n');
+            alert(data.msg || 'Error al iniciar sesiÛn');
         }
 
     } catch (error) {
         console.error('Error:', error);
-        alert('No se pudo conectar con el servidor. Revisa si el backend est√° corriendo.');
+        alert('No se pudo conectar con el servidor. Revisa si el backend est· corriendo.');
     } finally {
         btn.innerText = textoOriginal;
     }
