@@ -31,14 +31,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // RENDERIZADO DE TARJETAS
             grid.innerHTML = listaProductos.map(p => {
-                // 1. LIMPIEZA DE IMAGEN
-                const rawImages = p.IMAGE_SRC || p.image_principal || ""; 
-                let imagenFinal = rawImages.split(',')[0].trim();
-                
-                // Corregir protocolos para evitar Mixed Content
-                if (imagenFinal.startsWith('//')) imagenFinal = 'https:' + imagenFinal;
-                if (!imagenFinal.startsWith('http')) imagenFinal = 'https://placehold.co/400x500?text=Sin+Imagen';
+                // 1. LIMPIEZA DE IMAGEN (Optimizado para Shopify)
+const rawImages = p.IMAGE_SRC || p.image_principal || ""; 
+let imagenFinal = rawImages.split(',')[0].trim();
 
+// Si la URL está vacía, ponemos el placeholder directamente
+if (!imagenFinal) {
+    imagenFinal = 'https://placehold.co/400x500?text=Sin+Imagen';
+} 
+// Si la URL NO empieza con http pero es un nombre de archivo de Shopify
+else if (!imagenFinal.startsWith('http') && !imagenFinal.startsWith('//')) {
+    // Aquí es donde sucede la magia: le pegamos el dominio de Shopify
+    imagenFinal = 'https://cdn.shopify.com/s/files/1/0098/8822/files/' + imagenFinal;
+} 
+// Si empieza con // (protocolo relativo)
+else if (imagenFinal.startsWith('//')) {
+    imagenFinal = 'https:' + imagenFinal;
+}
                 // 2. DATOS (Usando MAYÚSCULAS según tu DB)
                 const nombre = p.TITLE || p.title || "Producto Gymshark";
                 const precio = p.PRICE || p.price || 0; 
