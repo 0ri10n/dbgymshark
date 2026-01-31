@@ -32,44 +32,30 @@ document.addEventListener('DOMContentLoaded', () => {
         if (cartCount) cartCount.innerText = carrito.length;
     };
 
-    async function loadProducts(query = '', ignoreSize = false) {
-        grid.innerHTML = '<div style="color:white; padding:20px;">Cargando catálogo...</div>';
+async function loadProducts(query = '', ignoreSize = false) {
+    grid.innerHTML = '<div style="color:white; padding:20px;">Cargando catálogo...</div>';
+    const tallaParaEnviar = ignoreSize ? '' : selectedSize;
 
-        const tallaParaEnviar = ignoreSize ? '' : selectedSize;
+    try {
+        const res = await fetch(`/api/productos?search=${query}&talla=${tallaParaEnviar}&stock=${filterStock}`);
+        const data = await res.json();
 
-        try {
-            const res = await fetch(`/api/productos?search=${query}&talla=${tallaParaEnviar}&stock=${filterStock}`);
-            const data = await res.json();
+        const listaProductos = data.productos || data; 
 
-            if (countAvailable) countAvailable.innerText = data.counts.totalDisponible;
-            if (countOutOfStock) countOutOfStock.innerText = data.counts.totalAgotado;
-
-            if (!data.productos || data.productos.length === 0) {
-                grid.innerHTML = '<div style="color:white; padding:20px;">No se encontraron productos.</div>';
-                return;
-            }
-
-            grid.innerHTML = data.productos.map(p => `
-                <div class="product-card">
-                    <div class="wishlist-btn" onclick="toggleFav(this)">
-                        <i class="far fa-heart"></i>
-                    </div>
-                    <div class="img-container">
-                        <img src="${p.imagenUrl || p.image || p.img}" alt="${p.nombre || p.name}">
-                    </div>
-                    <div class="product-info">
-                        <div class="product-name">${p.nombre || p.name}</div>
-                        <div class="product-price">$ ${p.precio || p.price}</div>
-                        <button class="add-btn" onclick="agregarAlCarrito('${p.nombre || p.name}', ${p.precio || p.price})">
-                            Añadir a la bolsa
-                        </button>
-                    </div>
-                </div>
-            `).join('');
-        } catch (err) {
-            grid.innerHTML = '<div style="color:red; padding:20px;">Error al conectar con el servidor.</div>';
+        if (!Array.isArray(listaProductos) || listaProductos.length === 0) {
+            grid.innerHTML = '<div style="color:white; padding:20px;">No se encontraron productos.</div>';
+            return;
         }
+
+        grid.innerHTML = listaProductos.map(p => `
+            <div class="product-card">
+                </div>
+        `).join('');
+    } catch (err) {
+        console.error("Error en fetch:", err);
+        grid.innerHTML = '<div style="color:red; padding:20px;">Error al conectar con el servidor.</div>';
     }
+}
 
     if (checkAvailable) {
         checkAvailable.onclick = () => {
