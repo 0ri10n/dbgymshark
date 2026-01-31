@@ -31,20 +31,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // RENDERIZADO DE TARJETAS
             grid.innerHTML = listaProductos.map(p => {
-                // 1. LIMPIEZA DE IMAGEN (Optimizado para Shopify)
+// 1. LIMPIEZA DE IMAGEN (Construcción de URL de Shopify)
 const rawImages = p.IMAGE_SRC || p.image_principal || ""; 
 let imagenFinal = rawImages.split(',')[0].trim();
 
-// Si la URL está vacía, ponemos el placeholder directamente
 if (!imagenFinal) {
     imagenFinal = 'https://placehold.co/400x500?text=Sin+Imagen';
 } 
-// Si la URL NO empieza con http pero es un nombre de archivo de Shopify
+// Si la imagen es solo un nombre de archivo, le ponemos el prefijo de Shopify
 else if (!imagenFinal.startsWith('http') && !imagenFinal.startsWith('//')) {
-    // Aquí es donde sucede la magia: le pegamos el dominio de Shopify
     imagenFinal = 'https://cdn.shopify.com/s/files/1/0098/8822/files/' + imagenFinal;
 } 
-// Si empieza con // (protocolo relativo)
 else if (imagenFinal.startsWith('//')) {
     imagenFinal = 'https:' + imagenFinal;
 }
@@ -91,8 +88,19 @@ else if (imagenFinal.startsWith('//')) {
     if (searchInput) {
         searchInput.oninput = (e) => loadProducts(e.target.value, e.target.value.trim() !== "");
     }
-
+    // Abrir el carrito al hacer clic en la bolsita
+    if (btnAbrirBolsa) {
+        btnAbrirBolsa.addEventListener('click', () => {
+        // Aquí va tu lógica para mostrar el modal del carrito
+        // Por ahora, un ejemplo rápido:
+        alert("Tu bolsa tiene " + carrito.length + " productos.");
+        // Si tienes un modal con ID 'cartModal', usa: 
+        // document.getElementById('cartModal').classList.add('active');
+    });
+}
     // Carga inicial
     loadProducts();
     actualizarContador();
+
+
 });
