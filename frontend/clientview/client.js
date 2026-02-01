@@ -177,15 +177,41 @@ else {
     const orderIdDisplay = document.getElementById('generatedOrderID');
     const closeSuccessBtn = document.getElementById('closeSuccessBtn');
     
-    if (checkoutBtn) {
-        checkoutBtn.addEventListener('click', () => {
-            const randomID = Math.floor(Math.random() * 900000000000) + 100000000000;
-            orderIdDisplay.textContent = randomID;
-            cartModal.classList.remove('active');
-            orderModal.style.display = 'flex';
-            localStorage.removeItem('makia_cart'); 
-        });
-    }
+if (checkoutBtn) {
+    checkoutBtn.addEventListener('click', async () => {
+        if (carrito.length === 0) return alert("Tu bolsa está vacía");
+
+        const randomID = Math.floor(Math.random() * 900000000000) + 100000000000;
+        const totalCompra = carrito.reduce((sum, p) => sum + p.precio, 0);
+
+        try {
+            const res = await fetch(`${API_BASE_URL}/ventas`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id_venta: randomID,
+                    productos: carrito,
+                    total: totalCompra
+                })
+            });
+
+            const data = await res.json(); // Para leer mensajes de error del backend
+         
+            if (res.ok) {
+                orderIdDisplay.textContent = randomID;
+                cartModal.classList.remove('active');
+                orderModal.style.display = 'flex';
+                localStorage.removeItem('makia_cart');
+                carrito = [];
+                renderizarCarrito();
+            } else {
+                alert("Error: " + (data.message || "No se pudo procesar la compra"));
+            }
+        } catch (err) {
+            alert("Error al procesar la compra");
+        }
+    });
+}
 
 // Cerrar el modal de éxito
 closeSuccessBtn.addEventListener('click', () => {
