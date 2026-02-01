@@ -195,7 +195,7 @@ exports.registrarVenta = async (req, res) => {
   const { id_venta, productos, total } = req.body;
 
   try {
-    const db = mongoose.connection.client.db(DEFAULT_DB);
+    const db = mongoose.connection.client.db('DB'); 
     const ventasCollection = db.collection('ventas');
     const productosCollection = getCollection();
 
