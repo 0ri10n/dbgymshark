@@ -189,3 +189,50 @@ exports.eliminarProducto = async (req, res) => {
     res.status(500).json({ msg: 'Error al eliminar' });
   }
 };
+
+// 6. REGISTRAR VENTA Y DESCONTAR STOCK
+exports.registrarVenta = async (req, res) => {
+  const { id_venta, productos, total } = req.body;
+
+  try {
+    const db = mongoose.connection.client.db(DEFAULT_DB);
+    const ventasCollection = db.collection('ventas'); // Nombre de tu tabla de ventas
+    const productosCollection = getCollection();
+
+    // 1. Crear el registro de la venta
+    const nuevaVenta = {
+      id_compra: id_venta,
+      total: total,
+      detalle: productos.map(p => p.nombre).join(', '),
+      fecha: new Date()
+    };
+    
+    await ventasCollection.insertOne(nuevaVenta);
+
+    // 2. Descontar stock de la tabla de productos
+    const promesasActualizacion = productos.map(p => {
+      return productosCollection.updateOne(
+        { 
+          // Buscamos por título o nombre según tu estructura de DB
+          $or: [{ title: p.nombre }, { nombre: p.nombre }], 
+          // Solo descontamos si hay stock disponible
+          inventory_quantity: { $gt: 0 } 
+        },
+        { 
+          $inc: { inventory_quantity: -1 } 
+        }
+      );
+    });
+
+    await Promise.all(promesasActualizacion);
+
+    res.status(200).json({ 
+      msg: 'Venta registrada con éxito y stock actualizado', 
+      id_compra: id_venta 
+    });
+
+  } catch (error) {
+    console.error('Error al registrar la venta:', error);
+    res.status(500).json({ msg: 'Error al procesar la venta en el servidor', error });
+  }
+};
