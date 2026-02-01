@@ -455,3 +455,43 @@ body {
     cursor: pointer;
     text-transform: uppercase;
 }
+
+/* --- ESTILOS PARA EL SELECTOR DE TALLAS --- */
+.size-selection-wrapper {
+    margin: 10px 0;
+    text-align: left;
+}
+
+.size-selection-wrapper label {
+    display: block;
+    margin-bottom: 5px;
+    letter-spacing: 1px;
+    font-weight: 600;
+}
+
+.size-selector {
+    width: 100%;
+    padding: 10px;
+    background: #000; 
+    color: #fff;     
+    border: 1px solid #333;
+    font-family: 'Poppins', sans-serif;
+    font-size: 13px;
+    cursor: pointer;
+    transition: border-color 0.3s ease;
+    outline: none;
+    border-radius: 2px;
+}
+
+.size-selector:hover, .size-selector:focus {
+    border-color: #ff4b4b; 
+}
+
+.size-selector option {
+    background: #111;
+    color: #fff;
+}
+
+.size-selector option:disabled {
+    color: #444; 
+}
