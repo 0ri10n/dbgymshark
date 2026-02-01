@@ -84,6 +84,10 @@ else {
         }
     }
 
+    if (searchInput) {
+        searchInput.oninput = (e) => loadProducts(e.target.value, e.target.value.trim() !== "");
+    }
+
 // --- LÓGICA DE CARRITO MEJORADA ---
     const cartModal = document.getElementById('cartModal');
     const closeCart = document.getElementById('closeCart');
