@@ -16,7 +16,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     let currentDB = null;
     let currentTable = null;
     const estructuras = {
-
+    productos: ['title', 'price', 'image_src', 'stock', 'categoria'],
+    ventas: ['id_compra', 'total', 'fecha', 'detalle_productos'],
+    usuarios: ['nombre', 'email', 'rol']
 };
 
     // Estilos mejorados para modal e inputs (inyectados para no depender de CSS externo)
@@ -343,4 +345,9 @@ async function loadTableData(dbName, tableName, page = 1) {
     }
 
     cargarDBs();
+
+    async function cargarVentas() {
+    const res = await fetch(`${API_BASE_URL}/ventas`);
+    const ventas = await res.json();
+}
 });
