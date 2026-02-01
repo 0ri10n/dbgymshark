@@ -149,31 +149,47 @@ else {
     const userDropdown = document.getElementById('userDropdown');
     const logoutBtn = document.getElementById('logoutBtn');
 
-    // 1. Mostrar/Ocultar el menú al hacer clic en el icono
     if (userIcon && userDropdown) {
         userIcon.addEventListener('click', (e) => {
-            e.stopPropagation(); // Evita que el clic se propague al documento
+            e.stopPropagation(); 
             userDropdown.classList.toggle('active');
         });
 
-        // Cerrar el menú si se hace clic fuera de él
         document.addEventListener('click', () => {
             userDropdown.classList.remove('active');
         });
     }
 
-    // 2. Funcionalidad del botón Cerrar Sesión
     if (logoutBtn) {
         logoutBtn.addEventListener('click', () => {
-            // Eliminar datos de sesión
             localStorage.removeItem('token');
             localStorage.removeItem('user');
             
             // Opcional: Limpiar carrito al cerrar sesion, por ver
             // localStorage.removeItem('makia_cart');
-            
-            // Redirigir (cambia 'index.html' por tu página de inicio/login)
             window.location.href = '../login/login.html'; 
         });
     }
+                          
+    // --- LÓGICA DE FINALIZAR COMPRA ---
+    const checkoutBtn = document.querySelector('.checkout-btn');
+    const orderModal = document.getElementById('orderSuccessModal');
+    const orderIdDisplay = document.getElementById('generatedOrderID');
+    const closeSuccessBtn = document.getElementById('closeSuccessBtn');
+    
+    if (checkoutBtn) {
+        checkoutBtn.addEventListener('click', () => {
+            const randomID = Math.floor(Math.random() * 900000000000) + 100000000000;
+            orderIdDisplay.textContent = randomID;
+            cartModal.classList.remove('active');
+            orderModal.style.display = 'flex';
+            localStorage.removeItem('makia_cart'); 
+        });
+    }
+
+// Cerrar el modal de éxito
+closeSuccessBtn.addEventListener('click', () => {
+    orderModal.style.display = 'none';
+    location.reload(); 
+});
 });
