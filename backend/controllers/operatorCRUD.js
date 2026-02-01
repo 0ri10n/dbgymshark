@@ -196,10 +196,9 @@ exports.registrarVenta = async (req, res) => {
 
   try {
     const db = mongoose.connection.client.db(DEFAULT_DB);
-    const ventasCollection = db.collection('ventas'); // Nombre de tu tabla de ventas
+    const ventasCollection = db.collection('ventas');
     const productosCollection = getCollection();
 
-    // 1. Crear el registro de la venta
     const nuevaVenta = {
       id_compra: id_venta,
       total: total,
@@ -209,30 +208,31 @@ exports.registrarVenta = async (req, res) => {
     
     await ventasCollection.insertOne(nuevaVenta);
 
-    // 2. Descontar stock de la tabla de productos
+    // 3. Descontar stock
     const promesasActualizacion = productos.map(p => {
       return productosCollection.updateOne(
         { 
-          // Buscamos por título o nombre según tu estructura de DB
           $or: [{ title: p.nombre }, { nombre: p.nombre }], 
-          // Solo descontamos si hay stock disponible
           inventory_quantity: { $gt: 0 } 
         },
-        { 
-          $inc: { inventory_quantity: -1 } 
-        }
+        { $inc: { inventory_quantity: -1 } }
       );
     });
 
-    await Promise.all(promesasActualizacion);
+    const resultados = await Promise.all(promesasActualizacion);
+    
+    const ventasFallidas = resultados.filter(r => r.modifiedCount === 0);
+    
+    if (ventasFallidas.length > 0) {
+        console.warn(`Atención: ${ventasFallidas.length} productos no pudieron descontar stock.`);
+    }
 
     res.status(200).json({ 
-      msg: 'Venta registrada con éxito y stock actualizado', 
+      msg: 'Venta procesada', 
       id_compra: id_venta 
     });
 
   } catch (error) {
-    console.error('Error al registrar la venta:', error);
-    res.status(500).json({ msg: 'Error al procesar la venta en el servidor', error });
+    res.status(500).json({ msg: 'Error fatal en el servidor', error: error.message });
   }
 };
