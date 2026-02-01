@@ -31,53 +31,73 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // RENDERIZADO DE TARJETAS
             grid.innerHTML = listaProductos.map(p => {
-// 1. LIMPIEZA DE IMAGEN
-const rawImages = p.IMAGE_SRC || p.image_src || p.image_principal || p.imagen || "";
-let imagenFinal = "";
+                // 1. LIMPIEZA DE IMAGEN
+                const rawImages = p.IMAGE_SRC || p.image_src || p.image_principal || p.imagen || "";
+                let imagenFinal = "";
 
-if (Array.isArray(rawImages)) {
-    imagenFinal = rawImages[0];
-} else {
-    imagenFinal = rawImages.split(',')[0].trim();
-}
+                if (Array.isArray(rawImages)) {
+                    imagenFinal = rawImages[0];
+                } else {
+                    imagenFinal = rawImages.split(',')[0].trim();
+                }
+                
+                if (!imagenFinal) {
+                    imagenFinal = 'https://placehold.co/400x500?text=Sin+Imagen';
+                } 
+                
+                else if (imagenFinal.startsWith('http')) {
+                    imagenFinal = imagenFinal;
+                }
 
-if (!imagenFinal) {
-    imagenFinal = 'https://placehold.co/400x500?text=Sin+Imagen';
-} 
-else if (imagenFinal.startsWith('http')) {
-    // Si ya es una URL completa, la dejamos así
-    imagenFinal = imagenFinal;
-}
-else if (imagenFinal.startsWith('//')) {
-    imagenFinal = 'https:' + imagenFinal;
-}
-else {
-    // Si solo es el nombre del archivo (ej: "botella.png")
-    // Gymshark suele usar este formato para sus imágenes:
-    imagenFinal = `https://cdn.shopify.com/s/files/1/0156/6146/products/${imagenFinal}`;
-}
-                // 2. DATOS (Usando MAYÚSCULAS según tu DB)
+                else if (imagenFinal.startsWith('//')) {
+                    imagenFinal = 'https:' + imagenFinal;
+                }
+                
+                else {
+                    imagenFinal = `https://cdn.shopify.com/s/files/1/0156/6146/products/${imagenFinal}`;
+                }
+
+                // 2. DATOS BÁSICOS
                 const nombre = p.TITLE || p.title || "Producto Gymshark";
                 const precio = p.PRICE || p.price || 0; 
+                // Usamos el handle o el ID para identificar el select de tallas de forma única
+                const productoId = p.handle || p._id;
 
+                // 3. GENERAR OPCIONES DE TALLA (Basado en variantes agrupadas)
+                // Filtramos variantes para que solo aparezcan las que tienen inventario si lo deseas
+                const opcionesTalla = p.variantes && p.variantes.length > 0 
+                    ? p.variantes.map(v => {
+                        const stockInfo = v.inventory > 0 ? `(${v.inventory} disp.)` : '(Agotado)';
+                        const disabled = v.inventory <= 0 ? 'disabled' : '';
+                        return `<option value="${v.talla}" ${disabled}>${v.talla} ${stockInfo}</option>`;
+                    }).join('')
+                    : '<option value="">Sin tallas disponibles</option>';
+
+                // 4. RETORNO DEL HTML DE LA TARJETA
                 return `
-                    <div class="product-card">
-                        <div class="product-image-container">
-                            <img src="${imagenFinal}" 
-                                 alt="${nombre}" 
-                                 onerror="this.src='https://placehold.co/400x500?text=Error+Link';">
-                        </div>
-                        <div class="product-info">
-                            <h3>${nombre}</h3>
-                            <p class="price">$${precio}</p>
-                            <button onclick="agregarAlCarrito('${nombre.replace(/'/g, "\\'")}', ${precio})">
-                                Agregar a la bolsa
-                            </button>
-                        </div>
-                    </div>
-                `;
+                <div class="product-card">
+                <div class="product-image-container">
+                <img src="${imagenFinal}" 
+                alt="${nombre}" 
+                   onerror="this.src='https://placehold.co/400x500?text=Error+Link';">
+                   </div>
+                   <div class="product-info">
+                   <h3>${nombre}</h3>
+                   <p class="price">$${precio}</p>
+                   <div class="size-selection-wrapper">
+                   <label for="size-${productoId}" style="font-size: 10px; color: #888;">SELECCIONAR TALLA:</label>
+                   <select id="size-${productoId}" class="size-selector">
+                   ${opcionesTalla}
+                   </select>
+                   </div>
+                   <button onclick="prepararCompra('${productoId}', '${nombre.replace(/'/g, "\\'")}', ${precio})">
+                   Agregar a la bolsa
+                   </button>
+                   </div>
+                   </div>
+                   `;
             }).join('');
-
+            
         } catch (err) {
             console.error("Error en fetch:", err);
             grid.innerHTML = `<div style="color:red; padding:20px;">Error: ${err.message}</div>`;
@@ -147,6 +167,25 @@ else {
     // Carga inicial
     loadProducts();
     renderizarCarrito();
+
+    // <--- PEGA AQUÍ EL SIGUIENTE BLOQUE --->
+    document.querySelectorAll('.size-grid button').forEach(btn => {
+        btn.onclick = () => {
+            document.querySelectorAll('.size-grid button').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            selectedSize = btn.innerText; 
+            loadProducts(); 
+        };
+    });
+
+    document.querySelectorAll('.filter-section input[type="checkbox"]').forEach(check => {
+        check.onchange = () => {
+            if (check.parentElement.textContent.includes('Disponibles')) {
+                filterStock = check.checked ? 'true' : '';
+            }
+            loadProducts();
+        };
+    });
     
 // --- LÓGICA DE USUARIO Y SESIÓN ---
     const userIcon = document.getElementById('userIcon');
@@ -223,3 +262,18 @@ closeSuccessBtn.addEventListener('click', () => {
     location.reload(); 
 });
 });
+
+window.prepararCompra = (id, nombre, precio) => {
+    const selector = document.getElementById(`size-${id}`);
+    const tallaSeleccionada = selector.value;
+
+    if (!tallaSeleccionada) {
+        alert("Por favor selecciona una talla");
+        return;
+    }
+    
+    agregarAlCarrito(`${nombre} (${tallaSeleccionada})`, precio);
+    
+    const cartModal = document.getElementById('cartModal');
+    if (cartModal) cartModal.classList.add('active');
+};
