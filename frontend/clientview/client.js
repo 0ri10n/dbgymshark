@@ -185,7 +185,7 @@ if (checkoutBtn) {
         const totalCompra = carrito.reduce((sum, p) => sum + p.precio, 0);
 
         try {
-            const res = await fetch(`${API_BASE_URL}/ventas`, {
+            const res = await fetch(`${API_BASE_URL}/productos/ventas`, { 
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
