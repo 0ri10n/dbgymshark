@@ -248,14 +248,16 @@ body {
 .cart-content {
     background-color: #000;
     width: 100%;
-    max-width: 350px; 
-    height: 100vh; 
-    padding: 20px; 
+    max-width: 400px; 
+    height: 100vh;   
+    padding: 30px;
+    box-sizing: border-box;
     border-left: 1px solid #222;
     display: flex;
     flex-direction: column;
-    position: relative;
-    box-shadow: -5px 0 15px rgba(0,0,0,0.5);
+    position: fixed; 
+    right: 0;
+    top: 0;
 }
 
 @keyframes slideIn {
@@ -314,10 +316,11 @@ body {
 }
 
 .cart-items-list {
-    flex: 1;
+    flex: 1; 
     overflow-y: auto; 
     overflow-x: hidden;
-    margin-bottom: 20px;
+    margin: 20px 0;
+    padding-right: 5px; 
 }
 
 .remove-item {
@@ -328,8 +331,10 @@ body {
 }
 
 .cart-footer {
+    margin-top: auto; 
     padding-top: 20px;
-    border-top: 1px solid var(--border-color);
+    border-top: 1px solid #222;
+    background-color: #000;
 }
 
 .cart-total {
