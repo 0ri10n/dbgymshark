@@ -248,14 +248,14 @@ body {
 .cart-content {
     background-color: #000;
     width: 100%;
-    max-width: 450px; 
-    height: 100%;
-    padding: 40px 30px;
+    max-width: 350px; 
+    height: 100vh; 
+    padding: 20px; 
     border-left: 1px solid #222;
     display: flex;
     flex-direction: column;
-    box-shadow: -10px 0 20px rgba(0,0,0,0.5); 
-    animation: slideIn 0.3s ease-out; 
+    position: relative;
+    box-shadow: -5px 0 15px rgba(0,0,0,0.5);
 }
 
 @keyframes slideIn {
@@ -267,7 +267,8 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 20px 0;
+    gap: 10px;
+    padding: 15px 0;
     border-bottom: 1px solid #1a1a1a;
 }
 
@@ -276,6 +277,30 @@ body {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 30px;
+}
+
+.cart-header h2 {
+    font-size: 18px;
+    letter-spacing: 1px;
+}
+
+.cart-item div div {
+    font-size: 13px;
+    max-width: 200px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.cart-item div div:first-child {
+    font-weight: 600;
+    margin-bottom: 4px;
+    color: var(--text-white);
+}
+
+.cart-item div div:last-child {
+    color: var(--muted-text);
+    font-size: 12px;
 }
 
 .close-btn { font-size: 30px; cursor: pointer; color: white; }
@@ -290,7 +315,9 @@ body {
 
 .cart-items-list {
     flex: 1;
-    overflow-y: auto;
+    overflow-y: auto; 
+    overflow-x: hidden;
+    margin-bottom: 20px;
 }
 
 .remove-item {
