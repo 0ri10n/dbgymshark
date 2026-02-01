@@ -168,13 +168,22 @@ document.addEventListener('DOMContentLoaded', () => {
     loadProducts();
     renderizarCarrito();
 
-    // <--- PEGA AQUÍ EL SIGUIENTE BLOQUE --->
+
     document.querySelectorAll('.size-grid button').forEach(btn => {
         btn.onclick = () => {
             document.querySelectorAll('.size-grid button').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-            selectedSize = btn.innerText; 
-            loadProducts(); 
+            
+            // Traducción simple para que coincida con Gymshark/MongoDB
+            let tallaTaller = btn.innerText;
+            if(tallaTaller === "XS") tallaTaller = "Extra Small";
+            if(tallaTaller === "S")  tallaTaller = "Small";
+            if(tallaTaller === "M")  tallaTaller = "Medium";
+            if(tallaTaller === "L")  tallaTaller = "Large";
+            if(tallaTaller === "XL") tallaTaller = "Extra Large";
+            
+            selectedSize = tallaTaller; 
+            loadProducts();   
         };
     });
 
