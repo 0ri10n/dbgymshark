@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const API_BASE_URL = 'https://dbgymshark.onrender.com/api';
+    const API_BASE_URL = '/api';
 
     let carrito = JSON.parse(localStorage.getItem('makia_cart')) || [];
     let selectedSize = '';

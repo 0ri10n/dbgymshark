@@ -9,7 +9,7 @@ document.getElementById('loginForm').addEventListener('submit', async function (
     btn.innerText = 'Cargando...';
 
     try {
-        const respuesta = await fetch('https://dbgymshark.onrender.com/api/auth/login', {
+        const respuesta = await fetch('/api/auth/login', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -31,12 +31,12 @@ document.getElementById('loginForm').addEventListener('submit', async function (
                 localStorage.removeItem('token');
             }
         } else {
-            alert(data.msg || 'Error al iniciar sesión');
+            alert(data.msg || 'Error al iniciar sesiï¿½n');
         }
 
     } catch (error) {
         console.error('Error:', error);
-        alert('No se pudo conectar con el servidor. Revisa si el backend está corriendo.');
+        alert('No se pudo conectar con el servidor. Revisa si el backend estï¿½ corriendo.');
     } finally {
         btn.innerText = textoOriginal;
     }
