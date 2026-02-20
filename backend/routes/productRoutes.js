@@ -8,6 +8,7 @@ const productController = require('../controllers/productController');
 
 // 2. Importamos tus candados de seguridad desde tu middleware
 const { auth, admin } = require('../middleware/authMiddleware');
+const { validarProducto } = require('../middleware/validarDatos');
 
 // Rutas para /api/productos
 
@@ -18,8 +19,8 @@ router.get('/', productController.obtenerProductos);
 router.get('/:handle', operatorCRUD.obtenerProductoPorHandle);
 
 // RUTAS PROTEGIDAS: Solo un 'admin' logueado puede crear, actualizar o borrar
-router.post('/', auth, admin, operatorCRUD.crearProducto);
-router.put('/:id', auth, admin, operatorCRUD.actualizarProducto);
+router.post('/', auth, admin, validarProducto, operatorCRUD.crearProducto);
+router.put('/:id', auth, admin, validarProducto, operatorCRUD.actualizarProducto);
 router.delete('/:id', auth, admin, operatorCRUD.eliminarProducto);
 
 // Ruta de ventas
