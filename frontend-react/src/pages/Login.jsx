@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext'; // Tu sistema de sesiones
 import LightRays from '../components/LightRays';
-import './Login.css';
+import './login.css';
 
 const Login = () => {
     const navigate = useNavigate();
