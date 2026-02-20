@@ -3,33 +3,38 @@ const axios = require('axios');
 
 exports.obtenerProductos = async (req, res) => {
     try {
-        // 1. Obtenemos el catálogo desde MongoDB
+        // 1. Obtenemos el catálogo (¡Con el límite temporal para Isaac!)
         const productos = await Producto.find().limit(20);
 
-        // 2. Consultamos la API de ExchangeRate usando tu variable de entorno segura
+        // 2. Consultamos la API de ExchangeRate
         const urlAPI = `https://v6.exchangerate-api.com/v6/${process.env.EXCHANGE_API_KEY}/latest/USD`;
         const respuesta = await axios.get(urlAPI);
-        
-        // 3. Extraemos a cuánto está el peso mexicano (MXN) hoy
         const tasaMXN = respuesta.data.conversion_rates.MXN;
 
-        // 4. Inyectamos el precio convertido a cada producto
-        const productosConPrecioMXN = productos.map(producto => {
+        // 3. Inyectamos el precio MXN y ARREGLAMOS LAS TALLAS
+        const productosProcesados = productos.map(producto => {
             const prodObj = producto.toObject(); 
             
-            // Calculamos el precio en pesos mexicanos
-            if(prodObj.precio) {
-                prodObj.precioMXN = Number((prodObj.precio * tasaMXN).toFixed(2));
+            // A. Conversión de moneda
+            if(prodObj.price) {
+                prodObj.precioMXN = Number((prodObj.price * tasaMXN).toFixed(2));
+            }
+
+            // B. Tallas: Extraemos el "size" de cada variante y creamos un arreglo limpio
+            if (prodObj.variants && prodObj.variants.length > 0) {
+                 prodObj.tallasDisponibles = [...new Set(prodObj.variants.map(v => v.size).filter(Boolean))];
+            } else {
+                 prodObj.tallasDisponibles = prodObj.sizes_available || [];
             }
             
             return prodObj;
         });
 
-        // 5. Enviamos el catálogo enriquecido a Megan (Frontend)
-        res.json(productosConPrecioMXN);
+        // 4. Enviamos al frontend
+        res.json(productosProcesados);
 
     } catch (error) {
-        console.error("Error al obtener productos o convertir moneda:", error);
+        console.error("Error al obtener productos:", error);
         res.status(500).json({ msg: "Hubo un error al cargar el catálogo" });
     }
 };
