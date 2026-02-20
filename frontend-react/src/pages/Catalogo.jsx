@@ -1,24 +1,48 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { useAuth } from '../context/AuthContext';
 import './Catalogo.css'; 
 
 const Catalogo = () => {
-    // 1. ESTADOS PARA LA INTERFAZ
+    const { logout } = useAuth();
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     
-    // 2. ESTADOS PARA LOS DATOS (Aquí entrarán Isaac y Kevin)
-    const [productos, setProductos] = useState([]); // Isaac usará esto para la paginación
+    const [productos, setProductos] = useState([]); 
     const [carrito, setCarrito] = useState([]);
     const [busqueda, setBusqueda] = useState("");
+    const [cargando, setCargando] = useState(true); // Nuevo estado para controlar la carga inicial
 
-    // 3. FUNCIONES DE CONTROL
+    useEffect(() => {
+        const cargarCatalogo = async () => {
+            try {
+                const url = 'https://dbgymshark.onrender.com/api/productos'; // API de Kevin
+                const respuesta = await axios.get(url);
+                setProductos(respuesta.data); 
+            } catch (error) {
+                console.error("Error al conectar con MAKIA API:", error);
+            } finally {
+                setCargando(false); // Terminó la carga, sea con éxito o error
+            }
+        };
+        cargarCatalogo();
+    }, []);
+
+    const agregarAlCarrito = (prod) => {
+        setCarrito([...carrito, prod]);
+        setShowSuccessModal(true);
+    };
+
+    const productosFiltrados = productos.filter(p => 
+        p.nombre.toLowerCase().includes(busqueda.toLowerCase())
+    );
+
     const toggleCart = () => setIsCartOpen(!isCartOpen);
     const toggleUserMenu = () => setIsUserMenuOpen(!isUserMenuOpen);
 
     return (
         <div className="client-view">
-            {/* HEADER */}
             <header className="client-header">
                 <div className="logo">MAKIA</div>
                 <div className="header-icons">
@@ -27,46 +51,29 @@ const Catalogo = () => {
                         <span id="cartCount">{carrito.length}</span>
                     </div>
                     <div className="user-menu-container" onClick={toggleUserMenu} style={{cursor: 'pointer'}}>
-                        <i className="far fa-user" id="userIcon"></i>
+                        <i className="far fa-user"></i>
                         {isUserMenuOpen && (
-                            <div className="user-dropdown" id="userDropdown">
-                                <button id="logoutBtn" onClick={() => console.log("Logout")}>Cerrar Sesión</button>
+                            <div className="user-dropdown">
+                                <button id="logoutBtn" onClick={logout}>Cerrar Sesión</button>
                             </div>
                         )}
                     </div>
                 </div>
             </header>
 
-            {/* HERO BANNER */}
             <div className="hero-banner">
                 <img src="/hero-banner-client.jpg" alt="Banner Hero" />
             </div>
 
-            {/* LAYOUT PRINCIPAL */}
             <div className="store-layout">
                 <aside className="filters-sidebar">
                     <h2 className="sidebar-title">Filtros</h2>
-
                     <div className="filter-section">
                         <h3>Talla</h3>
-                        <div className="size-grid" id="sizeFilters">
+                        <div className="size-grid">
                             {['XS', 'S', 'M', 'L', 'XL', '2X'].map(talla => (
                                 <button key={talla}>{talla}</button>
                             ))}
-                        </div>
-                    </div>
-
-                    <div className="filter-section">
-                        <h3>DISPONIBILIDAD</h3>
-                        <div className="filter-options">
-                            <label className="custom-checkbox">  
-                                <input type="checkbox" id="checkAvailable" /> 
-                                <span className="checkmark"></span> Disponible
-                            </label>
-                            <label className="custom-checkbox">
-                                <input type="checkbox" id="checkOutOfStock" />
-                                <span className="checkmark"></span> Fuera de Stock
-                            </label>
                         </div>
                     </div>
                 </aside>
@@ -77,21 +84,46 @@ const Catalogo = () => {
                             <i className="fas fa-search"></i>
                             <input 
                                 type="text" 
-                                placeholder="Search" 
-                                value={busqueda}
+                                placeholder="¿Qué estás buscando hoy?" 
+                                value={busqueda} 
                                 onChange={(e) => setBusqueda(e.target.value)} 
                             />
                         </div>
-                        <span className="view-all" style={{cursor: 'pointer', textDecoration: 'underline'}}>Ver todo</span>
                     </div>
 
-                    <div className="products-grid" id="productsGrid">
-                        {productos.length === 0 ? (
-                            <p className="loading-text">Cargando catálogo de MAKIA...</p>
+                    <div className="products-grid">
+                        {/* 🚦 LÓGICA DE ESTADOS DE RENDERIZADO */}
+                        {cargando ? (
+                            <div className="loading-container">
+                                <p className="loading-text">Conectando con el servidor de Kevin...</p>
+                            </div>
+                        ) : productosFiltrados.length === 0 ? (
+                            <div className="no-results-container">
+                                <i className="fas fa-search-minus"></i>
+                                <h3>Ups, no encontramos nada</h3>
+                                <p>No hay productos que coincidan con "{busqueda}". Intenta con otra palabra.</p>
+                            </div>
                         ) : (
-                            productos.map(prod => (
+                            productosFiltrados.map(prod => (
                                 <div key={prod._id} className="product-card">
-                                    {/* Aquí Isaac inyectará el mapeo de productos paginados */}
+                                    <img src={prod.imagen || '/placeholder.jpg'} alt={prod.nombre} className="product-img" />
+                                    <div className="product-info">
+                                        <h4>{prod.nombre}</h4>
+                                        <p className="product-price">
+                                            {prod.precioMXN?.toLocaleString('es-MX', { 
+                                                style: 'currency', 
+                                                currency: 'MXN' 
+                                            })}
+                                        </p>
+                                        <div className="product-sizes">
+                                            {prod.tallasDisponibles?.map(talla => (
+                                                <span key={talla} className="size-badge">{talla}</span>
+                                            ))}
+                                        </div>
+                                        <button className="add-to-cart-btn" onClick={() => agregarAlCarrito(prod)}>
+                                            Añadir a la bolsa
+                                        </button>
+                                    </div>
                                 </div>
                             ))
                         )}
@@ -99,36 +131,32 @@ const Catalogo = () => {
                 </main>
             </div>
 
-            {/* MODAL DEL CARRITO */}
+            {/* Modales mantenidos igual */}
             {isCartOpen && (
-                <div id="cartModal" className="cart-modal">
+                <div className="cart-modal">
                     <div className="cart-content">
                         <div className="cart-header">
                             <h2>TU BOLSA</h2>
                             <span className="close-btn" onClick={toggleCart}>&times;</span>
                         </div>
-                        <div id="cartItemsContainer" className="cart-items-list">
-                            {/* Megan: Aquí mapearás los items que se agreguen al carrito */}
-                        </div>
-                        <div className="cart-footer">
-                            <div className="cart-total">
-                                <span>Total:</span>
-                                <span id="cartTotalValue">$0.00</span>
-                            </div>
-                            <button className="checkout-btn" onClick={() => setShowSuccessModal(true)}>Finalizar Compra</button>
+                        <div className="cart-items-list">
+                            {carrito.map((item, index) => (
+                                <div key={index} className="cart-item">
+                                    <span>{item.nombre}</span>
+                                    <span>{item.precioMXN?.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' })}</span>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 </div>
             )}
 
-            {/* MODAL DE ÉXITO */}
             {showSuccessModal && (
-                <div id="orderSuccessModal" className="order-modal">
-                    <div className="order-content">  
-                        <i className="fas fa-check-circle success-icon"></i>  
-                        <h2>¡PEDIDO RECIBIDO!</h2>   
-                        <p>Tu orden ha sido procesada con éxito.</p>   
-                        <button className="close-success-btn" onClick={() => setShowSuccessModal(false)}>VOLVER A LA TIENDA</button>
+                <div className="order-modal">
+                    <div className="order-content">
+                        <i className="fas fa-check-circle success-icon"></i>
+                        <h2>¡LISTO!</h2>
+                        <button onClick={() => setShowSuccessModal(false)}>VOLVER</button>
                     </div>
                 </div>
             )}

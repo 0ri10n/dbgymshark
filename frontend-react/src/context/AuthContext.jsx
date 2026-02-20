@@ -1,52 +1,50 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useState, useContext, useEffect } from 'react';
+import axios from 'axios';
 
-// 1. Creamos el contexto
 const AuthContext = createContext();
 
-// 2. Definimos el Proveedor de Autenticación
 export const AuthProvider = ({ children }) => {
-    // Estado global del usuario y el token
-    const [user, setUser] = useState(null);
-    const [token, setToken] = useState(localStorage.getItem('token') || null);
-    const [loading, setLoading] = useState(true);
+    const [token, setToken] = useState(() => localStorage.getItem('token') || null);
+    const [user, setUser] = useState(() => {
+        const role = localStorage.getItem('role');
+        return role ? { role } : null;
+    });
 
-    // Persistencia: Verificar si hay un token al cargar la app
     useEffect(() => {
         if (token) {
-            // AQUÍ KEVIN: Podrías validar el token con el backend si es necesario
-            // Por ahora, simulamos que el usuario está autenticado
-            setUser({ role: 'admin' }); // Dato de prueba para que Isaac trabaje
+            axios.defaults.headers.common['x-auth-token'] = token;
+        } else {
+            delete axios.defaults.headers.common['x-auth-token'];
         }
-        setLoading(false);
     }, [token]);
 
-    // Función de Login que usará Kevin
-    const login = (newToken, userData) => {
+    const login = (newToken, newRole) => {
         setToken(newToken);
-        setUser(userData);
-        localStorage.setItem('token', newToken); // Guardamos para persistencia
+        setUser({ role: newRole });
+        localStorage.setItem('token', newToken);
+        localStorage.setItem('role', newRole);
+        axios.defaults.headers.common['x-auth-token'] = newToken;
     };
 
-    // Función de Logout
     const logout = () => {
         setToken(null);
         setUser(null);
         localStorage.removeItem('token');
-        window.location.href = '/login'; // Redirigir al limpiar sesión
+        localStorage.removeItem('role');
+        delete axios.defaults.headers.common['x-auth-token'];
+        window.location.href = '/login';
     };
 
     return (
-        <AuthContext.Provider value={{ user, token, login, logout, loading }}>
+        <AuthContext.Provider value={{ user, token, login, logout }}>
             {children}
         </AuthContext.Provider>
     );
 };
 
-// 3. Hook personalizado para usar la autenticación en cualquier componente
 export const useAuth = () => {
     const context = useContext(AuthContext);
-    if (!context) {
-        throw new Error("useAuth debe usarse dentro de un AuthProvider");
-    }
+    if (!context) throw new Error("useAuth debe usarse dentro de un AuthProvider");
     return context;
 };

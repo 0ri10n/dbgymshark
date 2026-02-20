@@ -1,119 +1,90 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import LightRays from '../components/LightRays';
-import './Registro.css'; // Mueve tu registro.css a esta carpeta
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { useAuth } from '../context/AuthContext';
+import './Registro.css';
 
 const Registro = () => {
     const navigate = useNavigate();
-    
-    // Estado para capturar los datos del formulario
+    const { login } = useAuth();
     const [formData, setFormData] = useState({
-        nombre: '',
-        apellido: '',
-        email: '',
-        password: '',
+        nombre: '', 
+        apellido: '', 
+        email: '', 
+        password: '', 
         confirmPassword: ''
     });
 
-    // Función para manejar los cambios en los inputs
+    // 1. FUNCIÓN CENTRALIZADA: Mejora la legibilidad y evita errores de linter
     const handleChange = (e) => {
-        const { id, value } = e.target;
+        const { name, value } = e.target;
         setFormData(prev => ({
             ...prev,
-            [id]: value
+            [name]: value
         }));
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        // PAUSA PARA ABDEL/KEVIN: Validaciones de seguridad aquí
+        
+        // 2. VALIDACIÓN: Seguridad básica antes de molestar al servidor
         if (formData.password !== formData.confirmPassword) {
-            alert("Las contraseñas no coinciden");
-            return;
+            return alert("Las contraseñas no coinciden");
         }
-        console.log("Datos listos para enviar al backend:", formData);
-        // Por ahora, simulamos éxito y volvemos al login
-        // navigate('/login'); 
+
+        try {
+            // 3. TRUCO DE ARQUITECTA: Usamos el guion bajo (_) para indicar a ESLint 
+            // que omitimos confirmPassword intencionalmente
+            const { confirmPassword: _, ...datosAEnviar } = formData;
+
+            // 4. CONEXIÓN: Usamos la URL de Render de Kevin
+            const url = 'https://dbgymshark.onrender.com/api/usuarios';
+            const res = await axios.post(url, datosAEnviar);
+            
+            // 5. LOGIN: Pasamos token y role como espera tu contexto
+            login(res.data.token, res.data.role);
+            
+            alert("¡Cuenta creada con éxito!");
+            navigate('/');
+        } catch (error) {
+            // Manejo de errores de Abdiel (QA)
+            const msg = error.response?.data?.msg || "Error al registrar el usuario";
+            alert(msg);
+        }
     };
 
     return (
         <div className="registro-page-wrapper">
-            {/* Reutilizamos el fondo que ya configuraste */}
-            <LightRays />
-
-            <div className="registro-container">
-                <h2>REGISTRAR CUENTA</h2>
-                <div className="divider"></div>
-
-                <form id="registroForm" onSubmit={handleSubmit}>
-                    
-                    <label htmlFor="nombre">Nombre/s</label>
-                    <div className="input-box">
-                        <input 
-                            type="text" 
-                            id="nombre" 
-                            placeholder="Ingrese Nombre/s Aquí" 
-                            value={formData.nombre}
-                            onChange={handleChange}
-                            required 
-                        />
-                    </div>
-
-                    <label htmlFor="apellido">Apellido/s</label>
-                    <div className="input-box">
-                        <input 
-                            type="text" 
-                            id="apellido" 
-                            placeholder="Ingrese Apellido/s Aquí" 
-                            value={formData.apellido}
-                            onChange={handleChange}
-                            required 
-                        />
-                    </div>
-
-                    <label htmlFor="email">Correo Electrónico:</label>
-                    <div className="input-box">
-                        <input 
-                            type="email" 
-                            id="email" 
-                            placeholder="Ejemplo@correo.com" 
-                            value={formData.email}
-                            onChange={handleChange}
-                            required 
-                        />
-                    </div>
-
-                    <label htmlFor="password">Contraseña:</label>
-                    <div className="input-box">
-                        <input 
-                            type="password" 
-                            id="password" 
-                            placeholder="Ingrese contraseña segura" 
-                            value={formData.password}
-                            onChange={handleChange}
-                            required 
-                        />
-                    </div>
-
-                    <div className="input-box">
-                        <input 
-                            type="password" 
-                            id="confirmPassword" 
-                            placeholder="Ingresa nuevamente contraseña" 
-                            value={formData.confirmPassword}
-                            onChange={handleChange}
-                            required 
-                        />
-                    </div>
-
-                    <div className="botones-container">
-                        {/* Navegación dinámica sin recargar la página */}
-                        <Link to="/login" className="btn-cancelar">Cancelar</Link>
-                        
-                        <button type="submit" className="btn-listo">Listo</button>
-                    </div>
-                </form>
-            </div>
+            <form onSubmit={handleSubmit} className="registro-container">
+                <h2>CREAR CUENTA</h2>
+                
+                <input 
+                    name="nombre" type="text" placeholder="Nombre" 
+                    value={formData.nombre} onChange={handleChange} required 
+                />
+                
+                <input 
+                    name="apellido" type="text" placeholder="Apellido" 
+                    value={formData.apellido} onChange={handleChange} required 
+                />
+                
+                <input 
+                    name="email" type="email" placeholder="Email" 
+                    value={formData.email} onChange={handleChange} required 
+                />
+                
+                <input 
+                    name="password" type="password" placeholder="Contraseña" 
+                    value={formData.password} onChange={handleChange} required 
+                />
+                
+                <input 
+                    name="confirmPassword" type="password" placeholder="Confirmar Contraseña" 
+                    value={formData.confirmPassword} onChange={handleChange} required 
+                />
+                
+                <button type="submit" className="btn-listo">LISTO</button>
+            </form>
         </div>
     );
 };
