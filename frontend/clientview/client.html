@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Store - MAKIA</title>
+    <link rel="stylesheet" href="/clientview/client.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+
+<body>
+    <header class="client-header">
+        <div class="logo">MAKIA</div>
+        <div class="header-icons">
+            <div class="cart-wrapper" id="openCart">
+                <i class="fas fa-shopping-bag"></i>
+                <span id="cartCount">0</span>
+            </div>
+            <div class="user-menu-container">
+                <i class="far fa-user" id="userIcon"></i>
+                <div class="user-dropdown" id="userDropdown">
+                    <button id="logoutBtn">Cerrar Sesión</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="hero-banner">
+        <img src="/clientview/hero-banner-client.jpg" alt="Banner Hero">
+    </div>
+
+    <div class="store-layout">
+        <aside class="filters-sidebar">
+            <h2 class="sidebar-title">Filtros</h2>
+
+            <div class="filter-section">
+                <h3>Talla</h3>
+                <div class="size-grid" id="sizeFilters">
+                    <button>XS</button><button>S</button><button>M</button>
+                    <button>L</button><button>XL</button><button>2X</button>
+                </div>
+            </div>
+
+
+            <div class="filter-section">
+                <div class="filter-header">
+                    <h3>DISPONIBILIDAD</h3>
+                    <i class="fas fa-chevron-up"></i> </div>
+                <div class="filter-options">
+                    <label class="custom-checkbox">  
+                        <input type="checkbox" id="checkAvailable"> 
+                        <span class="checkmark"></span>
+                        Disponible
+                    </label>
+                    <label class="custom-checkbox">
+                        <input type="checkbox" id="checkOutOfStock">
+                        <span class="checkmark"></span>
+                        Fuera de Stock
+                    </label>
+                </div>
+            </div>
+
+            <nav class="accordion">
+               <!--  <div class="acc-item">Categorias <i class="fas fa-chevron-right"></i></div> -->
+               <!--  <div class="acc-item">Colores <i class="fas fa-chevron-right"></i></div> -->
+                <div class="acc-item">Rango de precios <i class="fas fa-chevron-right"></i></div>
+            </nav>
+        </aside>
+
+        <main class="shop-content">
+            <div class="shop-controls">
+                <div class="search-bar">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchInput" placeholder="Search">
+                </div>
+                <span class="view-all" style="cursor: pointer; text-decoration: underline;">Ver todo</span>
+            </div>
+
+            <div class="products-grid" id="productsGrid">
+            </div>
+        </main>
+    </div>
+
+    <div id="cartModal" class="cart-modal">
+        <div class="cart-content">
+        <div class="cart-header">
+            <h2>TU BOLSA</h2>
+            <span id="closeCart" class="close-btn">&times;</span>
+        </div>
+            
+            <div id="cartItemsContainer" class="cart-items-list">
+            </div>
+            <div class="cart-footer">
+                <div class="cart-total">
+                    <span>Total:</span>
+                    <span id="cartTotalValue">$0.00</span>
+                </div>
+                
+                <button class="checkout-btn">Finalizar Compra</button>
+            </div>
+        </div>
+    </div>
+ 
+    <div id="orderSuccessModal" class="order-modal">
+        <div class="order-content">  
+            <i class="fas fa-check-circle success-icon"></i>  
+            <h2>¡PEDIDO RECIBIDO!</h2>   
+            <p>Tu orden ha sido procesada con éxito.</p>   
+            
+            <div class="order-id-box">
+                <span class="id-label">ID DE COMPRA:</span>
+                <span id="generatedOrderID" class="id-number"></span>
+            </div>
+            
+            <p class="order-note">Gracias por confiar en MAKIA.</p>
+            <button id="closeSuccessBtn" class="close-success-btn">VOLVER A LA TIENDA</button>
+        </div>
+    </div>
+
+    <script type="module" src="/clientview/client.js"></script>
+</body>
+
+</html>

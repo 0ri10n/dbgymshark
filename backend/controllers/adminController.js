@@ -28,14 +28,25 @@ exports.obtenerTablas = async (req, res) => {
     }
 };
 
-// FUNCIÓN 3: Obtener Datos (La usaremos para llenar la tabla)
+// FUNCIÓN 3: Obtener Datos con paginación
 exports.obtenerDatosTabla = async (req, res) => {
     try {
         const { dbName, tableName } = req.params;
+        const page = Math.max(parseInt(req.query.page || '1', 10), 1);
+        const limit = Math.max(parseInt(req.query.limit || '20', 10), 1);
+        const skip = (page - 1) * limit;
+
         const db = mongoose.connection.client.db(dbName);
         const collection = db.collection(tableName);
-        const datos = await collection.find({}).limit(50).toArray();
-        res.json(datos);
+
+        const [datos, totalDocs] = await Promise.all([
+            collection.find({}).skip(skip).limit(limit).toArray(),
+            collection.countDocuments({})
+        ]);
+
+        const totalPages = Math.max(Math.ceil(totalDocs / limit), 1);
+
+        res.json({ data: datos, totalDocs, totalPages, page, limit });
     } catch (error) {
         res.status(500).json({ msg: 'Error al obtener datos' });
     }

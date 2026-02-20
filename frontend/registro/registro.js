@@ -16,7 +16,7 @@ document.getElementById('registroForm').addEventListener('submit', async functio
     btn.innerText = 'Creando...';
 
     try {
-        const respuesta = await fetch('http://localhost:4000/api/auth/registro', {
+        const respuesta = await fetch('/api/auth/registro', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'

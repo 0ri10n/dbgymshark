@@ -1,19 +1,11 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registro - GymShark</title>
-    <link rel="stylesheet" href="/registro/registro.css">
-</head>
-<body>
+import React, { useEffect, useRef } from 'react';
+import { Renderer, Program, Triangle, Mesh } from 'ogl';
 
-    <div id="light-rays-background"></div>
+const LightRays = () => {
+    const containerRef = useRef(null);
 
-    <script type="module">
-        import { Renderer, Program, Triangle, Mesh } from 'https://cdn.skypack.dev/ogl';
-        
-        const container = document.getElementById('light-rays-background');
+    useEffect(() => {
+        const container = containerRef.current;
         const hexToRgb = hex => {
             const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
             return m ? [parseInt(m[1], 16) / 255, parseInt(m[2], 16) / 255, parseInt(m[3], 16) / 255] : [1, 1, 1];
@@ -79,67 +71,39 @@
         });
 
         function resize() {
+            if (!container) return;
             const w = window.innerWidth;
             const h = window.innerHeight;
             renderer.setSize(w, h);
             uniforms.iResolution.value = [w * renderer.dpr, h * renderer.dpr];
-            // Posicionamos el origen en la parte superior central
             uniforms.rayPos.value = [w * renderer.dpr * 0.5, -h * renderer.dpr * 0.2];
         }
 
         window.addEventListener('resize', resize);
-        window.addEventListener('mousemove', e => {
+        const onMouseMove = e => {
             uniforms.mousePos.value = [e.clientX / window.innerWidth, e.clientY / window.innerHeight];
-        });
+        };
+        window.addEventListener('mousemove', onMouseMove);
 
+        let requestId;
         function update(t) {
             uniforms.iTime.value = t * 0.001;
             renderer.render({ scene: mesh });
-            requestAnimationFrame(update);
+            requestId = requestAnimationFrame(update);
         }
 
         resize();
-        requestAnimationFrame(update);
-    </script>
+        requestId = requestAnimationFrame(update);
 
-    <div class="registro-container">
-        <h2>REGISTRAR CUENTA</h2>
-        <div class="divider"></div>
+        return () => {
+            window.removeEventListener('resize', resize);
+            window.removeEventListener('mousemove', onMouseMove);
+            cancelAnimationFrame(requestId);
+            if (container.contains(gl.canvas)) container.removeChild(gl.canvas);
+        };
+    }, []);
 
-        <form id="registroForm">
-            
-            <label>Nombre/s</label>
-            <div class="input-box">
-                <input type="text" id="nombre" placeholder="Ingrese Nombre/s Aquí" required>
-            </div>
+    return <div id="light-rays-background" ref={containerRef} style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: -1 }} />;
+};
 
-            <label>Apellido/s</label>
-            <div class="input-box">
-                <input type="text" id="apellido" placeholder="Ingrese Apellido/s Aquí" required>
-            </div>
-
-            <label>Correo Electrónico:</label>
-            <div class="input-box">
-                <input type="email" id="email" placeholder="Ejemplo@correo.com" required>
-            </div>
-
-            <label>Contraseña:</label>
-            <div class="input-box">
-                <input type="password" id="password" placeholder="Ingrese contraseña segura" required>
-            </div>
-
-            <div class="input-box">
-                <input type="password" id="confirmPassword" placeholder="Ingresa nuevamente contraseña" required>
-            </div>
-
-            <div class="botones-container">
-                <a href="/" class="btn-cancelar">Cancelar</a>
-                
-                <button type="submit" class="btn-listo">Listo</button>
-            </div>
-        </form>
-    </div>
-
-    <script src="/registro/registro.js"></script>
-</body>
-</html>
+export default LightRays;

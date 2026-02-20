@@ -6,13 +6,58 @@ document.addEventListener('DOMContentLoaded', async () => {
     const tableHead = document.getElementById('adminTableHead');
     const currentTableNameElem = document.getElementById('currentTableName');
     const token = localStorage.getItem('token');
-    const searchInput = document.getElementById('searchInput'); // Nuevo selector
-    let datosGlobales = []; // Aquí guardaremos la copia para el filtro
+    const logoutBtn = document.getElementById('logoutBtn');
+    const paginationButtons = document.querySelectorAll('.btn-nav');
+    const prevBtn = paginationButtons[0];
+    const nextBtn = paginationButtons[1];
+    let currentPage = 1;
+    const limit = 20;
+    let totalPages = 1;
+    let currentDB = null;
+    let currentTable = null;
     const estructuras = {
-    productos: ['title', 'product_type', 'price', 'inventory_quantity', 'variant_title'], 
-    usuarios: ['nombre', 'email', 'registro'],
-    ventas: ['_id', 'total', 'estado', 'createdAt']
+    productos: ['title', 'price', 'image_src', 'stock', 'categoria'],
+    ventas: ['id_compra', 'total', 'fecha', 'detalle_productos'],
+    usuarios: ['nombre', 'email', 'rol']
 };
+
+    // Estilos mejorados para modal e inputs (inyectados para no depender de CSS externo)
+    const modalStyle = document.createElement('style');
+modalStyle.textContent = `
+    #dynamicModal .modal-content {
+        background: #111826;
+        color: #e5e7eb;
+        width: min(550px, 95%);
+        margin: 5vh auto;
+        padding: 24px;
+        border-radius: 12px;
+        /* --- SOLUCIÓN AL CORTE --- */
+        max-height: 85vh;    /* No deja que el modal sea más alto que la pantalla */
+        overflow-y: auto;   /* Activa el scroll vertical */
+        position: relative;
+    }
+
+    #dynamicModal .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        margin-top: 20px;
+        /* --- BOTONES FIJOS --- */
+        position: sticky;
+        bottom: -24px;      /* Se pega al fondo del modal al hacer scroll */
+        background: #111826;
+        padding: 15px 0;
+        border-top: 1px solid #243349;
+    }
+
+    .modal-field {
+        margin-bottom: 15px;
+        display: flex;
+        flex-direction: column;
+    }
+`;
+document.head.appendChild(modalStyle);
+
 
     // Variables de estado para el Modal
     let editMode = false;
@@ -27,7 +72,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     async function cargarDBs() {
         try {
-            const respuesta = await fetch('http://localhost:4000/api/admin/dbs', {
+            const respuesta = await fetch('/api/admin/dbs', {
                 headers: { 'x-auth-token': token }
             });
 
@@ -49,7 +94,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
 // 2. Aquí la función que carga los datos sin romperse
-async function loadTableData(dbName, tableName) {
+async function loadTableData(dbName, tableName, page = 1) {
     const currentTableNameElem = document.getElementById('currentTableName');
     const tableBody = document.getElementById('adminTableBody');
     const tableHead = document.getElementById('adminTableHead');
@@ -58,12 +103,13 @@ async function loadTableData(dbName, tableName) {
     tableBody.innerHTML = '<tr><td colspan="10" style="text-align:center;">Cargando...</td></tr>';
 
     try {
-        const respuesta = await fetch(`http://localhost:4000/api/admin/datos/${dbName}/${tableName}`, {
+        const respuesta = await fetch(`/api/admin/datos/${dbName}/${tableName}?page=${page}&limit=${limit}`, {
             headers: { 'x-auth-token': localStorage.getItem('token') }
         });
-        const documentos = await respuesta.json();
-
-        datosGlobales = documentos;
+        const payload = await respuesta.json();
+        const documentos = Array.isArray(payload) ? payload : payload.data || [];
+        totalPages = payload.totalPages || 1;
+        currentPage = payload.page || page;
 
         let todasLasLlaves = new Set();
 
@@ -133,8 +179,11 @@ async function loadTableData(dbName, tableName) {
         const selectedDB = e.target.value;
         tablesNav.innerHTML = '';
         if (!selectedDB) return;
+        currentDB = selectedDB;
+        currentTable = null;
+        currentPage = 1;
         try {
-            const respuesta = await fetch(`http://localhost:4000/api/admin/tablas/${selectedDB}`, {
+            const respuesta = await fetch(`/api/admin/tablas/${selectedDB}`, {
                 headers: { 'x-auth-token': token }
             });
             const tablas = await respuesta.json();
@@ -146,7 +195,9 @@ async function loadTableData(dbName, tableName) {
                     event.preventDefault();
                     document.querySelectorAll('.sidebar-menu a').forEach(a => a.classList.remove('active'));
                     link.classList.add('active');
-                    loadTableData(selectedDB, tableName);
+                    currentTable = tableName;
+                    currentPage = 1;
+                    loadTableData(selectedDB, tableName, currentPage);
                 };
                 tablesNav.appendChild(link);
             });
@@ -170,11 +221,9 @@ async function loadTableData(dbName, tableName) {
         headers.forEach(header => {
             const valor = datosPrevios ? (datosPrevios[header.toLowerCase()] || '') : '';
             fieldsContainer.innerHTML += `
-                <div style="margin-bottom:15px;">
-                    <label style="display:block; color:#aaa; font-size:0.8rem;">${header.toUpperCase()}</label>
-                    <input type="text" id="field_${header}" class="form-control" 
-                           value="${valor}"
-                           style="width:100%; background:#222; color:white; border:1px solid #444; padding:8px;">
+                <div class="modal-field">
+                    <label class="modal-label">${header.toUpperCase()}</label>
+                    <input type="text" id="field_${header}" class="modal-input" value="${valor}">
                 </div>`;
         });
         document.getElementById('dynamicModal').style.display = 'block';
@@ -187,7 +236,7 @@ async function loadTableData(dbName, tableName) {
         const dbName = dbSelector.value;
         const tableName = currentTableNameElem.textContent.trim();
         if (!dbName || tableName === "NombreTabla1") return alert("Selecciona una tabla");
-        abrirModal("➕ Nuevo Registro", false);
+        abrirModal("Nuevo Registro", false);
     };
 
     // EDITAR
@@ -206,7 +255,7 @@ async function loadTableData(dbName, tableName) {
         });
 
         currentEditId = seleccionado.value;
-        abrirModal("✏️ Editar Registro", true, datosPrevios);
+        abrirModal("Editar Registro", true, datosPrevios);
     };
 
     // ELIMINAR
@@ -220,7 +269,7 @@ async function loadTableData(dbName, tableName) {
         if (confirm(`¿Eliminar ${seleccionados.length} elementos?`)) {
             try {
                 for (let id of seleccionados) {
-                    await fetch(`http://localhost:4000/api/admin/eliminar/${dbName}/${tableName}/${id}`, {
+                    await fetch(`/api/admin/eliminar/${dbName}/${tableName}/${id}`, {
                         method: 'DELETE',
                         headers: { 'x-auth-token': token }
                     });
@@ -245,8 +294,8 @@ async function loadTableData(dbName, tableName) {
         });
 
         const url = editMode 
-            ? `http://localhost:4000/api/admin/editar/${dbName}/${tableName}/${currentEditId}`
-            : `http://localhost:4000/api/admin/crear/${dbName}/${tableName}`;
+            ? `/api/admin/editar/${dbName}/${tableName}/${currentEditId}`
+            : `/api/admin/crear/${dbName}/${tableName}`;
         
         const metodo = editMode ? 'PUT' : 'POST';
 
@@ -264,48 +313,41 @@ async function loadTableData(dbName, tableName) {
             }
         } catch (error) { alert("Error en el servidor"); }
     };
-    // --- LÓGICA DEL FILTRO (BUSCADOR) ---
-    if(searchInput) {
-        searchInput.addEventListener('input', (e) => {
-            const texto = e.target.value.toLowerCase();
-            
-            // 1. Filtramos sobre la copia global que guardamos arriba
-            const filtrados = datosGlobales.filter(item => {
-                return Object.values(item).some(val => 
-                    String(val).toLowerCase().includes(texto)
-                );
-            });
 
-            // 2. Volvemos a pintar la tabla manualmente con los resultados
-            const tableName = currentTableNameElem.textContent.toLowerCase();
-            // Detectamos qué columnas usar (si es productos, usuarios, etc)
-            let columnas = estructuras[tableName] || ['nombre']; 
-            
-            // Generamos el HTML de las filas filtradas
-            if (filtrados.length > 0) {
-                tableBody.innerHTML = filtrados.map(doc => `
-                    <tr>
-                        <td><input type="checkbox" value="${doc._id}"></td>
-                        ${columnas.map(col => {
-                            // Mapeo manual para campos que cambian de nombre en Gymshark
-                            let val = doc[col];
-                            if(val === undefined && col === 'stock') val = doc['inventory_quantity'];
-                            if(col === 'price') val = '$' + val;
-                            
-                            // Si el valor no existe, ponemos vacío
-                            let displayVal = val !== undefined ? val : '';
-                            
-                            // Si es un ID lo cortamos
-                            if (col === '_id') displayVal = '<code>' + String(displayVal).substring(0, 8) + '...</code>';
-                            
-                            return '<td>' + displayVal + '</td>';
-                        }).join('')}
-                    </tr>
-                `).join('');
-            } else {
-                tableBody.innerHTML = '<tr><td colspan="10" style="text-align:center;">No se encontraron coincidencias 🔍</td></tr>';
+    // PAGINACIÓN
+    if (prevBtn) {
+        prevBtn.addEventListener('click', () => {
+            if (!currentDB || !currentTable) return;
+            if (currentPage > 1) {
+                currentPage -= 1;
+                loadTableData(currentDB, currentTable, currentPage);
+                console.log(`Página ${currentPage}/${totalPages}`);
             }
         });
     }
+    if (nextBtn) {
+        nextBtn.addEventListener('click', () => {
+            if (!currentDB || !currentTable) return;
+            if (currentPage < totalPages) {
+                currentPage += 1;
+                loadTableData(currentDB, currentTable, currentPage);
+                console.log(`Página ${currentPage}/${totalPages}`);
+            }
+        });
+    }
+
+    // LOGOUT
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', () => {
+            localStorage.removeItem('token');
+            window.location.href = '../login/login.html';
+        });
+    }
+
     cargarDBs();
+
+    async function cargarVentas() {
+    const res = await fetch(`${API_BASE_URL}/ventas`);
+    const ventas = await res.json();
+}
 });
