@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import './Catalogo.css'; 
 
 const Catalogo = () => {
+    // 1. CONTEXTO Y ESTADOS BASE
     const { logout } = useAuth();
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -12,23 +13,41 @@ const Catalogo = () => {
     const [productos, setProductos] = useState([]); 
     const [carrito, setCarrito] = useState([]);
     const [busqueda, setBusqueda] = useState("");
-    const [cargando, setCargando] = useState(true); // Nuevo estado para controlar la carga inicial
+    const [cargando, setCargando] = useState(true);
 
+    // 2. ESTADOS DE PAGINACIÓN DINÁMICA (Requisito de Isaac)
+    const [pagina, setPagina] = useState(1);
+    const [totalPaginas, setTotalPaginas] = useState(1);
+
+    // 3. EFECTO DE CARGA CON LÍMITE DE 20
     useEffect(() => {
         const cargarCatalogo = async () => {
+            setCargando(true);
             try {
-                const url = 'https://dbgymshark.onrender.com/api/productos'; // API de Kevin
+                // Usamos la variable de entorno de Render
+                const baseURL = import.meta.env.VITE_API_URL || 'https://dbgymshark.onrender.com/api';
+                const url = `${baseURL}/productos?page=${pagina}&limit=20`; 
+                
                 const respuesta = await axios.get(url);
-                setProductos(respuesta.data); 
+                
+                // Sincronización con el backend de Kevin
+                // Ajustamos según si la API devuelve el objeto directo o un envoltorio con metadata
+                if (respuesta.data.productos) {
+                    setProductos(respuesta.data.productos);
+                    setTotalPaginas(respuesta.data.paginasTotales);
+                } else {
+                    setProductos(respuesta.data);
+                }
             } catch (error) {
                 console.error("Error al conectar con MAKIA API:", error);
             } finally {
-                setCargando(false); // Terminó la carga, sea con éxito o error
+                setCargando(false);
             }
         };
         cargarCatalogo();
-    }, []);
+    }, [pagina]); // Se dispara cada vez que cambia la página
 
+    // 4. FUNCIONES DE INTERACCIÓN
     const agregarAlCarrito = (prod) => {
         setCarrito([...carrito, prod]);
         setShowSuccessModal(true);
@@ -92,7 +111,6 @@ const Catalogo = () => {
                     </div>
 
                     <div className="products-grid">
-                        {/* 🚦 LÓGICA DE ESTADOS DE RENDERIZADO */}
                         {cargando ? (
                             <div className="loading-container">
                                 <p className="loading-text">Conectando con el servidor de Kevin...</p>
@@ -128,10 +146,29 @@ const Catalogo = () => {
                             ))
                         )}
                     </div>
+
+                    {/* 5. CONTROLES DE PAGINACIÓN (Para el reto de Isaac) */}
+                    <div className="pagination-container" style={{display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: '40px', gap: '20px'}}>
+                        <button 
+                            className="btn-paginacion" 
+                            disabled={pagina === 1} 
+                            onClick={() => { setPagina(prev => prev - 1); window.scrollTo(0, 0); }}
+                        >
+                            Anterior
+                        </button>
+                        <span className="page-info">Página <strong>{pagina}</strong> de {totalPaginas}</span>
+                        <button 
+                            className="btn-paginacion" 
+                            disabled={pagina === totalPaginas} 
+                            onClick={() => { setPagina(prev => prev + 1); window.scrollTo(0, 0); }}
+                        >
+                            Siguiente
+                        </button>
+                    </div>
                 </main>
             </div>
 
-            {/* Modales mantenidos igual */}
+            {/* Modales */}
             {isCartOpen && (
                 <div className="cart-modal">
                     <div className="cart-content">
@@ -146,6 +183,7 @@ const Catalogo = () => {
                                     <span>{item.precioMXN?.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' })}</span>
                                 </div>
                             ))}
+                            {carrito.length === 0 && <p style={{textAlign: 'center', padding: '20px'}}>Tu bolsa está vacía.</p>}
                         </div>
                     </div>
                 </div>
@@ -155,8 +193,8 @@ const Catalogo = () => {
                 <div className="order-modal">
                     <div className="order-content">
                         <i className="fas fa-check-circle success-icon"></i>
-                        <h2>¡LISTO!</h2>
-                        <button onClick={() => setShowSuccessModal(false)}>VOLVER</button>
+                        <h2>¡AGREGADO!</h2>
+                        <button onClick={() => setShowSuccessModal(false)}>CONTINUAR COMPRANDO</button>
                     </div>
                 </div>
             )}
