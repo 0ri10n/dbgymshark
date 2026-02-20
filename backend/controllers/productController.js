@@ -4,7 +4,7 @@ const axios = require('axios');
 exports.obtenerProductos = async (req, res) => {
     try {
         // 1. Obtenemos el catálogo desde MongoDB
-        const productos = await Producto.find();
+        const productos = await Producto.find().limit(20);
 
         // 2. Consultamos la API de ExchangeRate usando tu variable de entorno segura
         const urlAPI = `https://v6.exchangerate-api.com/v6/${process.env.EXCHANGE_API_KEY}/latest/USD`;
