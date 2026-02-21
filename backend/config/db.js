@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const connectDB = async () => {
     try {
-        const dbName = (process.env.PRODUCT_DB || '').trim();
+        const dbName = (process.env.PRODUCT_DB || 'DB').trim();
         const options = {
             socketTimeoutMS: 45000,
             serverSelectionTimeoutMS: 10000,
@@ -16,7 +16,7 @@ const connectDB = async () => {
 
         const conn = await mongoose.connect(process.env.MONGO_URI, options);
 
-        console.log(`MongoDB Conectado: ${conn.connection.host}`);
+        console.log(`MongoDB Conectado: ${conn.connection.host} | DB: ${conn.connection.name}`);
     } catch (error) {
         const allowStartWithoutDb = process.env.ALLOW_START_WITHOUT_DB === 'true';
         console.error(`Error de conexion MongoDB: ${error.message}`);

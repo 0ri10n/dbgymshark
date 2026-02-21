@@ -8,10 +8,12 @@ if (fs.existsSync(rootEnvPath)) {
     dotenv.config({ path: rootEnvPath });
 }
 
-// In development, override with .env.development when present
+// In development, override with .env.development when present.
+// Never auto-load local development env on Render deployments.
 const isDevelopment = process.env.NODE_ENV === 'development';
+const isRender = process.env.RENDER === 'true';
 const devEnvPath = path.resolve(__dirname, '../.env.development');
-if (isDevelopment && fs.existsSync(devEnvPath)) {
+if (isDevelopment && !isRender && fs.existsSync(devEnvPath)) {
     dotenv.config({ path: devEnvPath, override: true });
 }
 
