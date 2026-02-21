@@ -24,7 +24,8 @@ const Login = () => {
         
         try {
             // Kevin configuró el endpoint en Render
-            const url = 'https://dbgymshark.onrender.com/api/auth';
+            const baseURL = import.meta.env.VITE_API_URL || 'https://dbgymshark.onrender.com/api';
+            const url = `${baseURL}/auth/login`;
             const respuesta = await axios.post(url, { email, password });
 
             // Kevin nos devuelve el token y el rol

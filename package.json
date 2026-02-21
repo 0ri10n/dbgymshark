@@ -5,7 +5,10 @@
   "main": "index.js",
   "scripts": {
     "start": "node backend/server.js",
-    "dev": "nodemon backend/server.js"
+    "dev": "nodemon backend/server.js",
+    "dev:backend": "nodemon backend/server.js",
+    "dev:frontend": "npm --prefix frontend-react run dev",
+    "build:frontend": "npm --prefix frontend-react run build"
   },
   "keywords": [],
   "author": "",

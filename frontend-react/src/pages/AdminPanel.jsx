@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
+import './AdminPanel.css';
 
 const AdminPanel = () => {
-    const { user, logout } = useAuth(); // Obtenemos el usuario y la función de salida
-    //ESTADOS Y EFECTO DE PAGINACIÓN
+    const { user, logout } = useAuth();
     const [productos, setProductos] = useState([]);
     const [pagina, setPagina] = useState(1);
     const [totalPaginas, setTotalPaginas] = useState(1);
@@ -15,84 +15,85 @@ const AdminPanel = () => {
             setCargando(true);
             try {
                 const baseURL = import.meta.env.VITE_API_URL || 'https://dbgymshark.onrender.com/api';
-                // La URL cambia dinámicamente según la página actual
                 const url = `${baseURL}/productos?page=${pagina}&limit=20`;
                 const respuesta = await axios.get(url);
-                
+
                 if (respuesta.data.productos) {
+                    const paginas = respuesta.data.paginasTotales || respuesta.data.pagination?.pages || 1;
                     setProductos(respuesta.data.productos);
-                    setTotalPaginas(respuesta.data.paginasTotales);
+                    setTotalPaginas(paginas);
                 } else {
                     setProductos(respuesta.data);
+                    setTotalPaginas(1);
                 }
             } catch (error) {
-                console.error("Error al cargar productos en panel admin:", error);
+                console.error('Error al cargar productos en panel admin:', error);
             } finally {
                 setCargando(false);
             }
         };
+
         obtenerProductos();
     }, [pagina]);
 
     return (
-        <div className="admin-container" style={{ padding: '20px', fontFamily: 'sans-serif' }}>
-            <header style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '2px solid #000', paddingBottom: '10px' }}>
-                <h1>Panel de Administración - MAKIA</h1>
-                <div>
+        <div className="admin-container">
+            <header className="admin-header">
+                <h1>Panel de Administracion - MAKIA</h1>
+                <div className="admin-header-actions">
                     <span>Bienvenido, <strong>{user?.role}</strong></span>
-                    <button onClick={logout} style={{ marginLeft: '15px', cursor: 'pointer' }}>
-                        Cerrar Sesión
+                    <button onClick={logout} className="admin-logout-btn">
+                        Cerrar Sesion
                     </button>
                 </div>
             </header>
 
-            <main style={{ marginTop: '30px' }}>
-                <section className="admin-stats" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px', marginBottom: '40px' }}>
-                    <div style={{ background: '#f4f4f4', padding: '20px', textAlign: 'center' }}>
+            <main className="admin-main">
+                <section className="admin-stats">
+                    <div className="admin-stat-card">
                         <h3>Productos</h3>
                         <p>Listo para gestionar el inventario</p>
                     </div>
-                    <div style={{ background: '#f4f4f4', padding: '20px', textAlign: 'center' }}>
+                    <div className="admin-stat-card">
                         <h3>Ventas</h3>
                         <p>$0.00 MXN hoy</p>
                     </div>
-                    <div style={{ background: '#f4f4f4', padding: '20px', textAlign: 'center' }}>
+                    <div className="admin-stat-card">
                         <h3>Usuarios</h3>
                         <p>Base de datos activa</p>
                     </div>
                 </section>
 
                 <section className="admin-actions">
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                        <h2>Gestión de Catálogo (DBGymshark)</h2>
-                        <button style={{ padding: '10px 20px', background: '#000', color: '#fff', border: 'none', cursor: 'pointer' }}>
+                    <div className="admin-section-header">
+                        <h2>Gestion de Catalogo (DBGymshark)</h2>
+                        <button className="admin-add-btn">
                             + Agregar Nuevo Producto
                         </button>
                     </div>
-                    
-                    {/* TABLA DE PRODUCTOS DINÁMICA */}
+
                     {cargando ? (
                         <p>Cargando inventario del servidor...</p>
                     ) : (
-                        <div style={{ overflowX: 'auto' }}>
-                            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', marginBottom: '30px' }}>
+                        <div className="admin-table-wrapper">
+                            <table className="admin-table">
                                 <thead>
-                                    <tr style={{ background: '#111', color: '#fff' }}>
-                                        <th style={{ padding: '12px' }}>Título</th>
-                                        <th style={{ padding: '12px' }}>Precio (MXN)</th>
-                                        <th style={{ padding: '12px' }}>Tipo</th>
-                                        <th style={{ padding: '12px' }}>Acciones</th>
+                                    <tr>
+                                        <th>Titulo</th>
+                                        <th>Precio (MXN)</th>
+                                        <th>Tipo</th>
+                                        <th>Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {productos.map(prod => (
-                                        <tr key={prod._id} style={{ borderBottom: '1px solid #ddd' }}>
-                                            <td style={{ padding: '12px' }}>{prod.title}</td>
-                                            <td style={{ padding: '12px' }}>${prod.precioMXN}</td>
-                                            <td style={{ padding: '12px' }}>{prod.product_type || 'N/A'}</td>
-                                            <td style={{ padding: '12px' }}>
-                                                <button style={{ marginRight: '10px', cursor: 'pointer', padding: '5px 10px' }}>Editar</button>
-                                                <button style={{ cursor: 'pointer', color: '#fff', background: '#dc3545', border: 'none', padding: '5px 10px' }}>Eliminar</button>
+                                    {productos.map((prod) => (
+                                        <tr key={prod._id}>
+                                            <td>{prod.title}</td>
+                                            <td>${prod.precioMXN}</td>
+                                            <td>{prod.product_type || 'N/A'}</td>
+                                            <td className="admin-row-actions">
+                                                <button className="admin-edit-btn">Editar</button>
+                                                <button className="admin-delete-btn">Eliminar</button>
                                             </td>
                                         </tr>
                                     ))}
@@ -101,20 +102,19 @@ const AdminPanel = () => {
                         </div>
                     )}
 
-                    {/* CONTROLES DE PAGINACIÓN */}
-                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '20px' }}>
-                        <button 
-                            disabled={pagina === 1} 
-                            onClick={() => setPagina(prev => prev - 1)}
-                            style={{ padding: '8px 16px', cursor: pagina === 1 ? 'not-allowed' : 'pointer', background: '#ddd', border: 'none' }}
+                    <div className="pagination-container admin-pagination">
+                        <button
+                            className="btn-paginacion"
+                            disabled={pagina === 1}
+                            onClick={() => setPagina((prev) => prev - 1)}
                         >
                             Anterior
                         </button>
-                        <span>Página <strong>{pagina}</strong> de {totalPaginas}</span>
-                        <button 
-                            disabled={pagina === totalPaginas} 
-                            onClick={() => setPagina(prev => prev + 1)}
-                            style={{ padding: '8px 16px', cursor: pagina === totalPaginas ? 'not-allowed' : 'pointer', background: '#ddd', border: 'none' }}
+                        <span className="page-info">Pagina <strong>{pagina}</strong> de {totalPaginas}</span>
+                        <button
+                            className="btn-paginacion"
+                            disabled={pagina === totalPaginas}
+                            onClick={() => setPagina((prev) => prev + 1)}
                         >
                             Siguiente
                         </button>

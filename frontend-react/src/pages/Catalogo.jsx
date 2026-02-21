@@ -33,10 +33,12 @@ const Catalogo = () => {
                 // Sincronización con el backend de Kevin
                 // Ajustamos según si la API devuelve el objeto directo o un envoltorio con metadata
                 if (respuesta.data.productos) {
+                    const paginas = respuesta.data.paginasTotales || respuesta.data.pagination?.pages || 1;
                     setProductos(respuesta.data.productos);
-                    setTotalPaginas(respuesta.data.paginasTotales);
+                    setTotalPaginas(paginas);
                 } else {
                     setProductos(respuesta.data);
+                    setTotalPaginas(1);
                 }
             } catch (error) {
                 console.error("Error al conectar con MAKIA API:", error);
@@ -65,11 +67,11 @@ const Catalogo = () => {
             <header className="client-header">
                 <div className="logo">MAKIA</div>
                 <div className="header-icons">
-                    <div className="cart-wrapper" onClick={toggleCart} style={{cursor: 'pointer'}}>
+                    <div className="cart-wrapper" onClick={toggleCart}>
                         <i className="fas fa-shopping-bag"></i>
                         <span id="cartCount">{carrito.length}</span>
                     </div>
-                    <div className="user-menu-container" onClick={toggleUserMenu} style={{cursor: 'pointer'}}>
+                    <div className="user-menu-container" onClick={toggleUserMenu}>
                         <i className="far fa-user"></i>
                         {isUserMenuOpen && (
                             <div className="user-dropdown">
@@ -148,7 +150,7 @@ const Catalogo = () => {
                     </div>
 
                     {/* 5. CONTROLES DE PAGINACIÓN (Para el reto de Isaac) */}
-                    <div className="pagination-container" style={{display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: '40px', gap: '20px'}}>
+                    <div className="pagination-container">
                         <button 
                             className="btn-paginacion" 
                             disabled={pagina === 1} 

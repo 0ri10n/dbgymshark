@@ -38,7 +38,8 @@ const Registro = () => {
             const { confirmPassword: _, ...datosAEnviar } = formData;
 
             // 4. CONEXIÓN: Usamos la URL de Render de Kevin
-            const url = 'https://dbgymshark.onrender.com/api/usuarios';
+            const baseURL = import.meta.env.VITE_API_URL || 'https://dbgymshark.onrender.com/api';
+            const url = `${baseURL}/auth/registro`;
             const res = await axios.post(url, datosAEnviar);
             
             // 5. LOGIN: Pasamos token y role como espera tu contexto
