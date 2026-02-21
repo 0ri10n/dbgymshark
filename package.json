@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "postinstall": "npm --prefix frontend-react install",
+    "postinstall": "npm --prefix frontend-react install --include=dev",
+    "render:build": "npm install --include=dev && npm run build:frontend",
     "start": "npm run build:frontend && node backend/server.js",
     "dev": "nodemon backend/server.js",
     "dev:backend": "nodemon backend/server.js",
