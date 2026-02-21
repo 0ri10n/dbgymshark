@@ -8,6 +8,7 @@ const Catalogo = () => {
     const { logout } = useAuth();
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+    const [isFiltersOpen, setIsFiltersOpen] = useState(false);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
 
     const [productos, setProductos] = useState([]);
@@ -46,6 +47,28 @@ const Catalogo = () => {
         cargarCatalogo();
     }, [pagina]);
 
+    useEffect(() => {
+        const onResize = () => {
+            if (window.innerWidth > 768) {
+                setIsFiltersOpen(false);
+                document.body.style.overflow = '';
+            }
+        };
+
+        window.addEventListener('resize', onResize);
+        return () => window.removeEventListener('resize', onResize);
+    }, []);
+
+    useEffect(() => {
+        if (window.innerWidth <= 768) {
+            document.body.style.overflow = isFiltersOpen ? 'hidden' : '';
+        }
+
+        return () => {
+            document.body.style.overflow = '';
+        };
+    }, [isFiltersOpen]);
+
     const agregarAlCarrito = (prod) => {
         setCarrito([...carrito, prod]);
         setShowSuccessModal(true);
@@ -58,6 +81,8 @@ const Catalogo = () => {
 
     const toggleCart = () => setIsCartOpen(!isCartOpen);
     const toggleUserMenu = () => setIsUserMenuOpen(!isUserMenuOpen);
+    const toggleFilters = () => setIsFiltersOpen(!isFiltersOpen);
+    const closeFilters = () => setIsFiltersOpen(false);
 
     return (
         <div className="client-view">
@@ -84,8 +109,18 @@ const Catalogo = () => {
             </div>
 
             <div className="store-layout">
-                <aside className="filters-sidebar">
-                    <h2 className="sidebar-title">Filtros</h2>
+                <aside id="catalog-filters" className={`filters-sidebar ${isFiltersOpen ? 'is-open' : ''}`}>
+                    <div className="filters-sidebar-header">
+                        <h2 className="sidebar-title">Filtros</h2>
+                        <button
+                            type="button"
+                            className="filters-close-btn"
+                            onClick={closeFilters}
+                            aria-label="Cerrar filtros"
+                        >
+                            &times;
+                        </button>
+                    </div>
                     <div className="filter-section">
                         <h3>Talla</h3>
                         <div className="size-grid">
@@ -96,8 +131,26 @@ const Catalogo = () => {
                     </div>
                 </aside>
 
+                {isFiltersOpen && (
+                    <button
+                        type="button"
+                        className="filters-overlay"
+                        aria-label="Cerrar filtros"
+                        onClick={closeFilters}
+                    />
+                )}
+
                 <main className="shop-content">
                     <div className="shop-controls">
+                        <button
+                            type="button"
+                            className="filters-toggle-btn"
+                            aria-expanded={isFiltersOpen}
+                            aria-controls="catalog-filters"
+                            onClick={toggleFilters}
+                        >
+                            Filtros
+                        </button>
                         <div className="search-bar">
                             <i className="fas fa-search"></i>
                             <input

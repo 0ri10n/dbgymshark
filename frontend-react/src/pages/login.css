@@ -1,5 +1,6 @@
 .login-page-wrapper {
     min-height: 100vh;
+    min-height: 100svh;
     position: relative;
     overflow: hidden;
     background: radial-gradient(circle at top, rgba(64, 73, 101, 0.45), #0c0f17 62%);
@@ -162,4 +163,54 @@
 .link-register:hover,
 .forgot-pass:hover {
     color: #ffffff;
+}
+
+@media (max-width: 480px) {
+    .login-wrapper {
+        padding: 14px;
+    }
+
+    .login-container {
+        padding: 20px 16px;
+    }
+
+    .btn-main-action {
+        width: 100%;
+        max-width: 320px;
+    }
+}
+
+@media (max-height: 700px) {
+    .brand-background {
+        justify-content: flex-start;
+        padding-top: 15vh;
+    }
+
+    .login-wrapper {
+        align-items: flex-start;
+        overflow-y: auto;
+        padding-top: 16px;
+        padding-bottom: 16px;
+    }
+
+    .login-container {
+        margin-top: 8px;
+        margin-bottom: 8px;
+    }
+}
+
+@media (max-height: 520px) and (orientation: landscape) {
+    .brand-background {
+        gap: 8px;
+        padding-top: 24px;
+    }
+
+    .brand-title {
+        font-size: clamp(2rem, 7vw, 3.4rem);
+        letter-spacing: clamp(4px, 1.8vw, 10px);
+    }
+
+    .brand-subtitle {
+        font-size: 0.66rem;
+    }
 }

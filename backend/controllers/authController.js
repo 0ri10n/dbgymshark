@@ -18,12 +18,16 @@ const signSessionToken = ({ id, rol }) => {
 };
 
 const resolveDevUserRole = (email, password) => {
-    const adminEmail = (process.env.DEV_ADMIN_EMAIL || 'admin@makia.local').toLowerCase();
-    const adminPassword = process.env.DEV_ADMIN_PASSWORD || 'admin12345';
-    const clientEmail = (process.env.DEV_CLIENT_EMAIL || 'cliente@makia.local').toLowerCase();
-    const clientPassword = process.env.DEV_CLIENT_PASSWORD || 'cliente12345';
+    const adminEmail = String(process.env.DEV_ADMIN_EMAIL || '').toLowerCase();
+    const adminPassword = String(process.env.DEV_ADMIN_PASSWORD || '');
+    const clientEmail = String(process.env.DEV_CLIENT_EMAIL || '').toLowerCase();
+    const clientPassword = String(process.env.DEV_CLIENT_PASSWORD || '');
 
     const normalizedEmail = String(email || '').toLowerCase();
+
+    if (!adminEmail || !adminPassword || !clientEmail || !clientPassword) {
+        return null;
+    }
 
     if (normalizedEmail === adminEmail && password === adminPassword) {
         return { role: 'admin', id: 'dev-admin' };
@@ -40,10 +44,14 @@ exports.registrarUsuario = async (req, res) => {
     try {
         const { nombre, apellido, email, password } = req.body;
 
-        if (isDevAuthBypass() || !isDbConnected()) {
+        if (isDevAuthBypass()) {
             const role = 'cliente';
             const token = signSessionToken({ id: `dev-reg-${Date.now()}`, rol: role });
             return res.json({ token, role, nombre, apellido, email });
+        }
+
+        if (!isDbConnected()) {
+            return res.status(503).json({ msg: 'Servicio de autenticacion no disponible temporalmente' });
         }
 
         let usuario = await Usuario.findOne({ email });
@@ -70,7 +78,7 @@ exports.iniciarSesion = async (req, res) => {
     const { email, password } = req.body;
 
     try {
-        if (isDevAuthBypass() || !isDbConnected()) {
+        if (isDevAuthBypass()) {
             const devUser = resolveDevUserRole(email, password);
 
             if (!devUser) {
@@ -79,6 +87,10 @@ exports.iniciarSesion = async (req, res) => {
 
             const token = signSessionToken({ id: devUser.id, rol: devUser.role });
             return res.json({ token, role: devUser.role });
+        }
+
+        if (!isDbConnected()) {
+            return res.status(503).json({ msg: 'Servicio de autenticacion no disponible temporalmente' });
         }
 
         const usuario = await Usuario.findOne({ email });

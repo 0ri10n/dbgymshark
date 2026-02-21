@@ -1,0 +1,29 @@
+:root {
+    --bp-xs: 480px;
+    --bp-sm: 768px;
+    --bp-md: 1024px;
+
+    --page-pad-xl: 40px;
+    --page-pad-lg: 20px;
+    --page-pad-sm: 14px;
+    --touch-target: 44px;
+}
+
+@media (max-width: 1024px) {
+    :root {
+        --page-pad-xl: 22px;
+        --page-pad-lg: 16px;
+    }
+}
+
+@media (max-width: 768px) {
+    :root {
+        --page-pad-xl: 14px;
+        --page-pad-lg: 14px;
+    }
+}
+
+.safe-full-height {
+    min-height: 100vh;
+    min-height: 100svh;
+}

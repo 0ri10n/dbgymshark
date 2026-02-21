@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', () => {
+﻿document.addEventListener('DOMContentLoaded', () => {
     const API_BASE_URL = '/api';
 
     let carrito = JSON.parse(localStorage.getItem('makia_cart')) || [];
@@ -95,10 +95,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     imagenFinal = `https://cdn.shopify.com/s/files/1/0156/6146/products/${imagenFinal}`;
                 }
 
-                // 2. DATOS BÁSICOS
+                // 2. DATOS BÃSICOS
                 const nombre = p.TITLE || p.title || "Producto Gymshark";
                 const precio = p.PRICE || p.price || 0; 
-                // Usamos el handle o el ID para identificar el select de tallas de forma única
+                // Usamos el handle o el ID para identificar el select de tallas de forma Ãºnica
                 const productoId = p.handle || p._id;
 
                 // 3. GENERAR OPCIONES DE TALLA (Basado en variantes agrupadas)
@@ -148,7 +148,7 @@ document.addEventListener('DOMContentLoaded', () => {
         searchInput.oninput = (e) => loadProducts(e.target.value, e.target.value.trim() !== "", 1);
     }
 
-// --- LÓGICA DE CARRITO MEJORADA ---
+// --- LÃ“GICA DE CARRITO MEJORADA ---
     const cartModal = document.getElementById('cartModal');
     const closeCart = document.getElementById('closeCart');
     const cartItemsContainer = document.getElementById('cartItemsContainer');
@@ -156,7 +156,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const renderizarCarrito = () => {
         if (carrito.length === 0) {
-            cartItemsContainer.innerHTML = '<p style="color:#888; text-align:center; margin-top:20px;">Tu bolsa está vacía.</p>';
+            cartItemsContainer.innerHTML = '<p style="color:#888; text-align:center; margin-top:20px;">Tu bolsa estÃ¡ vacÃ­a.</p>';
             cartTotalValue.innerText = '$0.00';
         } else {
             cartItemsContainer.innerHTML = carrito.map((p, index) => `
@@ -214,7 +214,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.querySelectorAll('.size-grid button').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             
-            // Traducción simple para que coincida con Gymshark/MongoDB
+            // TraducciÃ³n simple para que coincida con Gymshark/MongoDB
             let tallaTaller = btn.innerText;
             if(tallaTaller === "XS") tallaTaller = "Extra Small";
             if(tallaTaller === "S")  tallaTaller = "Small";
@@ -236,7 +236,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     });
     
-// --- LÓGICA DE USUARIO Y SESIÓN ---
+// --- LÃ“GICA DE USUARIO Y SESIÃ“N ---
     const userIcon = document.getElementById('userIcon');
     const userDropdown = document.getElementById('userDropdown');
     const logoutBtn = document.getElementById('logoutBtn');
@@ -263,7 +263,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
                           
-    // --- LÓGICA DE FINALIZAR COMPRA ---
+    // --- LÃ“GICA DE FINALIZAR COMPRA ---
     const checkoutBtn = document.querySelector('.checkout-btn');
     const orderModal = document.getElementById('orderSuccessModal');
     const orderIdDisplay = document.getElementById('generatedOrderID');
@@ -271,7 +271,14 @@ document.addEventListener('DOMContentLoaded', () => {
     
 if (checkoutBtn) {
     checkoutBtn.addEventListener('click', async () => {
-        if (carrito.length === 0) return alert("Tu bolsa está vacía");
+        if (carrito.length === 0) return alert("Tu bolsa estÃ¡ vacÃ­a");
+        const token = localStorage.getItem('token');
+
+        if (!token) {
+            alert("Debes iniciar sesion para finalizar la compra");
+            window.location.href = '../login/login.html';
+            return;
+        }
 
         const randomID = Math.floor(Math.random() * 900000000000) + 100000000000;
         const totalCompra = carrito.reduce((sum, p) => sum + p.precio, 0);
@@ -279,7 +286,10 @@ if (checkoutBtn) {
         try {
             const res = await fetch(`${API_BASE_URL}/productos/ventas`, { 
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-auth-token': token
+                },
                 body: JSON.stringify({
                     id_venta: randomID,
                     productos: carrito,
@@ -297,7 +307,7 @@ if (checkoutBtn) {
                 carrito = [];
                 renderizarCarrito();
             } else {
-                alert("Error: " + (data.message || "No se pudo procesar la compra"));
+                alert("Error: " + (data.msg || data.message || "No se pudo procesar la compra"));
             }
         } catch (err) {
             alert("Error al procesar la compra");
@@ -305,7 +315,7 @@ if (checkoutBtn) {
     });
 }
 
-// Cerrar el modal de éxito
+// Cerrar el modal de Ã©xito
 closeSuccessBtn.addEventListener('click', () => {
     orderModal.style.display = 'none';
     location.reload(); 
@@ -326,3 +336,4 @@ window.prepararCompra = (id, nombre, precio) => {
     const cartModal = document.getElementById('cartModal');
     if (cartModal) cartModal.classList.add('active');
 };
+

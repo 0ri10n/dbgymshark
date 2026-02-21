@@ -12,7 +12,13 @@
     "dev:frontend": "npm --prefix frontend-react run dev",
     "dev:frontend:local": "npm --prefix frontend-react run dev -- --mode development",
     "start:local": "set NODE_ENV=development&& npm run build:frontend && node backend/server.js",
-    "build:frontend": "npm --prefix frontend-react run build"
+    "build:frontend": "npm --prefix frontend-react run build",
+    "db:up": "docker compose -f docker-compose.mongo.yml up -d",
+    "db:down": "docker compose -f docker-compose.mongo.yml down",
+    "import:data": "node backend/scripts/importCatalogCsv.js",
+    "import:data:local": "set NODE_ENV=development&& node backend/scripts/importCatalogCsv.js",
+    "import:catalog": "node backend/scripts/importCatalogCsv.js --file \"frontend-react/src/assets/db/gymshark_products.csv\"",
+    "import:catalog:local": "set NODE_ENV=development&& node backend/scripts/importCatalogCsv.js --file \"frontend-react/src/assets/db/gymshark_products.csv\""
   },
   "keywords": [],
   "author": "",
@@ -22,6 +28,7 @@
     "axios": "^1.13.5",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
+    "csv-parser": "^3.2.0",
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",

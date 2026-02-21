@@ -24,6 +24,6 @@ router.put('/:id', auth, admin, validarProducto, operatorCRUD.actualizarProducto
 router.delete('/:id', auth, admin, operatorCRUD.eliminarProducto);
 
 // Ruta de ventas
-router.post('/ventas', operatorCRUD.registrarVenta);
+router.post('/ventas', auth, operatorCRUD.registrarVenta);
 
 module.exports = router;

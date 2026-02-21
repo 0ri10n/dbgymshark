@@ -91,10 +91,10 @@ const AdminPanel = () => {
                                 <tbody>
                                     {productos.map((prod) => (
                                         <tr key={prod._id}>
-                                            <td>{prod.title}</td>
-                                            <td>${prod.precioMXN}</td>
-                                            <td>{prod.product_type || 'N/A'}</td>
-                                            <td className="admin-row-actions">
+                                            <td data-label="Titulo">{prod.title || prod.nombre || 'Producto'}</td>
+                                            <td data-label="Precio (MXN)">${prod.precioMXN}</td>
+                                            <td data-label="Tipo">{prod.product_type || 'N/A'}</td>
+                                            <td data-label="Acciones" className="admin-row-actions">
                                                 <button className="admin-edit-btn">Editar</button>
                                                 <button className="admin-delete-btn">Eliminar</button>
                                             </td>

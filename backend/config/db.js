@@ -2,13 +2,19 @@ const mongoose = require('mongoose');
 
 const connectDB = async () => {
     try {
-        const conn = await mongoose.connect(process.env.MONGO_URI, {
-            dbName: 'DB',
+        const dbName = (process.env.PRODUCT_DB || '').trim();
+        const options = {
             socketTimeoutMS: 45000,
             serverSelectionTimeoutMS: 10000,
             retryWrites: true,
             maxPoolSize: 10,
-        });
+        };
+
+        if (dbName) {
+            options.dbName = dbName;
+        }
+
+        const conn = await mongoose.connect(process.env.MONGO_URI, options);
 
         console.log(`MongoDB Conectado: ${conn.connection.host}`);
     } catch (error) {
