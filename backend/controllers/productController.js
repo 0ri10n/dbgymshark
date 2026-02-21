@@ -6,6 +6,31 @@ const mockProducts = require('../data/mockProducts');
 const DEFAULT_MXN_RATE = Number(process.env.DEV_MXN_RATE || 17.2);
 
 const normalizeSize = (value = '') => value.trim().toUpperCase();
+const normalizeText = (value = '') => String(value || '').trim();
+
+const pickFirstImage = (product = {}) => {
+    const directCandidates = [
+        product.image_principal,
+        product.imagen,
+        product.imagenUrl,
+    ]
+        .map(normalizeText)
+        .filter(Boolean);
+
+    if (directCandidates.length > 0) {
+        return directCandidates[0];
+    }
+
+    const rawImageSrc = normalizeText(product.image_src);
+    if (!rawImageSrc) return '';
+
+    const fromCsvList = rawImageSrc
+        .split(',')
+        .map((item) => item.trim())
+        .find(Boolean);
+
+    return fromCsvList || '';
+};
 
 const shouldUseMockData = () => {
     const forceMock = process.env.USE_MOCK_DATA === 'true';
@@ -22,6 +47,7 @@ const buildPaginatedResponse = (sourceProducts, page, limit, tasaMXN) => {
 
     const productosProcesados = productos.map((producto) => {
         const prodObj = { ...producto };
+        prodObj.image_principal = pickFirstImage(prodObj);
 
         if (typeof prodObj.price === 'number') {
             prodObj.precioMXN = Number((prodObj.price * tasaMXN).toFixed(2));
@@ -115,6 +141,7 @@ exports.obtenerProductos = async (req, res) => {
 
         const productosProcesados = productos.map((producto) => {
             const prodObj = producto.toObject();
+            prodObj.image_principal = pickFirstImage(prodObj);
 
             if (typeof prodObj.price === 'number') {
                 prodObj.precioMXN = Number((prodObj.price * tasaMXN).toFixed(2));

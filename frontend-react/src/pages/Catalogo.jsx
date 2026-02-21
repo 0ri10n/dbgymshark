@@ -4,6 +4,24 @@ import { useAuth } from '../context/AuthContext';
 import PaginationControls from '../components/PaginationControls';
 import './Catalogo.css';
 
+const getPrimaryImage = (prod = {}) => {
+    const directCandidates = [prod.imagen, prod.image_principal, prod.imagenUrl]
+        .map((value) => String(value || '').trim())
+        .filter(Boolean);
+
+    if (directCandidates.length > 0) {
+        return directCandidates[0];
+    }
+
+    const rawImageSrc = String(prod.image_src || '').trim();
+    if (!rawImageSrc) return '/placeholder.jpg';
+
+    return rawImageSrc
+        .split(',')
+        .map((item) => item.trim())
+        .find(Boolean) || '/placeholder.jpg';
+};
+
 const Catalogo = () => {
     const { logout } = useAuth();
     const [isCartOpen, setIsCartOpen] = useState(false);
@@ -178,7 +196,7 @@ const Catalogo = () => {
                                 <div key={prod._id} className="product-card">
                                     <div className="product-image-container">
                                         <img
-                                            src={prod.imagen || prod.image_principal || prod.imagenUrl || '/placeholder.jpg'}
+                                            src={getPrimaryImage(prod)}
                                             alt={prod.nombre || prod.title || 'Producto'}
                                             className="product-img"
                                         />
