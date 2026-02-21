@@ -10,8 +10,11 @@
    - `JWT_SECRET`
    - `EXCHANGE_API_KEY`
    - `VITE_API_URL` (ejemplo local: `http://localhost:4000/api`)
+   - `FRONTEND_TARGET=react`
 
 ## Ejecucion
-1. Backend: `npm run dev:backend` (o `npm run dev`).
-2. Frontend: `npm run dev:frontend`.
-3. Compilar frontend: `npm run build:frontend`.
+1. Desarrollo con React:
+   - Backend: `npm run dev:backend`
+   - Frontend React (Vite): `npm run dev:frontend`
+2. Produccion/local integrado:
+   - `npm start` (compila React y lo sirve desde `backend/server.js`)

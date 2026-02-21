@@ -1,61 +1,72 @@
 require('dotenv').config();
 
 const express = require('express');
-const dotenv = require('dotenv');
 const cors = require('cors');
-const connectDB = require('./config/db');
 const path = require('path');
+const fs = require('fs');
 
-// 1. Configuración de Entorno
-dotenv.config({ path: path.resolve(__dirname, '../.env') });
-
-// 2. Conectar a la Base de Datos
-connectDB();
+const connectDB = require('./config/db');
 
 const app = express();
 
-// 3. Middlewares Globales
+// Backend setup
+connectDB();
 app.use(cors());
 app.use(express.json());
 
-// 4. Importar Rutas
-const authRoutes = require('./routes/authRoutes'); 
+// API routes
+const authRoutes = require('./routes/authRoutes');
 const productRoutes = require('./routes/productRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 
-// 5. Usar Rutas de la API
-app.use('/api/auth', authRoutes); 
+app.use('/api/auth', authRoutes);
 app.use('/api/productos', productRoutes);
 app.use('/api/admin', adminRoutes);
 
-// --- RUTAS DEL FRONTEND ---
+// Frontend selection
+const frontendTarget = (process.env.FRONTEND_TARGET || 'react').toLowerCase();
+const reactDistPath = path.resolve(__dirname, '../frontend-react/dist');
+const legacyFrontendPath = path.resolve(__dirname, '../frontend');
+const reactIndexPath = path.join(reactDistPath, 'index.html');
+const shouldServeReact = frontendTarget === 'react' && fs.existsSync(reactIndexPath);
 
-// 1. Ruta raíz: Primero definimos que al entrar a "/" cargue el login
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, '../frontend/login/login.html'));
-});
+if (shouldServeReact) {
+    app.use(express.static(reactDistPath));
 
-// 2. Otras rutas específicas
-app.get('/store', (req, res) => {
-    res.sendFile(path.join(__dirname, '../frontend/clientview/client.html'));
-});
+    // Legacy frontend is still available under /legacy for compatibility
+    app.use('/legacy', express.static(legacyFrontendPath));
 
-app.get('/admin', (req, res) => {
-    res.sendFile(path.join(__dirname, '../frontend/adminview/admin.html'));
-});
+    app.get(/^(?!\/api).*/, (req, res) => {
+        res.sendFile(reactIndexPath);
+    });
 
-// 3. ARCHIVOS ESTÁTICOS: Al final para que no interfiera con las rutas anteriores
-app.use(express.static(path.join(__dirname, '../frontend')));
+    console.log(`Frontend target: React (${reactDistPath})`);
+} else {
+    app.get('/', (req, res) => {
+        res.sendFile(path.join(legacyFrontendPath, 'login/login.html'));
+    });
 
-// --- MANEJO DE ERRORES 404 (Opcional pero recomendado) ---
-// Si alguien busca una ruta que no existe, le mandamos al login o una página 404
-app.use((req, res) => {
-    res.status(404).send('Página no encontrada');
-});
+    app.get('/store', (req, res) => {
+        res.sendFile(path.join(legacyFrontendPath, 'clientview/client.html'));
+    });
 
-// 6. Arrancar el servidor
+    app.get('/admin', (req, res) => {
+        res.sendFile(path.join(legacyFrontendPath, 'adminview/admin.html'));
+    });
+
+    app.use(express.static(legacyFrontendPath));
+
+    app.use((req, res) => {
+        res.status(404).send('Pagina no encontrada');
+    });
+
+    console.warn('Frontend target: Legacy HTML/CSS/JS');
+    if (frontendTarget === 'react') {
+        console.warn(`React build not found at ${reactIndexPath}. Run: npm run build:frontend`);
+    }
+}
+
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
     console.log(`Servidor corriendo en el puerto ${PORT}`);
-    console.log(`Frontend servido desde: ${path.join(__dirname, '../frontend')}`);
 });
