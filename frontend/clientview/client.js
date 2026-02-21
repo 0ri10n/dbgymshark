@@ -4,28 +4,66 @@ document.addEventListener('DOMContentLoaded', () => {
     let carrito = JSON.parse(localStorage.getItem('makia_cart')) || [];
     let selectedSize = '';
     let filterStock = '';
+    let currentPage = 1;
+    let totalPages = 1;
+    const pageSize = 20;
 
     const grid = document.getElementById('productsGrid');
     const searchInput = document.getElementById('searchInput');
     const cartCount = document.getElementById('cartCount');
     const btnAbrirBolsa = document.getElementById('openCart');
+    const paginationControls = document.getElementById('paginationControls');
 
-    async function loadProducts(query = '', ignoreSize = false) {
+    function renderPagination() {
+        if (!paginationControls) return;
+
+        paginationControls.innerHTML = `
+            <button id="prevPageBtn" class="btn-paginacion" ${currentPage <= 1 ? 'disabled' : ''}>Anterior</button>
+            <span class="page-info">Pagina <strong>${currentPage}</strong> de ${totalPages}</span>
+            <button id="nextPageBtn" class="btn-paginacion" ${currentPage >= totalPages ? 'disabled' : ''}>Siguiente</button>
+        `;
+
+        const prevBtn = document.getElementById('prevPageBtn');
+        const nextBtn = document.getElementById('nextPageBtn');
+
+        if (prevBtn) {
+            prevBtn.onclick = () => {
+                if (currentPage <= 1) return;
+                const activeQuery = searchInput ? searchInput.value.trim() : '';
+                loadProducts(activeQuery, activeQuery !== '', currentPage - 1);
+                window.scrollTo(0, 0);
+            };
+        }
+
+        if (nextBtn) {
+            nextBtn.onclick = () => {
+                if (currentPage >= totalPages) return;
+                const activeQuery = searchInput ? searchInput.value.trim() : '';
+                loadProducts(activeQuery, activeQuery !== '', currentPage + 1);
+                window.scrollTo(0, 0);
+            };
+        }
+    }
+
+    async function loadProducts(query = '', ignoreSize = false, page = 1) {
         if (!grid) return;
         
         const tallaParaEnviar = ignoreSize ? '' : selectedSize;
+        currentPage = Math.max(parseInt(page, 10) || 1, 1);
 
         try {
-            const url = `${API_BASE_URL}/productos?search=${query}&talla=${tallaParaEnviar}&stock=${filterStock}`;
+            const url = `${API_BASE_URL}/productos?search=${encodeURIComponent(query)}&talla=${encodeURIComponent(tallaParaEnviar)}&stock=${filterStock}&page=${currentPage}&limit=${pageSize}`;
             const res = await fetch(url);
             
             if (!res.ok) throw new Error("Error en la respuesta del servidor");
 
             const data = await res.json();
             const listaProductos = data.productos || data; 
+            totalPages = Math.max(data.paginasTotales || data.pagination?.pages || 1, 1);
 
             if (!Array.isArray(listaProductos) || listaProductos.length === 0) {
                 grid.innerHTML = '<div style="color:white; padding:20px;">No se encontraron productos.</div>';
+                renderPagination();
                 return;
             }
 
@@ -97,15 +135,17 @@ document.addEventListener('DOMContentLoaded', () => {
                    </div>
                    `;
             }).join('');
+            renderPagination();
             
         } catch (err) {
             console.error("Error en fetch:", err);
             grid.innerHTML = `<div style="color:red; padding:20px;">Error: ${err.message}</div>`;
+            if (paginationControls) paginationControls.innerHTML = '';
         }
     }
 
     if (searchInput) {
-        searchInput.oninput = (e) => loadProducts(e.target.value, e.target.value.trim() !== "");
+        searchInput.oninput = (e) => loadProducts(e.target.value, e.target.value.trim() !== "", 1);
     }
 
 // --- LÓGICA DE CARRITO MEJORADA ---
@@ -165,7 +205,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // Carga inicial
-    loadProducts();
+    loadProducts('', false, 1);
     renderizarCarrito();
 
 
@@ -183,7 +223,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if(tallaTaller === "XL") tallaTaller = "Extra Large";
             
             selectedSize = tallaTaller; 
-            loadProducts();   
+            loadProducts('', false, 1);   
         };
     });
 
@@ -192,7 +232,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (check.parentElement.textContent.includes('Disponibles')) {
                 filterStock = check.checked ? 'true' : '';
             }
-            loadProducts();
+            loadProducts('', false, 1);
         };
     });
     
