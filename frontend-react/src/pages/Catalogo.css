@@ -156,43 +156,59 @@ body {
 
 .products-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 24px;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 40px;
 }
 
 .product-card {
-    background: linear-gradient(165deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.01));
-    border: 1px solid var(--border-color);
-    border-radius: 16px;
-    overflow: hidden;
-    transition: transform 0.2s ease;
+    position: relative;
+    background: transparent;
+    transition: transform 0.3s ease;
 }
 
 .product-card:hover {
-    transform: translateY(-4px);
+    transform: translateY(-5px);
+}
+
+.product-image-container {
+    background: #1a1a1a;
+    border-radius: 4px;
+    overflow: hidden;
+    height: 360px;
+    width: 100%;
+    position: relative;
 }
 
 .product-img {
     width: 100%;
-    aspect-ratio: 4 / 5;
+    height: 100%;
     object-fit: cover;
-    background: #11151f;
     display: block;
 }
 
 .product-info {
-    padding: 14px;
+    padding: 15px 0;
+    display: flex;
+    flex-direction: column;
 }
 
+.product-info h3,
 .product-info h4 {
-    margin: 0 0 8px;
-    font-size: 0.95rem;
+    font-size: 13px;
+    color: #ccc;
+    margin: 0 0 8px 0;
+    font-weight: 400;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
+.price,
 .product-price {
     margin: 0 0 12px;
-    color: var(--accent);
+    color: var(--text-white);
     font-weight: 700;
+    font-size: 15px;
 }
 
 .product-sizes {
@@ -212,13 +228,23 @@ body {
 
 .add-to-cart-btn {
     width: 100%;
-    border: 0;
-    border-radius: 10px;
-    background: var(--accent);
-    color: #0a111f;
-    font-weight: 700;
-    min-height: 42px;
+}
+
+.product-info button {
+    background: #fff;
+    color: #000;
+    border: none;
+    padding: 12px;
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
     cursor: pointer;
+    border-radius: 2px;
+    transition: background 0.2s;
+}
+
+.product-info button:hover {
+    background: #e0e0e0;
 }
 
 .loading-container,

@@ -123,14 +123,16 @@ const Catalogo = () => {
                         ) : (
                             productosFiltrados.map((prod) => (
                                 <div key={prod._id} className="product-card">
-                                    <img
-                                        src={prod.imagen || prod.image_principal || prod.imagenUrl || '/placeholder.jpg'}
-                                        alt={prod.nombre || prod.title || 'Producto'}
-                                        className="product-img"
-                                    />
+                                    <div className="product-image-container">
+                                        <img
+                                            src={prod.imagen || prod.image_principal || prod.imagenUrl || '/placeholder.jpg'}
+                                            alt={prod.nombre || prod.title || 'Producto'}
+                                            className="product-img"
+                                        />
+                                    </div>
                                     <div className="product-info">
-                                        <h4>{prod.nombre || prod.title || 'Producto'}</h4>
-                                        <p className="product-price">
+                                        <h3>{prod.nombre || prod.title || 'Producto'}</h3>
+                                        <p className="price">
                                             {prod.precioMXN?.toLocaleString('es-MX', {
                                                 style: 'currency',
                                                 currency: 'MXN',

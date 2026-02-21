@@ -1,9 +1,31 @@
-require('dotenv').config();
+const path = require('path');
+const fs = require('fs');
+const dotenv = require('dotenv');
+
+// Load base env first
+const rootEnvPath = path.resolve(__dirname, '../.env');
+if (fs.existsSync(rootEnvPath)) {
+    dotenv.config({ path: rootEnvPath });
+}
+
+// In development, override with .env.development when present
+const isDevelopment = process.env.NODE_ENV === 'development';
+const devEnvPath = path.resolve(__dirname, '../.env.development');
+if (isDevelopment && fs.existsSync(devEnvPath)) {
+    dotenv.config({ path: devEnvPath, override: true });
+}
+
+// Optional explicit env file override
+const explicitEnvFile = process.env.ENV_FILE;
+if (explicitEnvFile) {
+    const explicitPath = path.resolve(__dirname, `../${explicitEnvFile}`);
+    if (fs.existsSync(explicitPath)) {
+        dotenv.config({ path: explicitPath, override: true });
+    }
+}
 
 const express = require('express');
 const cors = require('cors');
-const path = require('path');
-const fs = require('fs');
 
 const connectDB = require('./config/db');
 
@@ -33,7 +55,7 @@ const shouldServeReact = frontendTarget === 'react' && fs.existsSync(reactIndexP
 if (shouldServeReact) {
     app.use(express.static(reactDistPath));
 
-    // Legacy frontend is still available under /legacy for compatibility
+    // Legacy frontend available under /legacy for compatibility
     app.use('/legacy', express.static(legacyFrontendPath));
 
     app.get(/^(?!\/api).*/, (req, res) => {
@@ -69,4 +91,7 @@ if (shouldServeReact) {
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
     console.log(`Servidor corriendo en el puerto ${PORT}`);
+    if (isDevelopment) {
+        console.log('Entorno: development');
+    }
 });

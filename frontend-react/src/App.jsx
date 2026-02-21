@@ -25,8 +25,11 @@ function App() {
         <Routes>
           {/* Rutas Públicas */}
           <Route path="/" element={<Catalogo />} />
+          <Route path="/clientview/client.html" element={<Catalogo />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/login/login.html" element={<Login />} />
           <Route path="/registro" element={<Registro />} />
+          <Route path="/registro/registro.html" element={<Registro />} />
 
           {/* Ruta Protegida: Solo el equipo con rol de admin puede entrar */}
           <Route 
@@ -36,6 +39,14 @@ function App() {
                 <AdminPanel />
               </ProtectedRoute>
             } 
+          />
+          <Route
+            path="/adminview/admin.html"
+            element={
+              <ProtectedRoute>
+                <AdminPanel />
+              </ProtectedRoute>
+            }
           />
           
           {/* Ruta para errores 404 */}

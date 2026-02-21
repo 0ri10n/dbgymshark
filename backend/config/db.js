@@ -12,7 +12,14 @@ const connectDB = async () => {
 
         console.log(`MongoDB Conectado: ${conn.connection.host}`);
     } catch (error) {
-        console.error(`Error: ${error.message}`);
+        const allowStartWithoutDb = process.env.ALLOW_START_WITHOUT_DB === 'true';
+        console.error(`Error de conexion MongoDB: ${error.message}`);
+
+        if (allowStartWithoutDb) {
+            console.warn('Continuando sin MongoDB por configuracion de desarrollo (ALLOW_START_WITHOUT_DB=true).');
+            return null;
+        }
+
         process.exit(1);
     }
 };
