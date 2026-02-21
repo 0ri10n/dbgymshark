@@ -1,0 +1,85 @@
+.app-pagination {
+    --pg-bg: #1f2937;
+    --pg-bg-hover: #374151;
+    --pg-bg-active: #2563eb;
+    --pg-text: #f9fafb;
+    --pg-text-active: #ffffff;
+    --pg-border: #374151;
+    --pg-muted: #9ca3af;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    margin-top: 28px;
+}
+
+.app-pagination__controls {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+}
+
+.app-pagination__btn {
+    border: 1px solid var(--pg-border);
+    border-radius: 10px;
+    background: var(--pg-bg);
+    color: var(--pg-text);
+    min-width: 42px;
+    min-height: 42px;
+    padding: 0 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.2s ease, opacity 0.2s ease;
+}
+
+.app-pagination__btn:hover:not(:disabled) {
+    background: var(--pg-bg-hover);
+    transform: translateY(-1px);
+}
+
+.app-pagination__btn:focus-visible {
+    outline: 2px solid var(--pg-bg-active);
+    outline-offset: 2px;
+}
+
+.app-pagination__btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.app-pagination__btn--icon {
+    width: 42px;
+    padding: 0;
+}
+
+.app-pagination__btn--page {
+    min-width: 44px;
+}
+
+.app-pagination__btn--active {
+    background: var(--pg-bg-active);
+    color: var(--pg-text-active);
+    border-color: var(--pg-bg-active);
+}
+
+.app-pagination__status {
+    color: var(--pg-muted);
+    font-size: 0.95rem;
+}
+
+@media (max-width: 768px) {
+    .app-pagination {
+        gap: 12px;
+    }
+
+    .app-pagination__controls {
+        gap: 6px;
+    }
+
+    .app-pagination__status {
+        width: 100%;
+        text-align: center;
+    }
+}

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
+import PaginationControls from '../components/PaginationControls';
 import './Catalogo.css';
 
 const Catalogo = () => {
@@ -149,29 +150,17 @@ const Catalogo = () => {
                         )}
                     </div>
 
-                    <div className="catalog-pagination-container">
-                        <button
-                            className="catalog-btn-paginacion"
-                            disabled={pagina === 1}
-                            onClick={() => {
-                                setPagina((prev) => prev - 1);
-                                window.scrollTo(0, 0);
-                            }}
-                        >
-                            Anterior
-                        </button>
-                        <span className="catalog-page-info">Pagina <strong>{pagina}</strong> de {totalPaginasSeguras}</span>
-                        <button
-                            className="catalog-btn-paginacion"
-                            disabled={pagina === totalPaginasSeguras}
-                            onClick={() => {
-                                setPagina((prev) => prev + 1);
-                                window.scrollTo(0, 0);
-                            }}
-                        >
-                            Siguiente
-                        </button>
-                    </div>
+                    <PaginationControls
+                        page={pagina}
+                        totalPages={totalPaginasSeguras}
+                        groupSize={6}
+                        className="catalog-pagination-theme"
+                        ariaLabel="Paginacion del catalogo"
+                        onPageChange={(nextPage) => {
+                            setPagina(nextPage);
+                            window.scrollTo(0, 0);
+                        }}
+                    />
                 </main>
             </div>
 

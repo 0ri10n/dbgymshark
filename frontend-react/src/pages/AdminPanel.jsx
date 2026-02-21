@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
+import PaginationControls from '../components/PaginationControls';
 import './AdminPanel.css';
 
 const AdminPanel = () => {
@@ -9,6 +10,7 @@ const AdminPanel = () => {
     const [pagina, setPagina] = useState(1);
     const [totalPaginas, setTotalPaginas] = useState(1);
     const [cargando, setCargando] = useState(false);
+    const totalPaginasSeguras = Math.max(Number(totalPaginas) || 1, 1);
 
     useEffect(() => {
         const obtenerProductos = async () => {
@@ -19,11 +21,12 @@ const AdminPanel = () => {
                 const respuesta = await axios.get(url);
 
                 if (respuesta.data.productos) {
-                    const paginas = respuesta.data.paginasTotales || respuesta.data.pagination?.pages || 1;
+                    const paginasRaw = respuesta.data.paginasTotales || respuesta.data.pagination?.pages || 1;
+                    const paginas = Math.max(Number(paginasRaw) || 1, 1);
                     setProductos(respuesta.data.productos);
                     setTotalPaginas(paginas);
                 } else {
-                    setProductos(respuesta.data);
+                    setProductos(Array.isArray(respuesta.data) ? respuesta.data : []);
                     setTotalPaginas(1);
                 }
             } catch (error) {
@@ -102,23 +105,14 @@ const AdminPanel = () => {
                         </div>
                     )}
 
-                    <div className="pagination-container admin-pagination">
-                        <button
-                            className="btn-paginacion"
-                            disabled={pagina === 1}
-                            onClick={() => setPagina((prev) => prev - 1)}
-                        >
-                            Anterior
-                        </button>
-                        <span className="page-info">Pagina <strong>{pagina}</strong> de {totalPaginas}</span>
-                        <button
-                            className="btn-paginacion"
-                            disabled={pagina === totalPaginas}
-                            onClick={() => setPagina((prev) => prev + 1)}
-                        >
-                            Siguiente
-                        </button>
-                    </div>
+                    <PaginationControls
+                        page={pagina}
+                        totalPages={totalPaginasSeguras}
+                        groupSize={8}
+                        className="admin-pagination-theme"
+                        ariaLabel="Paginacion del panel de administracion"
+                        onPageChange={(nextPage) => setPagina(nextPage)}
+                    />
                 </section>
             </main>
         </div>
