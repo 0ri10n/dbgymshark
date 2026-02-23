@@ -5,7 +5,6 @@ import PaginationControls from '../components/PaginationControls';
 import './Catalogo.css';
 
 const getPrimaryImage = (prod = {}) => {
-    // Prioriza la imagen principal, luego la del CSV
     const img = prod.image_principal || prod.imagen || (prod.image_src ? prod.image_src.split(',')[0] : '/placeholder.jpg');
     return img.trim();
 };
@@ -16,10 +15,13 @@ const Catalogo = () => {
     const [carrito, setCarrito] = useState([]);
     const [busqueda, setBusqueda] = useState('');
     const [cargando, setCargando] = useState(true);
+    
+    // ESTADOS PARA INTERACTIVIDAD
     const [tallasSeleccionadas, setTallasSeleccionadas] = useState({});
+    const [colorVisual, setColorVisual] = useState({}); // { idProducto: "Color Name" }
+    
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
-
     const [pagina, setPagina] = useState(1);
     const [totalPaginas, setTotalPaginas] = useState(1);
 
@@ -42,21 +44,30 @@ const Catalogo = () => {
         cargarCatalogo();
     }, [pagina]);
 
-    const agregarAlCarrito = (prod) => {
-        const tallasReales = (prod.tallasDisponibles || []).filter(t => t !== 'Única' && t !== 'N/A');
+    const agregarAlCarrito = (prod, colorElegido) => {
+        const tallasReales = (prod.sizes_available || []).filter(t => t !== 'Única' && t !== 'N/A' && t !== 'Default Title');
         const necesitaTalla = tallasReales.length > 0;
         
         const item = {
             ...prod,
-            tallaElegida: necesitaTalla ? tallasSeleccionadas[prod._id] : 'Única'
+            tallaElegida: necesitaTalla ? tallasSeleccionadas[prod._id] : 'Única',
+            colorElegido: colorElegido || (prod.colors_available?.[0] || 'N/A')
         };
 
         setCarrito([...carrito, item]);
         setShowSuccessModal(true);
     };
 
-    const seleccionarTalla = (id, talla) => {
-        setTallasSeleccionadas(prev => ({ ...prev, [id]: talla }));
+    // FUNCIÓN MEJORADA: Permite seleccionar y DESELECCIONAR
+    const toggleTalla = (id, talla) => {
+        setTallasSeleccionadas(prev => ({
+            ...prev,
+            [id]: prev[id] === talla ? null : talla
+        }));
+    };
+
+    const cambiarColorVisual = (id, color) => {
+        setColorVisual(prev => ({ ...prev, [id]: color }));
     };
 
     const productosFiltrados = productos.filter(p => 
@@ -109,13 +120,19 @@ const Catalogo = () => {
                             <div className="loading-container"><p>Cargando MAKIA...</p></div>
                         ) : (
                             productosFiltrados.map((prod) => {
-                                const tallasReales = (prod.tallasDisponibles || []).filter(t => t !== 'Única' && t !== 'N/A');
+                                // Lógica de tallas
+                                const tallasReales = (prod.sizes_available || []).filter(t => t !== 'Única' && t !== 'N/A' && t !== 'Default Title');
                                 const tieneTallas = tallasReales.length > 0;
+
+                                // Lógica de colores e imagen dinámica
+                                const colorActivo = colorVisual[prod._id] || (prod.colors_available?.[0]);
+                                const varianteColor = prod.variants?.find(v => v.color === colorActivo);
+                                const imagenAMostrar = varianteColor?.image || getPrimaryImage(prod);
 
                                 return (
                                     <div key={prod._id} className="product-card">
                                         <div className="product-image-container">
-                                            <img src={getPrimaryImage(prod)} alt={prod.title} className="product-img" />
+                                            <img src={imagenAMostrar} alt={prod.title} className="product-img" />
                                         </div>
                                         <div className="product-info">
                                             <h3>{prod.title}</h3>
@@ -123,13 +140,29 @@ const Catalogo = () => {
                                                 {prod.precioMXN?.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' })}
                                             </p>
 
+                                            {/* SELECTOR DE COLORES */}
+                                            {prod.colors_available?.length > 0 && (
+                                                <div className="color-selector">
+                                                    {prod.colors_available.map(col => (
+                                                        <button 
+                                                            key={col}
+                                                            className={`color-dot ${colorActivo === col ? 'active' : ''}`}
+                                                            style={{ backgroundColor: col.toLowerCase().includes('blue') ? '#1e3a8a' : col.toLowerCase() }}
+                                                            onClick={() => cambiarColorVisual(prod._id, col)}
+                                                            title={col}
+                                                        />
+                                                    ))}
+                                                </div>
+                                            )}
+
+                                            {/* SELECTOR DE TALLAS */}
                                             <div className="product-sizes">
                                                 {tieneTallas ? (
                                                     tallasReales.map(t => (
                                                         <button 
                                                             key={t}
                                                             className={`size-badge-btn ${tallasSeleccionadas[prod._id] === t ? 'activa' : ''}`}
-                                                            onClick={() => seleccionarTalla(prod._id, t)}
+                                                            onClick={() => toggleTalla(prod._id, t)}
                                                         >
                                                             {t}
                                                         </button>
@@ -139,7 +172,7 @@ const Catalogo = () => {
 
                                             <button 
                                                 className="add-to-cart-btn"
-                                                onClick={() => agregarAlCarrito(prod)}
+                                                onClick={() => agregarAlCarrito(prod, colorActivo)}
                                                 disabled={tieneTallas && !tallasSeleccionadas[prod._id]}
                                             >
                                                 {tieneTallas && !tallasSeleccionadas[prod._id] ? 'SELECCIONA TALLA' : 'AÑADIR A LA BOLSA'}
@@ -166,7 +199,9 @@ const Catalogo = () => {
                                 <div key={i} className="cart-item">
                                     <div className="cart-item-info">
                                         <span>{item.title}</span>
-                                        <span className="item-talla-label">TALLA: {item.tallaElegida}</span>
+                                        <span className="item-variant-label">
+                                            {item.tallaElegida} | {item.colorElegido}
+                                        </span>
                                     </div>
                                     <span>{item.precioMXN?.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' })}</span>
                                 </div>

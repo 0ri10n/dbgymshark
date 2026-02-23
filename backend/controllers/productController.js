@@ -1,6 +1,5 @@
 const mongoose = require('mongoose');
 const axios = require('axios');
-// Importante: Coincidir con el nombre del archivo Productos.js
 const Producto = require('../models/Productos'); 
 
 const getExchangeRate = async () => {
@@ -17,11 +16,17 @@ exports.obtenerProductos = async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 20;
+        const search = req.query.search || ''; 
         const tasaMXN = await getExchangeRate();
 
+        let filtro = {};
+        if (search) {
+            filtro.title = { $regex: search, $options: 'i' };
+        }
+
         const [productos, total] = await Promise.all([
-            Producto.find().skip((page - 1) * limit).limit(limit).lean(),
-            Producto.countDocuments()
+            Producto.find(filtro).skip((page - 1) * limit).limit(limit).lean(),
+            Producto.countDocuments(filtro)
         ]);
 
         const respuesta = productos.map(p => ({
@@ -29,46 +34,11 @@ exports.obtenerProductos = async (req, res) => {
             precioMXN: p.price_range?.min ? Number((p.price_range.min * tasaMXN).toFixed(2)) : 0
         }));
 
-        res.json({ productos: respuesta, pagination: { page, pages: Math.ceil(total / limit), total } });
+        res.json({ 
+            productos: respuesta, 
+            pagination: { page, pages: Math.ceil(total / limit), total } 
+        });
     } catch (error) {
         res.status(500).json({ msg: 'Error en el catálogo' });
-    }
-};
-
-exports.limpiarBaseDeDatos = async (req, res) => {
-    try {
-        const productos = await Producto.find({});
-        const mapa = {};
-        let eliminados = 0;
-
-        productos.forEach(p => {
-            const clave = (p.handle || p.title || '').trim().toLowerCase();
-            if (clave) {
-                if (!mapa[clave]) mapa[clave] = [];
-                mapa[clave].push(p);
-            }
-        });
-
-        for (const clave in mapa) {
-            const grupo = mapa[clave];
-            if (grupo.length > 1) {
-                const maestro = grupo[0];
-                // Fusionamos todas las versiones en variantes del primer producto
-                maestro.variants = grupo.map(item => ({
-                    size: item.sizes_available?.[0] || 'N/A',
-                    sku: `${item.handle || 'SKU'}-${Math.random().toString(36).substring(7)}`,
-                    price: item.price_range?.min || 0,
-                    inventory_quantity: 10
-                }));
-
-                await maestro.save(); 
-                const idsBorrar = grupo.slice(1).map(d => d._id);
-                await Producto.deleteMany({ _id: { $in: idsBorrar } });
-                eliminados += idsBorrar.length;
-            }
-        }
-        res.json({ msg: "Limpieza profunda exitosa", documentos_eliminados: eliminados });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
     }
 };

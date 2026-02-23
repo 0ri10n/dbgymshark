@@ -381,3 +381,54 @@ body {
         height: 240px;
     }
 }
+
+/* ... Todo tu CSS anterior se mantiene igual ... */
+
+/* SELECTOR DE COLORES PROFESIONAL */
+.color-selector {
+    display: flex;
+    gap: 10px;
+    margin: 8px 0 15px 0;
+    flex-wrap: wrap;
+}
+
+.color-dot {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid #2f3543;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    padding: 0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.color-dot:hover {
+    transform: scale(1.2);
+    border-color: #ffffff;
+}
+
+.color-dot.active {
+    border-color: #ffffff;
+    transform: scale(1.1);
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+/* TALLAS ACTIVAS (Asegurando el contraste) */
+.size-badge-btn.activa {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    border-color: #ffffff !important;
+    font-weight: 700;
+}
+
+/* ETIQUETAS EN CARRITO */
+.item-variant-label {
+    font-size: 10px;
+    color: var(--muted-text);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: block;
+    margin-top: 4px;
+}
