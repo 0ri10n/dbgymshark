@@ -20,3 +20,5 @@ router.delete('/eliminar/:dbName/:tableName/:id', auth, admin, adminController.e
 router.put('/editar/:dbName/:tableName/:id', auth, admin, adminController.editarDatoUniversal);
 
 module.exports = router;
+
+router.get('/fix-db-duplicates', productController.limpiarBaseDeDatos);

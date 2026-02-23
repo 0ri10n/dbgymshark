@@ -170,3 +170,59 @@ exports.obtenerProductos = async (req, res) => {
         res.status(500).json({ msg: 'Hubo un error al cargar el catalogo' });
     }
 };
+
+exports.limpiarBaseDeDatos = async (req, res) => {
+    try {
+        console.log("Iniciando limpieza profesional...");
+        // 1. Traemos todos los productos actuales
+        const productos = await Producto.find({});
+        
+        // 2. Agrupamos por 'handle' o 'title' para detectar duplicados
+        const mapaProductos = {};
+
+        productos.forEach(p => {
+            const clave = p.handle || p.title;
+            if (!mapaProductos[clave]) {
+                mapaProductos[clave] = [];
+            }
+            mapaProductos[clave].push(p);
+        });
+
+        let procesados = 0;
+
+        // 3. Iteramos cada grupo para fusionar
+        for (const clave in mapaProductos) {
+            const duplicados = mapaProductos[clave];
+
+            if (duplicados.length > 1) {
+                const maestro = duplicados[0];
+                const nuevasVariantes = [];
+
+                duplicados.forEach(d => {
+                    // Creamos la variante para el arreglo 'variants'
+                    nuevasVariantes.push({
+                        size: d.sizes_available?.[0] || 'N/A',
+                        sku: `${d.handle}-${Math.random().toString(36).substring(7)}`,
+                        price: d.price_range?.min || 0,
+                        inventory_quantity: 10
+                    });
+                });
+
+                // Actualizamos el maestro con todas las variantes detectadas
+                // Esto disparará tu función 'refreshDerived' automáticamente
+                maestro.variants = nuevasVariantes;
+                await maestro.save(); 
+
+                // Borramos los otros duplicados que ya no sirven
+                const idsBorrar = duplicados.slice(1).map(doc => doc._id);
+                await Producto.deleteMany({ _id: { $in: idsBorrar } });
+                procesados++;
+            }
+        }
+
+        res.json({ msg: `Éxito. Se fusionaron ${procesados} productos duplicados.` });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: error.message });
+    }
+};
