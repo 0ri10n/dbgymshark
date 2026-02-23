@@ -4,6 +4,25 @@ import { useAuth } from '../context/AuthContext';
 import PaginationControls from '../components/PaginationControls';
 import './Catalogo.css';
 
+// MAPA DE COLORES PARA MAKIA
+const COLOR_MAP = {
+    "Midnight Blue": "#1e3a8a",
+    "Base Green Marl": "#2d4d43",
+    "White": "#ffffff",
+    "Black": "#000000",
+    "Lats Blue": "#3b82f6",
+    "Evening Teal": "#134e4a",
+    "Burgundy": "#7f1d1d",
+    "Core Olive": "#3f6212",
+    "Charcoal": "#374151"
+};
+
+const getColorHex = (colorName) => {
+    if (!colorName) return "#ccc";
+    const baseColor = colorName.split('/')[0].trim();
+    return COLOR_MAP[baseColor] || "#555"; 
+};
+
 const getPrimaryImage = (prod = {}) => {
     const img = prod.image_principal || prod.imagen || (prod.image_src ? prod.image_src.split(',')[0] : '/placeholder.jpg');
     return img.trim();
@@ -16,12 +35,10 @@ const Catalogo = () => {
     const [busqueda, setBusqueda] = useState('');
     const [cargando, setCargando] = useState(true);
     
-    // ESTADOS PARA INTERACTIVIDAD
     const [tallasSeleccionadas, setTallasSeleccionadas] = useState({});
-    const [colorVisual, setColorVisual] = useState({}); // { idProducto: "Color Name" }
+    const [colorVisual, setColorVisual] = useState({}); 
     
     const [isCartOpen, setIsCartOpen] = useState(false);
-    const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [pagina, setPagina] = useState(1);
     const [totalPaginas, setTotalPaginas] = useState(1);
 
@@ -51,14 +68,13 @@ const Catalogo = () => {
         const item = {
             ...prod,
             tallaElegida: necesitaTalla ? tallasSeleccionadas[prod._id] : 'Única',
-            colorElegido: colorElegido || (prod.colors_available?.[0] || 'N/A')
+            colorElegido: colorElegido || (prod.colors_available?.[0] || 'Único')
         };
 
         setCarrito([...carrito, item]);
-        setShowSuccessModal(true);
+        alert("Producto añadido a tu bolsa MAKIA");
     };
 
-    // FUNCIÓN MEJORADA: Permite seleccionar y DESELECCIONAR
     const toggleTalla = (id, talla) => {
         setTallasSeleccionadas(prev => ({
             ...prev,
@@ -96,7 +112,7 @@ const Catalogo = () => {
                     <h2 className="sidebar-title">Filtros</h2>
                     <div className="filter-section">
                         <h3>Talla</h3>
-                        <div className="size-grid">
+                        <div className="size-grid-filter">
                             {['XS', 'S', 'M', 'L', 'XL', '2X'].map(t => <button key={t}>{t}</button>)}
                         </div>
                     </div>
@@ -108,7 +124,7 @@ const Catalogo = () => {
                             <i className="fas fa-search"></i>
                             <input
                                 type="text"
-                                placeholder="Que estas buscando hoy?"
+                                placeholder="¿Qué estás buscando hoy?"
                                 value={busqueda}
                                 onChange={(e) => setBusqueda(e.target.value)}
                             />
@@ -120,11 +136,9 @@ const Catalogo = () => {
                             <div className="loading-container"><p>Cargando MAKIA...</p></div>
                         ) : (
                             productosFiltrados.map((prod) => {
-                                // Lógica de tallas
                                 const tallasReales = (prod.sizes_available || []).filter(t => t !== 'Única' && t !== 'N/A' && t !== 'Default Title');
                                 const tieneTallas = tallasReales.length > 0;
 
-                                // Lógica de colores e imagen dinámica
                                 const colorActivo = colorVisual[prod._id] || (prod.colors_available?.[0]);
                                 const varianteColor = prod.variants?.find(v => v.color === colorActivo);
                                 const imagenAMostrar = varianteColor?.image || getPrimaryImage(prod);
@@ -140,38 +154,39 @@ const Catalogo = () => {
                                                 {prod.precioMXN?.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' })}
                                             </p>
 
-                                            {/* SELECTOR DE COLORES */}
+                                            {/* SELECTOR DE COLORES PROFESIONAL */}
                                             {prod.colors_available?.length > 0 && (
-                                                <div className="color-selector">
+                                                <div className="color-selector-scroll">
                                                     {prod.colors_available.map(col => (
                                                         <button 
                                                             key={col}
                                                             className={`color-dot ${colorActivo === col ? 'active' : ''}`}
-                                                            style={{ backgroundColor: col.toLowerCase().includes('blue') ? '#1e3a8a' : col.toLowerCase() }}
+                                                            style={{ backgroundColor: getColorHex(col) }}
                                                             onClick={() => cambiarColorVisual(prod._id, col)}
-                                                            title={col}
+                                                            title={col} // Muestra el nombre al pasar el cursor
                                                         />
                                                     ))}
                                                 </div>
                                             )}
 
-                                            {/* SELECTOR DE TALLAS */}
-                                            <div className="product-sizes">
+                                            {/* SELECTOR DE TALLAS LIMPIO (DROPDOWN) */}
+                                            <div className="size-selection-area">
                                                 {tieneTallas ? (
-                                                    tallasReales.map(t => (
-                                                        <button 
-                                                            key={t}
-                                                            className={`size-badge-btn ${tallasSeleccionadas[prod._id] === t ? 'activa' : ''}`}
-                                                            onClick={() => toggleTalla(prod._id, t)}
-                                                        >
-                                                            {t}
-                                                        </button>
-                                                    ))
-                                                ) : <span className="size-badge">Única</span>}
+                                                    <select 
+                                                        className="size-dropdown-select"
+                                                        value={tallasSeleccionadas[prod._id] || ""}
+                                                        onChange={(e) => toggleTalla(prod._id, e.target.value)}
+                                                    >
+                                                        <option value="">Seleccionar Talla</option>
+                                                        {tallasReales.map(t => (
+                                                            <option key={t} value={t}>{t}</option>
+                                                        ))}
+                                                    </select>
+                                                ) : <span className="size-label-unique">Talla Única</span>}
                                             </div>
 
                                             <button 
-                                                className="add-to-cart-btn"
+                                                className="add-to-cart-btn-makia"
                                                 onClick={() => agregarAlCarrito(prod, colorActivo)}
                                                 disabled={tieneTallas && !tallasSeleccionadas[prod._id]}
                                             >
@@ -187,6 +202,7 @@ const Catalogo = () => {
                 </main>
             </div>
 
+            {/* MODAL DEL CARRITO */}
             {isCartOpen && (
                 <div className="cart-modal" onClick={() => setIsCartOpen(false)}>
                     <div className="cart-content" onClick={e => e.stopPropagation()}>
@@ -198,12 +214,12 @@ const Catalogo = () => {
                             {carrito.map((item, i) => (
                                 <div key={i} className="cart-item">
                                     <div className="cart-item-info">
-                                        <span>{item.title}</span>
+                                        <span className="item-title">{item.title}</span>
                                         <span className="item-variant-label">
                                             {item.tallaElegida} | {item.colorElegido}
                                         </span>
                                     </div>
-                                    <span>{item.precioMXN?.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' })}</span>
+                                    <span className="item-price">{item.precioMXN?.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' })}</span>
                                 </div>
                             ))}
                         </div>
