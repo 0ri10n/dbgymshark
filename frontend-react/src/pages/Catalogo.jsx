@@ -34,6 +34,9 @@ const Catalogo = () => {
     const [busqueda, setBusqueda] = useState('');
     const [cargando, setCargando] = useState(true);
 
+    // NUEVO: Estado para rastrear qué talla eligió el usuario en cada producto
+    const [tallasSeleccionadas, setTallasSeleccionadas] = useState({});
+
     const [pagina, setPagina] = useState(1);
     const [totalPaginas, setTotalPaginas] = useState(1);
     const totalPaginasSeguras = Math.max(totalPaginas || 1, 1);
@@ -42,7 +45,7 @@ const Catalogo = () => {
         const cargarCatalogo = async () => {
             setCargando(true);
             try {
-                const baseURL = import.meta.env.VITE_API_URL || 'https://dbgymshark.onrender.com/api';
+                const baseURL = import.meta.env.VITE_API_URL || 'https://dbgymshark-ddk1.onrender.com/api';
                 const url = `${baseURL}/productos?page=${pagina}&limit=20`;
                 const respuesta = await axios.get(url);
 
@@ -87,9 +90,26 @@ const Catalogo = () => {
         };
     }, [isFiltersOpen]);
 
+    // MODIFICADO: Ahora recibe la talla seleccionada
     const agregarAlCarrito = (prod) => {
-        setCarrito([...carrito, prod]);
+        const tallaElegida = tallasSeleccionadas[prod._id];
+        
+        // Creamos un objeto que incluya la talla para la bolsa
+        const productoConTalla = {
+            ...prod,
+            tallaElegida: tallaElegida || 'N/A'
+        };
+
+        setCarrito([...carrito, productoConTalla]);
         setShowSuccessModal(true);
+    };
+
+    // NUEVO: Función para manejar el clic en las tallas
+    const seleccionarTalla = (idProducto, talla) => {
+        setTallasSeleccionadas(prev => ({
+            ...prev,
+            [idProducto]: talla
+        }));
     };
 
     const productosFiltrados = productos.filter((p) => {
@@ -209,13 +229,32 @@ const Catalogo = () => {
                                                 currency: 'MXN',
                                             }) || '$0.00 MXN'}
                                         </p>
+
+                                        {/* SECCIÓN DE TALLAS INTERACTIVAS */}
                                         <div className="product-sizes">
-                                            {(prod.tallasDisponibles || prod.sizes_available || []).map((talla) => (
-                                                <span key={talla} className="size-badge">{talla}</span>
-                                            ))}
+                                            {(prod.tallasDisponibles || prod.sizes_available || []).length > 0 ? (
+                                                (prod.tallasDisponibles || prod.sizes_available).map((talla) => (
+                                                    <button 
+                                                        key={talla} 
+                                                        className={`size-badge-btn ${tallasSeleccionadas[prod._id] === talla ? 'activa' : ''}`}
+                                                        onClick={() => seleccionarTalla(prod._id, talla)}
+                                                    >
+                                                        {talla}
+                                                    </button>
+                                                ))
+                                            ) : (
+                                                <span className="size-badge">Única</span>
+                                            )}
                                         </div>
-                                        <button className="add-to-cart-btn" onClick={() => agregarAlCarrito(prod)}>
-                                            Anadir a la bolsa
+
+                                        <button 
+                                            className="add-to-cart-btn" 
+                                            onClick={() => agregarAlCarrito(prod)}
+                                            disabled={(prod.tallasDisponibles || prod.sizes_available || []).length > 0 && !tallasSeleccionadas[prod._id]}
+                                        >
+                                            {(prod.tallasDisponibles || prod.sizes_available || []).length > 0 && !tallasSeleccionadas[prod._id] 
+                                                ? 'Selecciona Talla' 
+                                                : 'Anadir a la bolsa'}
                                         </button>
                                     </div>
                                 </div>
@@ -247,7 +286,10 @@ const Catalogo = () => {
                         <div className="cart-items-list">
                             {carrito.map((item, index) => (
                                 <div key={index} className="cart-item">
-                                    <span>{item.nombre || item.title || 'Producto'}</span>
+                                    <div className="cart-item-info">
+                                        <span>{item.nombre || item.title || 'Producto'}</span>
+                                        <span className="item-talla-label">Talla: {item.tallaElegida}</span>
+                                    </div>
                                     <span>{item.precioMXN?.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' }) || '$0.00 MXN'}</span>
                                 </div>
                             ))}
