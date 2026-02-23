@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const axios = require('axios');
-const Producto = require('../models/Producto'); 
+const Producto = require('../models/Productos'); 
 
 const DEFAULT_MXN_RATE = 18.0;
 
