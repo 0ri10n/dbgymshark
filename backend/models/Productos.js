@@ -32,6 +32,7 @@ function refreshDerived(doc) {
     const colors = [];
     let minPrice = Number.POSITIVE_INFINITY;
     let maxPrice = 0;
+
     doc.variants.forEach((v) => {
         if (v.size) sizes.push(v.size);
         if (v.color) colors.push(v.color);
@@ -40,36 +41,24 @@ function refreshDerived(doc) {
             if (v.price > maxPrice) maxPrice = v.price;
         }
     });
+
     doc.sizes_available = [...new Set(sizes)];
     doc.colors_available = [...new Set(colors)];
-    doc.price_range = minPrice === Number.POSITIVE_INFINITY ? { min: 0, max: 0 } : { min: minPrice, max: maxPrice };
+    doc.price_range = {
+        min: minPrice === Number.POSITIVE_INFINITY ? 0 : minPrice,
+        max: maxPrice
+    };
 }
 
-// CORRECCIÓN: Quitamos 'next' porque usamos async
-async function assertUniqueSkus(doc, currentId) {
-    const skus = (doc.variants || []).map((v) => v.sku).filter(Boolean);
-    if (skus.length !== new Set(skus).size) throw new Error('SKU duplicado dentro del producto');
-    if (skus.length === 0) return;
-    const conflict = await mongoose.models.Producto.findOne({
-        _id: { $ne: currentId || doc._id },
-        'variants.sku': { $in: skus }
-    }).lean();
-    if (conflict) throw new Error('SKU duplicado en otro producto');
-}
-
-ProductSchema.pre('save', async function () {
+// CORRECCIÓN: Quitamos 'next' de los parámetros porque usamos async/await
+ProductSchema.pre('save', async function() {
     refreshDerived(this);
-    await assertUniqueSkus(this);
 });
 
-ProductSchema.pre('findOneAndUpdate', async function () {
-    const update = this.getUpdate() || {};
-    const doc = update.$set || update;
-    if (doc.variants) {
-        refreshDerived(doc);
-        const currentId = this.getQuery()?._id;
-        await assertUniqueSkus(doc, currentId);
-    }
+ProductSchema.pre('findOneAndUpdate', async function() {
+    const update = this.getUpdate();
+    if (update.$set) refreshDerived(update.$set);
+    else refreshDerived(update);
 });
 
 module.exports = mongoose.model('Producto', ProductSchema);
