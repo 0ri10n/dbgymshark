@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import PaginationControls from '../components/PaginationControls';
 import './Catalogo.css';
 
-// MAPA DE COLORES EXTENDIDO (Basado en CSV y capturas)
+// MAPA DE COLORES (Asegúrate que los nombres coincidan con tu CSV)
 const COLOR_MAP = {
     "Midnight Blue": "#1e3a8a",
     "Lats Blue": "#3b82f6",
@@ -16,14 +16,11 @@ const COLOR_MAP = {
     "Core Olive": "#3f6212",
     "Charcoal": "#374151",
     "Mars Red": "#b91c1c",
-    "Deep Teal": "#064e3b",
-    "Forest Green": "#064e3b",
-    "Navy": "#1e3a8a"
+    "Deep Teal": "#064e3b"
 };
 
 const getColorHex = (colorName) => {
     if (!colorName) return "#555";
-    // Limpia el nombre si trae "/" (ej: Midnight Blue/Lats Blue)
     const baseColor = colorName.split('/')[0].trim();
     return COLOR_MAP[baseColor] || "#555"; 
 };
@@ -39,7 +36,6 @@ const Catalogo = () => {
     const [carrito, setCarrito] = useState([]);
     const [busqueda, setBusqueda] = useState('');
     const [cargando, setCargando] = useState(true);
-    
     const [tallasSeleccionadas, setTallasSeleccionadas] = useState({});
     const [colorVisual, setColorVisual] = useState({}); 
     const [isCartOpen, setIsCartOpen] = useState(false);
@@ -51,14 +47,13 @@ const Catalogo = () => {
             setCargando(true);
             try {
                 const baseURL = import.meta.env.VITE_API_URL || 'https://dbgymshark-ddk1.onrender.com/api';
-                // Añadimos la búsqueda a la petición para que funcione el filtro
                 const respuesta = await axios.get(`${baseURL}/productos?page=${pagina}&search=${busqueda}`);
                 if (respuesta.data.productos) {
                     setProductos(respuesta.data.productos);
                     setTotalPaginas(respuesta.data.pagination?.pages || 1);
                 }
             } catch (error) {
-                console.error('Error MAKIA API:', error);
+                console.error('Error MAKIA:', error);
             } finally {
                 setCargando(false);
             }
@@ -68,27 +63,13 @@ const Catalogo = () => {
 
     const agregarAlCarrito = (prod, colorElegido) => {
         const tallasReales = (prod.sizes_available || []).filter(t => t !== 'Única' && t !== 'N/A' && t !== 'Default Title');
-        const necesitaTalla = tallasReales.length > 0;
-        
         const item = {
             ...prod,
-            tallaElegida: necesitaTalla ? tallasSeleccionadas[prod._id] : 'Única',
-            colorElegido: colorElegido || (prod.colors_available?.[0] || 'Único')
+            tallaElegida: tallasReales.length > 0 ? tallasSeleccionadas[prod._id] : 'Única',
+            colorElegido: colorElegido || (prod.colors_available?.[0] || 'N/A')
         };
-
         setCarrito([...carrito, item]);
-        setIsCartOpen(true); 
-    };
-
-    const toggleTalla = (id, talla) => {
-        setTallasSeleccionadas(prev => ({
-            ...prev,
-            [id]: prev[id] === talla ? null : talla
-        }));
-    };
-
-    const cambiarColorVisual = (id, color) => {
-        setColorVisual(prev => ({ ...prev, [id]: color }));
+        setIsCartOpen(true);
     };
 
     return (
@@ -100,9 +81,7 @@ const Catalogo = () => {
                         <i className="fas fa-shopping-bag"></i>
                         <span id="cartCount">{carrito.length}</span>
                     </div>
-                    <div className="user-menu-container" onClick={logout}>
-                         <i className="far fa-user"></i>
-                    </div>
+                    <i className="far fa-user" onClick={logout} style={{cursor: 'pointer'}}></i>
                 </div>
             </header>
 
@@ -115,26 +94,28 @@ const Catalogo = () => {
                     <h2 className="sidebar-title">Filtros</h2>
                     <div className="filter-section">
                         <h3>Talla</h3>
-                        <div className="size-grid">
-                            {['XS', 'S', 'M', 'L', 'XL', '2X'].map(t => <button key={t}>{t}</button>)}
+                        <div className="sidebar-size-grid">
+                            {['XS', 'S', 'M', 'L', 'XL', '2X'].map(t => (
+                                <button key={t} className="filter-size-btn">{t}</button>
+                            ))}
                         </div>
                     </div>
                 </aside>
 
                 <main className="shop-content">
                     <div className="shop-controls">
-                        <div className="search-bar">
+                        <div className="search-bar-white">
                             <i className="fas fa-search"></i>
-                            <input
-                                type="text"
-                                placeholder="¿Qué estás buscando hoy?"
-                                value={busqueda}
-                                onChange={(e) => setBusqueda(e.target.value)}
+                            <input 
+                                type="text" 
+                                placeholder="¿Qué estás buscando hoy?" 
+                                value={busqueda} 
+                                onChange={(e) => setBusqueda(e.target.value)} 
                             />
                         </div>
                     </div>
 
-                    <div className="products-grid">
+                    <div className="products-grid-3">
                         {cargando ? (
                             <div className="loading-container"><p>Cargando MAKIA...</p></div>
                         ) : (
@@ -156,40 +137,38 @@ const Catalogo = () => {
                                                 {prod.precioMXN?.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' })}
                                             </p>
 
-                                            <div className="color-selector-scroll">
+                                            <div className="color-dots-container">
                                                 {prod.colors_available?.map(col => (
                                                     <button 
                                                         key={col}
                                                         className={`color-dot ${colorActivo === col ? 'active' : ''}`}
                                                         style={{ backgroundColor: getColorHex(col) }}
-                                                        onClick={() => cambiarColorVisual(prod._id, col)}
+                                                        onClick={() => setColorVisual(prev => ({ ...prev, [prod._id]: col }))}
                                                         title={col}
                                                     />
                                                 ))}
                                             </div>
 
-                                            <div className="size-selection-area">
+                                            <div className="card-actions">
                                                 {tieneTallas ? (
                                                     <select 
-                                                        className="size-dropdown-select"
+                                                        className="size-dropdown"
                                                         value={tallasSeleccionadas[prod._id] || ""}
-                                                        onChange={(e) => toggleTalla(prod._id, e.target.value)}
+                                                        onChange={(e) => setTallasSeleccionadas(prev => ({ ...prev, [prod._id]: e.target.value }))}
                                                     >
-                                                        <option value="">Selecciona Talla</option>
-                                                        {tallasReales.map(t => (
-                                                            <option key={t} value={t}>{t}</option>
-                                                        ))}
+                                                        <option value="">Seleccionar Talla</option>
+                                                        {tallasReales.map(t => <option key={t} value={t}>{t}</option>)}
                                                     </select>
-                                                ) : <span className="size-label-unique">Talla Única</span>}
-                                            </div>
+                                                ) : <div className="unique-size-box">Talla Única</div>}
 
-                                            <button 
-                                                className="add-to-cart-btn-makia"
-                                                onClick={() => agregarAlCarrito(prod, colorActivo)}
-                                                disabled={tieneTallas && !tallasSeleccionadas[prod._id]}
-                                            >
-                                                {tieneTallas && !tallasSeleccionadas[prod._id] ? 'SELECCIONA TALLA' : 'AÑADIR A LA BOLSA'}
-                                            </button>
+                                                <button 
+                                                    className="add-to-bag-btn"
+                                                    onClick={() => agregarAlCarrito(prod, colorActivo)}
+                                                    disabled={tieneTallas && !tallasSeleccionadas[prod._id]}
+                                                >
+                                                    {tieneTallas && !tallasSeleccionadas[prod._id] ? 'SELECCIONA TALLA' : 'AÑADIR A LA BOLSA'}
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 );
@@ -200,26 +179,24 @@ const Catalogo = () => {
                 </main>
             </div>
 
-            {/* MODAL DE LA BOLSA (Overlay completo) */}
             {isCartOpen && (
-                <div className="cart-modal-overlay" onClick={() => setIsCartOpen(false)}>
-                    <div className="cart-modal-content" onClick={e => e.stopPropagation()}>
-                        <div className="cart-modal-header">
+                <div className="cart-overlay" onClick={() => setIsCartOpen(false)}>
+                    <div className="cart-panel" onClick={e => e.stopPropagation()}>
+                        <div className="cart-header-modal">
                             <h2>TU BOLSA</h2>
-                            <span className="cart-close-icon" onClick={() => setIsCartOpen(false)}>&times;</span>
+                            <span className="close-x" onClick={() => setIsCartOpen(false)}>&times;</span>
                         </div>
-                        <div className="cart-items-container">
-                            {carrito.length === 0 ? <p>Tu bolsa está vacía</p> : carrito.map((item, i) => (
-                                <div key={i} className="cart-item-row">
-                                    <div className="cart-item-details">
-                                        <span className="cart-item-name">{item.title}</span>
-                                        <span className="cart-item-meta">{item.tallaElegida} | {item.colorElegido}</span>
+                        <div className="cart-list">
+                            {carrito.map((item, i) => (
+                                <div key={i} className="cart-row">
+                                    <div className="cart-text">
+                                        <p>{item.title}</p>
+                                        <small>{item.tallaElegida} | {item.colorElegido}</small>
                                     </div>
-                                    <span>{item.precioMXN?.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' })}</span>
+                                    <p>{item.precioMXN?.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' })}</p>
                                 </div>
                             ))}
                         </div>
-                        {carrito.length > 0 && <button className="checkout-btn-makia">PAGAR</button>}
                     </div>
                 </div>
             )}
