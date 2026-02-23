@@ -1,13 +1,14 @@
 const express = require('express');
 const router = express.Router();
 const adminController = require('../controllers/adminController');
-// 1. IMPORTAMOS el controlador de productos para la limpieza
-const productController = require('../controllers/productController');
+
+// Eliminamos la importación de productController ya que la limpieza
+// ahora se hace directamente desde los Playgrounds de VS Code.
 
 // Agregamos las llaves { } para extraer exactamente las funciones
 const { auth, admin } = require('../middleware/authMiddleware');
 
-// Rutas de Administración 
+// --- Rutas de Administración ---
 
 // 1. OBTENER ESTRUCTURA
 router.get('/dbs', auth, admin, adminController.obtenerBasesDeDatos);
@@ -21,8 +22,7 @@ router.post('/crear/:dbName/:tableName', auth, admin, adminController.crearDatoU
 router.delete('/eliminar/:dbName/:tableName/:id', auth, admin, adminController.eliminarDatoUniversal);
 router.put('/editar/:dbName/:tableName/:id', auth, admin, adminController.editarDatoUniversal);
 
-// 2. RUTA DE LIMPIEZA (La moví arriba del export para que funcione)
-// Nota: La dejamos sin 'auth' temporalmente para que puedas ejecutarla directo en el navegador
-router.get('/fix-db-duplicates', productController.limpiarBaseDeDatos);
+// La ruta de limpieza se ha eliminado de aquí por seguridad.
+// Recuerda que ahora usas tus scripts de VS Code para esto.
 
 module.exports = router;
