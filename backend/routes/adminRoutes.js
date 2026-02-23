@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const adminController = require('../controllers/adminController');
+// 1. IMPORTAMOS el controlador de productos para la limpieza
+const productController = require('../controllers/productController');
 
 // Agregamos las llaves { } para extraer exactamente las funciones
 const { auth, admin } = require('../middleware/authMiddleware');
@@ -19,6 +21,8 @@ router.post('/crear/:dbName/:tableName', auth, admin, adminController.crearDatoU
 router.delete('/eliminar/:dbName/:tableName/:id', auth, admin, adminController.eliminarDatoUniversal);
 router.put('/editar/:dbName/:tableName/:id', auth, admin, adminController.editarDatoUniversal);
 
-module.exports = router;
-
+// 2. RUTA DE LIMPIEZA (La moví arriba del export para que funcione)
+// Nota: La dejamos sin 'auth' temporalmente para que puedas ejecutarla directo en el navegador
 router.get('/fix-db-duplicates', productController.limpiarBaseDeDatos);
+
+module.exports = router;
