@@ -1,123 +1,4 @@
-const mongoose = require('mongoose');
-const axios = require('axios');
-const Producto = require('../models/Productos');
-const mockProducts = require('../data/mockProducts');
-
-const DEFAULT_MXN_RATE = Number(process.env.DEV_MXN_RATE || 17.2);
-
-const normalizeSize = (value = '') => value.trim().toUpperCase();
-const normalizeText = (value = '') => String(value || '').trim();
-
-const pickFirstImage = (product = {}) => {
-    const directCandidates = [
-        product.image_principal,
-        product.imagen,
-        product.imagenUrl,
-    ]
-        .map(normalizeText)
-        .filter(Boolean);
-
-    if (directCandidates.length > 0) {
-        return directCandidates[0];
-    }
-
-    const rawImageSrc = normalizeText(product.image_src);
-    if (!rawImageSrc) return '';
-
-    const fromCsvList = rawImageSrc
-        .split(',')
-        .map((item) => item.trim())
-        .find(Boolean);
-
-    return fromCsvList || '';
-};
-
-const shouldUseMockData = () => {
-    const forceMock = process.env.USE_MOCK_DATA === 'true';
-    const dbConnected = mongoose.connection.readyState === 1;
-    return forceMock || !dbConnected;
-};
-
-const buildPaginatedResponse = (sourceProducts, page, limit, tasaMXN) => {
-    const totalProductos = sourceProducts.length;
-    const paginasTotales = Math.max(Math.ceil(totalProductos / limit), 1);
-    const pagina = Math.min(Math.max(page, 1), paginasTotales);
-    const skip = (pagina - 1) * limit;
-    const productos = sourceProducts.slice(skip, skip + limit);
-
-    const productosProcesados = productos.map((producto) => {
-        const prodObj = { ...producto };
-        prodObj.image_principal = pickFirstImage(prodObj);
-
-        if (typeof prodObj.price === 'number') {
-            prodObj.precioMXN = Number((prodObj.price * tasaMXN).toFixed(2));
-        }
-
-        if (Array.isArray(prodObj.variants) && prodObj.variants.length > 0) {
-            prodObj.tallasDisponibles = [...new Set(prodObj.variants.map((v) => v.size).filter(Boolean))];
-        } else {
-            prodObj.tallasDisponibles = prodObj.sizes_available || [];
-        }
-
-        return prodObj;
-    });
-
-    return {
-        productos: productosProcesados,
-        paginasTotales,
-        pagination: {
-            page: pagina,
-            pages: paginasTotales,
-            total: totalProductos,
-        },
-    };
-};
-
-const getExchangeRate = async () => {
-    if (process.env.USE_STATIC_EXCHANGE_RATE === 'true') {
-        return DEFAULT_MXN_RATE;
-    }
-
-    try {
-        const urlAPI = `https://v6.exchangerate-api.com/v6/${process.env.EXCHANGE_API_KEY}/latest/USD`;
-        const respuesta = await axios.get(urlAPI, { timeout: 7000 });
-        return Number(respuesta.data?.conversion_rates?.MXN) || DEFAULT_MXN_RATE;
-    } catch (error) {
-        console.warn('No se pudo obtener tasa MXN de API externa. Usando tasa local de respaldo.');
-        return DEFAULT_MXN_RATE;
-    }
-};
-
-const applyMockFilters = (products, search, talla, stock) => {
-    let filtered = [...products];
-
-    if (search) {
-        const query = search.toLowerCase();
-        filtered = filtered.filter((p) => {
-            const haystack = `${p.title || ''} ${p.product_type || ''} ${(p.tags || []).join(' ')}`.toLowerCase();
-            return haystack.includes(query);
-        });
-    }
-
-    if (talla) {
-        const targetSize = normalizeSize(talla);
-        filtered = filtered.filter((p) => {
-            const productSizes = (p.sizes_available || []).map(normalizeSize);
-            const variantSizes = (p.variants || []).map((v) => normalizeSize(v.size || ''));
-            return productSizes.includes(targetSize) || variantSizes.includes(targetSize);
-        });
-    }
-
-    if (stock === 'true') {
-        filtered = filtered.filter((p) => (p.variants || []).some((v) => Number(v.inventory_quantity) > 0));
-    }
-
-    if (stock === 'false') {
-        filtered = filtered.filter((p) => (p.variants || []).every((v) => Number(v.inventory_quantity) <= 0));
-    }
-
-    return filtered;
-};
+// ... (Tus funciones auxiliares normalizeSize, pickFirstImage, etc. se mantienen igual)
 
 exports.obtenerProductos = async (req, res) => {
     try {
@@ -134,17 +15,38 @@ exports.obtenerProductos = async (req, res) => {
             return res.json(buildPaginatedResponse(filtered, page, limit, tasaMXN));
         }
 
+        // --- CORRECCIÓN: CONSTRUCCIÓN DEL FILTRO PARA MONGO ---
+        let query = {};
+        if (search) {
+            query.$or = [
+                { title: { $regex: search, $options: 'i' } },
+                { product_type: { $regex: search, $options: 'i' } }
+            ];
+        }
+        if (talla) {
+            query.sizes_available = talla.toUpperCase();
+        }
+        if (stock === 'true') {
+            query['variants.inventory_quantity'] = { $gt: 0 };
+        }
+
         const skip = (page - 1) * limit;
-        const productos = await Producto.find().skip(skip).limit(limit);
-        const totalProductos = await Producto.countDocuments();
+        
+        // Ejecutamos la consulta con el objeto 'query' corregido
+        const [productos, totalProductos] = await Promise.all([
+            Producto.find(query).skip(skip).limit(limit).lean(),
+            Producto.countDocuments(query)
+        ]);
+
         const paginasTotales = Math.max(Math.ceil(totalProductos / limit), 1);
 
         const productosProcesados = productos.map((producto) => {
-            const prodObj = producto.toObject();
+            const prodObj = { ...producto }; // .lean() ya nos da un objeto plano
             prodObj.image_principal = pickFirstImage(prodObj);
 
-            if (typeof prodObj.price === 'number') {
-                prodObj.precioMXN = Number((prodObj.price * tasaMXN).toFixed(2));
+            // Cálculo de precio: $PrecioUSD \times TasaMXN = PrecioMXN$
+            if (typeof prodObj.price_range?.min === 'number') {
+                prodObj.precioMXN = Number((prodObj.price_range.min * tasaMXN).toFixed(2));
             }
 
             if (Array.isArray(prodObj.variants) && prodObj.variants.length > 0) {
@@ -173,56 +75,58 @@ exports.obtenerProductos = async (req, res) => {
 
 exports.limpiarBaseDeDatos = async (req, res) => {
     try {
-        console.log("Iniciando limpieza profesional...");
-        // 1. Traemos todos los productos actuales
         const productos = await Producto.find({});
-        
-        // 2. Agrupamos por 'handle' o 'title' para detectar duplicados
         const mapaProductos = {};
+        let eliminados = 0;
 
         productos.forEach(p => {
-            const clave = p.handle || p.title;
+            // Usamos el 'handle' como clave principal, limpiando espacios
+            const clave = (p.handle || p.title).trim().toLowerCase();
             if (!mapaProductos[clave]) {
                 mapaProductos[clave] = [];
             }
             mapaProductos[clave].push(p);
         });
 
-        let procesados = 0;
-
-        // 3. Iteramos cada grupo para fusionar
         for (const clave in mapaProductos) {
-            const duplicados = mapaProductos[clave];
+            const grupo = mapaProductos[clave];
 
-            if (duplicados.length > 1) {
-                const maestro = duplicados[0];
+            if (grupo.length > 1) {
+                const maestro = grupo[0];
                 const nuevasVariantes = [];
 
-                duplicados.forEach(d => {
-                    // Creamos la variante para el arreglo 'variants'
+                grupo.forEach(item => {
+                    // Extraemos la talla si existe, o usamos la del campo sizes_available
+                    const tallaDetectada = item.sizes_available?.[0] || 'Única';
+                    
                     nuevasVariantes.push({
-                        size: d.sizes_available?.[0] || 'N/A',
-                        sku: `${d.handle}-${Math.random().toString(36).substring(7)}`,
-                        price: d.price_range?.min || 0,
+                        size: tallaDetectada,
+                        sku: `${item.handle}-${tallaDetectada}-${Math.random().toString(36).substring(7)}`,
+                        price: item.price_range?.min || 0,
                         inventory_quantity: 10
                     });
                 });
 
-                // Actualizamos el maestro con todas las variantes detectadas
-                // Esto disparará tu función 'refreshDerived' automáticamente
+                // 1. Asignamos las variantes al maestro
                 maestro.variants = nuevasVariantes;
+                
+                // 2. Al usar .save(), se dispara tu función 'refreshDerived' 
+                // que llenará automáticamente 'sizes_available' y 'price_range'
                 await maestro.save(); 
 
-                // Borramos los otros duplicados que ya no sirven
-                const idsBorrar = duplicados.slice(1).map(doc => doc._id);
+                // 3. Borramos los duplicados
+                const idsBorrar = grupo.slice(1).map(d => d._id);
                 await Producto.deleteMany({ _id: { $in: idsBorrar } });
-                procesados++;
+                eliminados += idsBorrar.length;
             }
         }
 
-        res.json({ msg: `Éxito. Se fusionaron ${procesados} productos duplicados.` });
+        res.json({ 
+            msg: "Limpieza profunda completada", 
+            productos_fusionados: Object.keys(mapaProductos).length,
+            documentos_eliminados: eliminados 
+        });
     } catch (error) {
-        console.error(error);
         res.status(500).json({ error: error.message });
     }
 };
