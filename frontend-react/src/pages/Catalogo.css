@@ -1,19 +1,12 @@
-/* --- VARIABLES Y RESET --- */
 :root {
     --bg-black: #050508;
-    --surface: #0e1017;
-    --surface-soft: #171b26;
     --text-white: #ffffff;
-    --muted-text: #aeb7c5;
     --border-color: #2f3543;
-    --accent: #d9fb56; /* Verde Neón MAKIA */
+    --accent: #d9fb56;
     --page-pad-xl: 5%;
-    --touch-target: 44px;
 }
 
-* {
-    box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
 body {
     margin: 0;
@@ -39,15 +32,9 @@ body {
     top: 0;
     z-index: 1001;
     border-bottom: 1px solid var(--border-color);
-    backdrop-filter: blur(10px);
 }
 
-.logo {
-    font-weight: 800;
-    font-size: 26px;
-    letter-spacing: 3px;
-    color: var(--text-white);
-}
+.logo { font-weight: 800; font-size: 26px; letter-spacing: 3px; }
 
 .header-icons {
     display: flex;
@@ -55,40 +42,23 @@ body {
     align-items: center;
 }
 
-.cart-wrapper {
-    position: relative;
+.cart-wrapper, .user-menu-container {
     cursor: pointer;
     font-size: 22px;
-    color: #fff;
+    position: relative;
 }
 
 #cartCount {
-    position: absolute;
-    top: -10px;
-    right: -12px;
-    background: var(--accent);
-    color: #000;
-    font-size: 11px;
-    padding: 2px 6px;
-    border-radius: 10px;
-    font-weight: bold;
+    position: absolute; top: -10px; right: -12px;
+    background: var(--accent); color: #000;
+    font-size: 11px; padding: 2px 6px; border-radius: 10px; font-weight: bold;
 }
 
-/* --- HERO BANNER (Tamaño Estable) --- */
-.hero-banner {
-    width: 100%;
-    height: 300px; /* Evita que crezca demasiado */
-    overflow: hidden;
-}
+/* --- BANNER --- */
+.hero-banner { width: 100%; height: 320px; overflow: hidden; }
+.hero-banner img { width: 100%; height: 100%; object-fit: cover; }
 
-.hero-banner img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-}
-
-/* --- LAYOUT PRINCIPAL --- */
+/* --- LAYOUT --- */
 .store-layout {
     display: grid;
     grid-template-columns: 250px minmax(0, 1fr);
@@ -98,287 +68,93 @@ body {
     gap: 32px;
 }
 
-/* --- SIDEBAR FILTERS --- */
+/* --- FILTROS Y BUSCADOR --- */
 .filters-sidebar {
-    align-self: start;
-    position: sticky;
-    top: 94px;
     background: rgba(12, 15, 22, 0.75);
     border: 1px solid var(--border-color);
-    border-radius: 14px;
-    padding: 18px;
-}
-
-.sidebar-title {
-    font-size: 1.1rem;
-    margin-bottom: 20px;
-}
-
-.size-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
+    padding: 20px;
+    border-radius: 10px;
 }
 
 .size-grid button {
-    background: #fff;
-    border: none;
-    color: #000;
-    padding: 8px;
-    border-radius: 4px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: 0.2s;
+    background: #fff; color: #000; border: none;
+    padding: 8px; border-radius: 4px; font-weight: bold; cursor: pointer;
 }
 
-/* --- SEARCH BAR --- */
-.shop-controls {
-    display: flex;
-    justify-content: flex-end;
-    margin-bottom: 24px;
-}
+.shop-controls { display: flex; justify-content: flex-end; margin-bottom: 25px; }
 
 .search-bar {
-    display: flex;
-    align-items: center;
-    background: #fff;
-    padding: 10px 15px;
-    border-radius: 8px;
-    width: 100%;
-    max-width: 400px;
+    display: flex; align-items: center;
+    background: #fff; padding: 10px 15px; border-radius: 8px;
+    width: 100%; max-width: 380px;
 }
 
-.search-bar input {
-    border: none;
-    outline: none;
-    width: 100%;
-    color: #000;
-    font-size: 14px;
-    margin-left: 10px;
-}
+.search-bar input { border: none; outline: none; width: 100%; color: #000; margin-left: 10px; }
+.search-bar i { color: #555; }
 
-.search-bar i {
-    color: #555;
-}
-
-/* --- PRODUCT GRID --- */
+/* --- PRODUCTOS (Tamaño recuperado) --- */
 .products-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 40px;
 }
 
-.product-card {
-    display: flex;
-    flex-direction: column;
-    background: transparent;
-    transition: transform 0.3s ease;
-}
-
-.product-card:hover {
-    transform: translateY(-5px);
-}
-
 .product-image-container {
     background: #1a1a1a;
     border-radius: 8px;
     overflow: hidden;
-    height: 380px;
-    width: 100%;
+    height: 380px; /* Tamaño estable de imagen */
 }
 
-.product-img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-}
+.product-img { width: 100%; height: 100%; object-fit: cover; }
 
-.product-info {
-    padding: 15px 0;
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-}
-
-.product-info h3 {
-    font-size: 14px;
-    color: var(--muted-text);
-    margin: 0 0 8px 0;
-    font-weight: 400;
-}
-
-.price {
-    margin: 0 0 12px;
-    color: var(--text-white);
-    font-weight: 700;
-    font-size: 16px;
-}
-
-/* --- SELECTOR DE COLORES (Sin Cortes) --- */
+/* --- COLORES (Sin recortes) --- */
 .color-selector-scroll {
-    display: flex;
-    gap: 12px;
-    margin-bottom: 15px;
-    padding: 8px 4px; /* Evita que el anillo de selección se corte */
-    overflow-x: auto;
-    scrollbar-width: none;
-}
-
-.color-selector-scroll::-webkit-scrollbar {
-    display: none;
+    display: flex; gap: 12px; margin: 15px 0;
+    padding: 10px 5px; /* Padding para evitar que el anillo se corte */
+    overflow: visible; 
 }
 
 .color-dot {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    cursor: pointer;
-    flex-shrink: 0;
+    width: 24px; height: 24px; border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.2);
+    cursor: pointer; flex-shrink: 0;
     transition: transform 0.2s ease;
 }
 
-.color-dot:hover {
-    transform: scale(1.2);
-}
+.color-dot:hover { transform: scale(1.2); }
 
 .color-dot.active {
-    /* Usamos sombra para el anillo para no afectar el tamaño del círculo */
     box-shadow: 0 0 0 2px #000, 0 0 0 4px var(--accent);
     transform: scale(1.1);
 }
 
-/* --- SELECTOR DE TALLAS (Dropdown) --- */
-.size-selection-area {
-    margin-bottom: 15px;
-    min-height: 40px;
-}
+/* --- BOTÓN COMPRA --- */
+.size-selection-area { margin-bottom: 15px; min-height: 40px; }
 
 .size-dropdown-select {
-    width: 100%;
-    padding: 10px;
-    background: #111;
-    color: #fff;
-    border: 1px solid #333;
-    border-radius: 5px;
-    cursor: pointer;
+    width: 100%; padding: 10px; background: #111; color: #fff;
+    border: 1px solid #333; border-radius: 5px;
 }
 
-.size-label-unique {
-    color: #888;
-    font-size: 13px;
-    background: #111;
-    padding: 10px;
-    display: block;
-    text-align: center;
-    border-radius: 5px;
-}
-
-/* --- BOTÓN AÑADIR --- */
 .add-to-cart-btn-makia {
-    background: #fff;
-    color: #000;
-    border: none;
-    padding: 15px;
-    font-weight: bold;
-    text-transform: uppercase;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: 0.3s;
-    margin-top: auto; /* Siempre al final de la card */
+    width: 100%; background: #fff; color: #000; border: none;
+    padding: 15px; font-weight: bold; border-radius: 5px; cursor: pointer;
 }
 
-.add-to-cart-btn-makia:hover:not(:disabled) {
-    background: var(--accent);
-}
+.add-to-cart-btn-makia:hover:not(:disabled) { background: var(--accent); }
 
-.add-to-cart-btn-makia:disabled {
-    background: #1a1b1f;
-    color: #555;
-    cursor: not-allowed;
-    border: 1px solid #333;
-}
-
-/* --- MODAL DE LA BOLSA (Fixed) --- */
+/* --- MODAL BOLSA (Fixed) --- */
 .cart-modal-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.85);
-    z-index: 2000;
-    display: flex;
-    justify-content: flex-end;
+    position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+    z-index: 2000; display: flex; justify-content: flex-end;
 }
 
 .cart-modal-content {
-    width: min(92vw, 400px);
-    background: #000;
-    height: 100vh;
-    padding: 30px;
-    border-left: 1px solid var(--border-color);
-    display: flex;
-    flex-direction: column;
+    width: min(90vw, 400px); background: #000; height: 100%; padding: 30px;
+    border-left: 1px solid var(--border-color); display: flex; flex-direction: column;
 }
 
-.cart-modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 30px;
-}
-
-.cart-close-icon {
-    font-size: 32px;
-    cursor: pointer;
-    color: #fff;
-}
-
-.cart-items-container {
-    flex-grow: 1;
-    overflow-y: auto;
-}
-
-.cart-item-row {
-    display: flex;
-    justify-content: space-between;
-    padding: 15px 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.item-variant-label {
-    font-size: 11px;
-    color: var(--muted-text);
-    text-transform: uppercase;
-    display: block;
-}
-
-.checkout-btn-makia {
-    background: var(--accent);
-    color: #000;
-    padding: 15px;
-    font-weight: bold;
-    border: none;
-    border-radius: 4px;
-    margin-top: 20px;
-    cursor: pointer;
-}
-
-/* --- RESPONSIVE --- */
-@media (max-width: 768px) {
-    .store-layout {
-        grid-template-columns: 1fr;
-    }
-    .filters-sidebar {
-        display: none; /* Se podría implementar un toggle después */
-    }
-    .products-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 15px;
-    }
-    .product-image-container {
-        height: 250px;
-    }
-    .hero-banner {
-        height: 180px;
-    }
-}
+.cart-modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+.cart-close-icon { font-size: 32px; cursor: pointer; color: #fff; }
+.checkout-btn-makia { background: var(--accent); padding: 15px; font-weight: bold; border: none; border-radius: 4px; margin-top: 20px; }
