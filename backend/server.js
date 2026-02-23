@@ -47,47 +47,24 @@ app.use('/api/auth', authRoutes);
 app.use('/api/productos', productRoutes);
 app.use('/api/admin', adminRoutes);
 
-// Frontend selection
-const frontendTarget = (process.env.FRONTEND_TARGET || 'react').toLowerCase();
+// Frontend (React only)
 const reactDistPath = path.resolve(__dirname, '../frontend-react/dist');
-const legacyFrontendPath = path.resolve(__dirname, '../frontend');
 const reactIndexPath = path.join(reactDistPath, 'index.html');
-const shouldServeReact = frontendTarget === 'react' && fs.existsSync(reactIndexPath);
+const shouldServeReact = fs.existsSync(reactIndexPath);
 
 if (shouldServeReact) {
     app.use(express.static(reactDistPath));
-
-    // Legacy frontend available under /legacy for compatibility
-    app.use('/legacy', express.static(legacyFrontendPath));
 
     app.get(/^(?!\/api).*/, (req, res) => {
         res.sendFile(reactIndexPath);
     });
 
-    console.log(`Frontend target: React (${reactDistPath})`);
+    console.log(`Frontend: React (${reactDistPath})`);
 } else {
-    app.get('/', (req, res) => {
-        res.sendFile(path.join(legacyFrontendPath, 'login/login.html'));
+    console.warn(`React build not found at ${reactIndexPath}. Run: npm run build:frontend`);
+    app.get(/^(?!\/api).*/, (req, res) => {
+        res.status(503).send('Frontend React no compilado. Ejecuta: npm run build:frontend');
     });
-
-    app.get('/store', (req, res) => {
-        res.sendFile(path.join(legacyFrontendPath, 'clientview/client.html'));
-    });
-
-    app.get('/admin', (req, res) => {
-        res.sendFile(path.join(legacyFrontendPath, 'adminview/admin.html'));
-    });
-
-    app.use(express.static(legacyFrontendPath));
-
-    app.use((req, res) => {
-        res.status(404).send('Pagina no encontrada');
-    });
-
-    console.warn('Frontend target: Legacy HTML/CSS/JS');
-    if (frontendTarget === 'react') {
-        console.warn(`React build not found at ${reactIndexPath}. Run: npm run build:frontend`);
-    }
 }
 
 const PORT = process.env.PORT || 4000;

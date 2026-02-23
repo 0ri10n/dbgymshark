@@ -22,8 +22,7 @@ Credenciales de desarrollo:
 
 ## Produccion/Integrado
 1. `npm start` para compilar React y servirlo desde backend.
-2. Si `FRONTEND_TARGET=react`, backend sirve `frontend-react/dist`.
-3. El frontend legado sigue disponible en `/legacy`.
+2. Backend sirve `frontend-react/dist` como unica capa de vistas.
 
 ## Cargar CSV en Mongo Local
 1. Levantar Mongo local con Docker:
