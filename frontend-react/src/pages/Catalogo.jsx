@@ -4,16 +4,25 @@ import { useAuth } from '../context/AuthContext';
 import PaginationControls from '../components/PaginationControls';
 import './Catalogo.css';
 
+// Mapeo para que los botones del filtro (XS, S...) coincidan con tu base de datos
+const sizeMapping = {
+    'XS': 'Extra Small',
+    'S': 'Small',
+    'M': 'Medium',
+    'L': 'Large',
+    'XL': 'Extra Large',
+    '2X': 'Extra Extra Large'
+};
+
 const getColorHex = (colorName) => {
     if (!colorName) return "#555";
     const name = colorName.toLowerCase();
-    if (name.includes('blue') || name.includes('teal')) return "#1e3a8a";
-    if (name.includes('pink') || name.includes('fuchsia')) return "#db2777";
-    if (name.includes('green') || name.includes('olive')) return "#2d4d43";
-    if (name.includes('red') || name.includes('burgundy')) return "#991b1b";
+    if (name.includes('blue')) return "#1e3a8a";
+    if (name.includes('pink')) return "#db2777";
+    if (name.includes('green')) return "#2d4d43";
+    if (name.includes('red')) return "#991b1b";
     if (name.includes('black')) return "#111";
     if (name.includes('white')) return "#fff";
-    if (name.includes('grey')) return "#777";
     return "#555";
 };
 
@@ -27,6 +36,7 @@ const Catalogo = () => {
     const [productos, setProductos] = useState([]);
     const [carrito, setCarrito] = useState([]);
     const [busqueda, setBusqueda] = useState('');
+    const [tallaFiltro, setTallaFiltro] = useState(null); 
     const [cargando, setCargando] = useState(true);
     const [tallasSeleccionadas, setTallasSeleccionadas] = useState({});
     const [colorVisual, setColorVisual] = useState({}); 
@@ -50,12 +60,14 @@ const Catalogo = () => {
         cargarCatalogo();
     }, [pagina, busqueda]);
 
+    // Lógica de filtrado por talla
+    const productosAMostrar = productos.filter(p => {
+        if (!tallaFiltro) return true;
+        return (p.sizes_available || []).includes(sizeMapping[tallaFiltro]);
+    });
+
     const agregarAlCarrito = (prod, colorElegido) => {
-        const item = {
-            ...prod,
-            tallaElegida: tallasSeleccionadas[prod._id] || 'Única',
-            colorElegido: colorElegido || (prod.colors_available?.[0] || 'N/A')
-        };
+        const item = { ...prod, tallaElegida: tallasSeleccionadas[prod._id] || 'Única', colorElegido: colorElegido || 'N/A' };
         setCarrito([...carrito, item]);
         setIsCartOpen(true);
     };
@@ -67,13 +79,13 @@ const Catalogo = () => {
                 <div className="header-right-icons">
                     <div className="cart-wrapper" onClick={() => setIsCartOpen(true)}>
                         <i className="fas fa-shopping-bag"></i>
-                        <span id="cartCountBadge">{carrito.length}</span>
+                        <span id="cartCount">{carrito.length}</span>
                     </div>
                     <div className="user-icon" onClick={logout}><i className="far fa-user"></i></div>
                 </div>
             </header>
 
-            <div className="hero-banner-fixed"><img src="/hero-banner-client.jpg" alt="MAKIA Banner" /></div>
+            <div className="hero-banner-fixed"><img src="/hero-banner-client.jpg" alt="Banner" /></div>
 
             <div className="store-layout-container">
                 <aside className="sidebar-filter-box">
@@ -81,7 +93,13 @@ const Catalogo = () => {
                     <div className="filter-group">
                         <h3 className="sidebar-h3">Talla</h3>
                         <div className="sidebar-btn-grid">
-                            {['XS', 'S', 'M', 'L', 'XL', '2X'].map(t => <button key={t} className="filter-size-btn">{t}</button>)}
+                            {Object.keys(sizeMapping).map(t => (
+                                <button 
+                                    key={t} 
+                                    className={`filter-size-btn ${tallaFiltro === t ? 'active' : ''}`}
+                                    onClick={() => setTallaFiltro(tallaFiltro === t ? null : t)}
+                                >{t}</button>
+                            ))}
                         </div>
                     </div>
                 </aside>
@@ -95,26 +113,21 @@ const Catalogo = () => {
                     </div>
 
                     <div className="fixed-grid-3">
-                        {!cargando && productos.map((prod) => {
+                        {!cargando && productosAMostrar.map((prod) => {
                             const colorActivo = colorVisual[prod._id] || (prod.colors_available?.[0]);
-                            const imagenAMostrar = getPrimaryImage(prod);
-
                             return (
                                 <div key={prod._id} className="makia-product-card">
                                     <div className="img-frame">
-                                        <img src={imagenAMostrar} alt={prod.title} className="p-img" />
+                                        <img src={getPrimaryImage(prod)} alt={prod.title} className="p-img" />
                                     </div>
                                     <div className="info-frame">
                                         <h3>{prod.title}</h3>
                                         <p className="p-price">{prod.precioMXN?.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' })}</p>
-                                        
-                                        {/* Carrusel de colores */}
                                         <div className="swatch-row-carrusel">
                                             {prod.colors_available?.map(col => (
                                                 <button key={col} className={`swatch-circle ${colorActivo === col ? 'active' : ''}`} style={{ backgroundColor: getColorHex(col) }} onClick={() => setColorVisual(prev => ({ ...prev, [prod._id]: col }))} />
                                             ))}
                                         </div>
-
                                         <div className="card-footer">
                                             <select className="makia-size-dropdown" value={tallasSeleccionadas[prod._id] || ""} onChange={(e) => setTallasSeleccionadas(prev => ({ ...prev, [prod._id]: e.target.value }))}>
                                                 <option value="">Seleccionar Talla</option>
@@ -138,7 +151,7 @@ const Catalogo = () => {
                         <div className="cart-modal-list">
                             {carrito.map((item, i) => (
                                 <div key={i} className="cart-modal-row">
-                                    <div><p>{item.title}</p><small>{item.tallaElegida} | {item.colorElegido}</small></div>
+                                    <div><p>{item.title}</p><small>{item.tallaElegida}</small></div>
                                     <p>{item.precioMXN?.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' })}</p>
                                 </div>
                             ))}
