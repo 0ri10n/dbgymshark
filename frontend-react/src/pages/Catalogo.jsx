@@ -51,7 +51,7 @@ const Catalogo = () => {
     }, [pagina, busqueda]);
 
     const agregarAlCarrito = (prod, colorElegido) => {
-        const tallasReales = (prod.sizes_available || []).filter(t => t !== 'Única' && t !== 'N/A' && t !== 'Default Title');
+        const tallasReales = (prod.sizes_available || []).filter(t => !['Única', 'N/A', 'Default Title'].includes(t));
         const item = {
             ...prod,
             tallaElegida: tallasReales.length > 0 ? tallasSeleccionadas[prod._id] : 'Única',
@@ -108,10 +108,10 @@ const Catalogo = () => {
 
                     <div className="fixed-grid-3">
                         {cargando ? (
-                            <div className="loading-container"><p>Cargando MAKIA...</p></div>
+                            <div className="loading-container"><p>Cargando productos...</p></div>
                         ) : (
                             productos.map((prod) => {
-                                const tallasReales = (prod.sizes_available || []).filter(t => t !== 'Única' && t !== 'N/A' && t !== 'Default Title');
+                                const tallasReales = (prod.sizes_available || []).filter(t => !['Única', 'N/A', 'Default Title'].includes(t));
                                 const colorActivo = colorVisual[prod._id] || (prod.colors_available?.[0]);
                                 const varianteColor = prod.variants?.find(v => v.color === colorActivo);
                                 const imagenAMostrar = varianteColor?.image || getPrimaryImage(prod);
