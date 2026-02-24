@@ -51,7 +51,7 @@ const getPrimaryImage = (p = {}) => {
 
 const Store = () => {
     const { logout } = useContext(AuthContext);
-    const { cart, addToCart } = useContext(CartContext);
+    const { cart, addToCart, clearCart } = useContext(CartContext);
     
     const [productos, setProductos] = useState([]);
     const [page, setPage] = useState(1);
@@ -60,9 +60,8 @@ const Store = () => {
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [cargando, setCargando] = useState(true);
 
-    // Estados de Filtros
+    // Filtros simultáneos
     const [catFiltro, setCatFiltro] = useState(null);
-    const [subCatFiltro, setSubCatFiltro] = useState(null);
     const [precioMax, setPrecioMax] = useState(3500);
     const [tallasSeleccionadas, setTallasSeleccionadas] = useState({});
 
@@ -76,27 +75,26 @@ const Store = () => {
            .finally(() => setCargando(false));
     }, [page]);
 
-    // [ARREGLO COMPRA] Agrega y abre bolsa al instante
-    const handleAgregarALaBolsa = (p) => {
-        const talla = tallasSeleccionadas[p._id] || 'M';
-        addToCart(p, talla);
-        setIsCartOpen(true); 
-    };
-
-    // [ARREGLO FILTROS] Búsqueda por nombre O categoría parcial
+    // [ARREGLO FILTROS] Búsqueda ultra sensible por nombre O categoría parcial
     const productosAMostrar = productos.filter(p => {
         const query = search.toLowerCase().trim();
         const pPrecioMXN = p.precioMXN || (Number(p.price) * TIPO_CAMBIO_USD_MXN);
         const pType = (p.product_type || '').trim().toLowerCase();
         const pTitle = (p.title || '').toLowerCase();
 
+        // Multi-filtro funcional al mismo tiempo
         const matchSearch = query === '' || pTitle.includes(query) || pType.includes(query);
-        const matchCat = catFiltro ? categoryGroups[catFiltro].some(t => t.toLowerCase() === pType) : true;
-        const matchSub = subCatFiltro ? pType === subCatFiltro.toLowerCase() : true;
+        const matchCat = !catFiltro || categoryGroups[catFiltro].some(t => t.toLowerCase() === pType);
         const matchPrecio = pPrecioMXN <= precioMax;
 
-        return matchSearch && matchCat && matchSub && matchPrecio;
+        return matchSearch && matchCat && matchPrecio;
     });
+
+    const handleFinalizarCompra = () => {
+        alert("¡Pedido en MAKIA realizado con éxito!");
+        if (clearCart) clearCart();
+        setIsCartOpen(false);
+    };
 
     return (
         <div className="client-view">
@@ -111,29 +109,23 @@ const Store = () => {
                 </div>
             </header>
 
+            {/* Banner del boxeador recuperado */}
+            <div className="hero-banner-full">
+                <img src="/hero-banner-client.jpg" alt="Boxer Banner MAKIA" />
+            </div>
+
             <div className="store-layout-container">
                 <aside className="sidebar-filter-box">
                     <div className="sidebar-top-row">
                         <h2 className="sidebar-h2">Filtros</h2>
-                        <button className="clear-filters-btn" onClick={() => {setCatFiltro(null); setSubCatFiltro(null); setPrecioMax(3500); setSearch('');}}>Limpiar</button>
+                        <button className="clear-filters-btn" onClick={() => {setCatFiltro(null); setPrecioMax(3500); setSearch('');}}>Limpiar</button>
                     </div>
 
                     <div className="filter-group">
                         <h3 className="sidebar-h3">Categoría</h3>
                         {Object.keys(categoryGroups).map(cat => (
-                            <div key={cat} className="category-dropdown-item">
-                                <div className={`cat-main-label ${catFiltro === cat ? 'selected' : ''}`} onClick={() => setCatFiltro(catFiltro === cat ? null : cat)}>
-                                    {cat} <i className={`fas fa-chevron-${catFiltro === cat ? 'up' : 'down'}`}></i>
-                                </div>
-                                {catFiltro === cat && (
-                                    <div className="sub-cat-list">
-                                        {categoryGroups[cat].map(sub => (
-                                            <div key={sub} className={`sub-item ${subCatFiltro === sub ? 'active' : ''}`} onClick={() => setSubCatFiltro(sub)}>
-                                                {sub.replace('Womens ', '').replace('Mens ', '')}
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
+                            <div key={cat} className={`cat-main-label ${catFiltro === cat ? 'selected' : ''}`} onClick={() => setCatFiltro(catFiltro === cat ? null : cat)}>
+                                {cat} <i className={`fas fa-chevron-${catFiltro === cat ? 'up' : 'down'}`}></i>
                             </div>
                         ))}
                     </div>
@@ -147,7 +139,7 @@ const Store = () => {
                 <main className="shop-main-content">
                     <div className="white-search-box">
                         <i className="fas fa-search"></i>
-                        <input type="text" placeholder="Busca producto o categoría (ej. Vit)..." value={search} onChange={e => setSearch(e.target.value)} />
+                        <input type="text" placeholder="¿Qué buscas hoy?" value={search} onChange={e => setSearch(e.target.value)} />
                     </div>
 
                     {/* Grid de 3 productos uniforme */}
@@ -175,7 +167,7 @@ const Store = () => {
                                                 <option value="">Talla</option>
                                                 {(p.sizes_available || []).map(s => <option key={s} value={s}>{s}</option>)}
                                             </select>
-                                            <button className="btn-add-to-bag-makia" onClick={() => handleAgregarALaBolsa(p)}>
+                                            <button className="btn-add-to-bag-makia" onClick={() => {addToCart(p, tallasSeleccionadas[p._id] || 'M'); setIsCartOpen(true);}}>
                                                 AÑADIR A LA BOLSA
                                             </button>
                                         </div>
@@ -204,7 +196,7 @@ const Store = () => {
                                 );
                             })}
                         </div>
-                        <button className="btn-checkout-makia" onClick={() => alert("¡Gracias por tu compra en MAKIA!")}>FINALIZAR COMPRA</button>
+                        <button className="btn-checkout-makia" onClick={handleFinalizarCompra}>FINALIZAR COMPRA</button>
                     </div>
                 </div>
             )}

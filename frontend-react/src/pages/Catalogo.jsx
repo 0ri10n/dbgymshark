@@ -7,7 +7,7 @@ import './Catalogo.css';
 // --- CONFIGURACIÓN DE MONEDA ---
 const TIPO_CAMBIO_USD_MXN = 17.00; //
 
-// Mapeo exhaustivo de categorías para filtros robustos
+// Agrupación exhaustiva de categorías para filtros simultáneos
 const categoryGroups = {
     'Womens': [
         'Womens Bodysuit', 'Womens Bottoms', 'Womens Crop Top', 'Womens Crop Tops', 'Womens Dress', 
@@ -43,7 +43,7 @@ const getColorHex = (name = "") => {
     return "#555";
 };
 
-// [ARREGLO IMAGEN] Función para asegurar que la imagen principal aparezca
+// [ARREGLO IMAGEN] Asegura que la imagen principal siempre aparezca
 const getPrimaryImage = (p = {}) => {
     if (!p) return "/placeholder.jpg";
     const img = p.image_principal || p.imagen || p.image_src || (p.variants && p.variants[0]?.image);
@@ -76,7 +76,6 @@ const Catalogo = () => {
 
     // Estados de Filtros
     const [catFiltro, setCatFiltro] = useState(null);
-    const [subCatFiltro, setSubCatFiltro] = useState(null);
     const [precioMax, setPrecioMax] = useState(3500);
     const [tallasSeleccionadas, setTallasSeleccionadas] = useState({});
     const [colorVisual, setColorVisual] = useState({});
@@ -97,19 +96,18 @@ const Catalogo = () => {
         cargarData();
     }, [pagina]);
 
-    // [ARREGLO BÚSQUEDA] Búsqueda ultra sensible (nombre o categoría)
+    // [ARREGLO BÚSQUEDA] Sensible a nombre O categoría
     const productosAMostrar = productos.filter(p => {
         const query = busqueda.toLowerCase().trim();
         const titulo = (p.title || '').toLowerCase();
         const tipoDB = (p.product_type || '').trim().toLowerCase();
         const precioPesos = getNumericPriceMXN(p);
 
-        const matchBusqueda = query === '' || titulo.includes(query) || tipoDB.includes(query);
-        const matchCat = catFiltro ? categoryGroups[catFiltro].some(t => t.toLowerCase() === tipoDB) : true;
-        const matchSub = subCatFiltro ? tipoDB === subCatFiltro.toLowerCase().trim() : true;
+        const matchSearch = query === '' || titulo.includes(query) || tipoDB.includes(query);
+        const matchCat = !catFiltro || categoryGroups[catFiltro].some(t => t.toLowerCase() === tipoDB);
         const matchPrecio = precioPesos <= precioMax;
 
-        return matchBusqueda && matchCat && matchSub && matchPrecio;
+        return matchSearch && matchCat && matchPrecio;
     });
 
     const agregarAlCarrito = (prod, colorElegido) => {
@@ -120,12 +118,11 @@ const Catalogo = () => {
             colorElegido: colorElegido || 'N/A' 
         };
         setCarrito([...carrito, item]);
-        setIsCartOpen(true); 
+        setIsCartOpen(true); // Despliega la bolsa al añadir
     };
 
-    // [ARREGLO FINALIZAR COMPRA] Función funcional que limpia la bolsa
     const handleFinalizarCompra = () => {
-        alert("¡Pedido en MAKIA realizado con éxito! Gracias por tu preferencia.");
+        alert("¡Pedido en MAKIA realizado con éxito!");
         setCarrito([]);
         setIsCartOpen(false);
     };
@@ -143,29 +140,23 @@ const Catalogo = () => {
                 </div>
             </header>
 
+            {/* Banner del boxeador recuperado */}
+            <div className="hero-banner-full">
+                <img src="/hero-banner-client.jpg" alt="Banner Boxeo MAKIA" />
+            </div>
+
             <div className="store-layout-container">
                 <aside className="sidebar-filter-box">
                     <div className="sidebar-top-row">
                         <h2 className="sidebar-h2">Filtros</h2>
-                        <button className="clear-filters-btn" onClick={() => {setCatFiltro(null); setSubCatFiltro(null); setPrecioMax(3500); setBusqueda('');}}>Limpiar</button>
+                        <button className="clear-filters-btn" onClick={() => {setCatFiltro(null); setPrecioMax(3500); setBusqueda('');}}>Limpiar</button>
                     </div>
                     
                     <div className="filter-group">
                         <h3 className="sidebar-h3">Categoría</h3>
                         {Object.keys(categoryGroups).map(cat => (
-                            <div key={cat} className="category-dropdown-item">
-                                <div className={`cat-main-label ${catFiltro === cat ? 'selected' : ''}`} onClick={() => {setCatFiltro(catFiltro === cat ? null : cat); setSubCatFiltro(null);}}>
-                                    {cat} <i className={`fas fa-chevron-${catFiltro === cat ? 'up' : 'down'}`}></i>
-                                </div>
-                                {catFiltro === cat && (
-                                    <div className="sub-cat-list">
-                                        {categoryGroups[cat].map(sub => (
-                                            <div key={sub} className={`sub-item ${subCatFiltro === sub.toLowerCase() ? 'active' : ''}`} onClick={() => setSubCatFiltro(sub.toLowerCase())}>
-                                                {sub.replace('Womens ', '').replace('Mens ', '')}
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
+                            <div key={cat} className={`cat-main-label ${catFiltro === cat ? 'selected' : ''}`} onClick={() => setCatFiltro(catFiltro === cat ? null : cat)}>
+                                {cat} <i className={`fas fa-chevron-${catFiltro === cat ? 'up' : 'down'}`}></i>
                             </div>
                         ))}
                     </div>
@@ -179,10 +170,10 @@ const Catalogo = () => {
                 <main className="shop-main-content">
                     <div className="white-search-box">
                         <i className="fas fa-search"></i>
-                        <input type="text" placeholder="Busca por nombre o tipo..." value={busqueda} onChange={(e) => setBusqueda(e.target.value)} />
+                        <input type="text" placeholder="Busca nombre o categoría..." value={busqueda} onChange={(e) => setBusqueda(e.target.value)} />
                     </div>
 
-                    {/* Grid de 3 productos */}
+                    {/* Grid de 3 productos uniforme */}
                     <div className="fixed-grid-3">
                         {!cargando && productosAMostrar.map((prod) => {
                             const colorActivo = colorVisual[prod._id] || (prod.colors_available?.[0]);
