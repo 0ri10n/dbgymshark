@@ -1,32 +1,34 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
+import { CartContext } from '../context/CartContext';
 import PaginationControls from '../components/PaginationControls';
 import './Catalogo.css';
 
-// --- CONFIGURACIÓN DE MONEDA ---
+// --- CONFIGURACIÓN ---
 const TIPO_CAMBIO_USD_MXN = 17.00; //
 
-// Agrupación exhaustiva de categorías para filtros simultáneos
+// [ARREGLO CATEGORÍAS] Lista exhaustiva para que el filtro sea exacto
 const categoryGroups = {
     'Womens': [
-        'Womens Bodysuit', 'Womens Bottoms', 'Womens Crop Top', 'Womens Crop Tops', 'Womens Dress', 
-        'Womens Hoodie', 'Womens Hoodies', 'Womens Jacket', 'Womens Jackets / Outerwear', 'Womens Leggings', 
-        'Womens Long Sleeve Top', 'Womens Ls Tops', 'Womens One Piece', 'Womens One Pieces', 'Womens Pants', 
-        'Womens Pullover', 'Womens Pullovers', 'Womens Shorts', 'Womens Skort', 'Womens Sleeveless Top', 
-        'Womens Sleeveless Tops', 'Womens Socks', 'Womens Sports Bra', 'Womens Sports Bras', 'Womens Ss Tops', 
-        'Womens Sweater', 'Womens Swimwear', 'Womens T-Shirt', 'Womens Tank', 'Womens Tanks', 'Womens Underwear', 'Womens Vest'
+        "Womens Bodysuit", "Womens Bottoms", "Womens Crop Top", "Womens Crop Tops", "Womens Dress", 
+        "Womens Hoodie", "Womens Hoodies", "Womens Jacket", "Womens Jackets / Outerwear", "Womens Leggings", 
+        "Womens Long Sleeve Top", "Womens Ls Tops", "Womens One Piece", "Womens One Pieces", "Womens Pants", 
+        "Womens Pullover", "Womens Pullovers", "Womens Shorts", "Womens Skort", "Womens Sleeveless Top", 
+        "Womens Sleeveless Tops", "Womens Socks", "Womens Sports Bra", "Womens Sports Bras", "Womens Ss Tops", 
+        "Womens Sweater", "Womens Swimwear", "Womens T-Shirt", "Womens Tank", "Womens Tanks", "Womens Underwear", 
+        "Womens Vest", "womens Accessories", "womens Bags", "womens Headwear", "womens Socks"
     ],
     'Mens': [
-        'Mens Baselayer', 'Mens Bottoms', 'Mens Drop Armhole Tank', 'Mens Hoodie', 'Mens Jacket', 'Mens Jackets', 
-        'Mens Jackets / Outerwear', 'Mens Joggers', 'Mens Leggings', 'Mens Long Sleeve Top', 'Mens Ls Tops', 
-        'Mens Outerwear', 'Mens Pants', 'Mens Pullover', 'Mens Pullovers', 'Mens Shirt', 'Mens Shorts', 
-        'Mens Sleeveless Tops', 'Mens Ss Tops', 'Mens Stringer', 'Mens T-Shirt', 'Mens Tank', 'Mens Tops', 
-        'Mens Underwear', 'Mens t', 'mens unisex Bottoms', 'mens unisex Pullovers'
+        "Mens Baselayer", "Mens Bottoms", "Mens Drop Armhole Tank", "Mens Hoodie", "Mens Jacket", "Mens Jackets", 
+        "Mens Jackets / Outerwear", "Mens Joggers", "Mens Leggings", "Mens Long Sleeve Top", "Mens Ls Tops", 
+        "Mens Outerwear", "Mens Pants", "Mens Pullover", "Mens Pullovers", "Mens Shirt", "Mens Shorts", 
+        "Mens Sleeveless Tops", "Mens Ss Tops", "Mens Stringer", "Mens T-Shirt", "Mens Tank", "Mens Tops", 
+        "Mens Underwear", "Mens t", "mens unisex Bottoms", "mens unisex Pullovers"
     ],
     'Accessories': [
-        'Accessories', 'Bag', 'Bags', 'Bottles', 'Footwear', 'Headwear', 'Socks', 'Thirft Bag', 'footwear',
-        'womens Accessories', 'womens Bags', 'womens Headwear', 'womens Socks', 'Misc.', 'Gift Card'
+        "Accessories", "Bag", "Bags", "Bottles", "Footwear", "Gift Card", "Headwear", "Misc.", 
+        "Pants", "Pullovers", "Socks", "Ss Tops", "Thirft Bag", "Underwear", "footwear"
     ]
 };
 
@@ -43,7 +45,6 @@ const getColorHex = (name = "") => {
     return "#555";
 };
 
-// [ARREGLO IMAGEN] Asegura que la imagen principal siempre aparezca
 const getPrimaryImage = (p = {}) => {
     if (!p) return "/placeholder.jpg";
     const img = p.image_principal || p.imagen || p.image_src || (p.variants && p.variants[0]?.image);
@@ -59,26 +60,20 @@ const getNumericPriceMXN = (prod) => {
     return valor || 0;
 };
 
-const getFormattedPriceMXN = (prod) => {
-    const valor = getNumericPriceMXN(prod);
-    return valor.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' }) + " MXN";
-};
-
 const Catalogo = () => {
-    const { logout } = useAuth();
+    const { user, logout } = useAuth();
+    const { cart, addToCart, removeFromCart, updateCartItem, clearCart } = useContext(CartContext);
+    
     const [productos, setProductos] = useState([]);
-    const [carrito, setCarrito] = useState([]);
     const [busqueda, setBusqueda] = useState('');
     const [cargando, setCargando] = useState(true);
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [pagina, setPagina] = useState(1);
     const [totalPaginas, setTotalPaginas] = useState(1);
 
-    // Estados de Filtros
     const [catFiltro, setCatFiltro] = useState(null);
     const [precioMax, setPrecioMax] = useState(3500);
     const [tallasSeleccionadas, setTallasSeleccionadas] = useState({});
-    const [colorVisual, setColorVisual] = useState({});
 
     useEffect(() => {
         const cargarData = async () => {
@@ -100,31 +95,54 @@ const Catalogo = () => {
     const productosAMostrar = productos.filter(p => {
         const query = busqueda.toLowerCase().trim();
         const titulo = (p.title || '').toLowerCase();
-        const tipoDB = (p.product_type || '').trim().toLowerCase();
+        const tipoDB = (p.product_type || '').trim();
         const precioPesos = getNumericPriceMXN(p);
 
-        const matchSearch = query === '' || titulo.includes(query) || tipoDB.includes(query);
-        const matchCat = !catFiltro || categoryGroups[catFiltro].some(t => t.toLowerCase() === tipoDB);
+        const matchSearch = query === '' || titulo.includes(query) || tipoDB.toLowerCase().includes(query);
+        const matchCat = !catFiltro || categoryGroups[catFiltro].includes(tipoDB);
         const matchPrecio = precioPesos <= precioMax;
 
         return matchSearch && matchCat && matchPrecio;
     });
 
-    const agregarAlCarrito = (prod, colorElegido) => {
-        const item = { 
-            ...prod, 
-            precioFinal: getFormattedPriceMXN(prod),
-            tallaElegida: tallasSeleccionadas[prod._id] || 'M', 
-            colorElegido: colorElegido || 'N/A' 
-        };
-        setCarrito([...carrito, item]);
-        setIsCartOpen(true); // Despliega la bolsa al añadir
+    // [ARREGLO AÑADIR] Validación obligatoria de talla
+    const handleAgregar = (p) => {
+        const talla = tallasSeleccionadas[p._id];
+        if (!talla) {
+            alert("Vania, debes seleccionar una talla antes de añadir a la bolsa.");
+            return;
+        }
+        addToCart({ ...p, selectedSize: talla, quantity: 1 });
+        setIsCartOpen(true); 
     };
 
-    const handleFinalizarCompra = () => {
-        alert("¡Pedido en MAKIA realizado con éxito!");
-        setCarrito([]);
-        setIsCartOpen(false);
+    // [ARREGLO VENTAS] Registro de pedido en base de datos
+    const handleFinalizarCompra = async () => {
+        if (cart.length === 0) return;
+        
+        const total = cart.reduce((acc, item) => acc + (getNumericPriceMXN(item) * item.quantity), 0);
+        const ventaData = {
+            usuario: user?.email || "Invitado",
+            productos: cart.map(item => ({
+                id: item._id,
+                titulo: item.title,
+                talla: item.selectedSize,
+                cantidad: item.quantity,
+                precioUnitario: getNumericPriceMXN(item)
+            })),
+            total: total,
+            fecha: new Date().toISOString()
+        };
+
+        try {
+            const baseURL = import.meta.env.VITE_API_URL || 'https://dbgymshark-ddk1.onrender.com/api';
+            await axios.post(`${baseURL}/ventas`, ventaData);
+            alert("¡Venta registrada con éxito en MAKIA!");
+            clearCart();
+            setIsCartOpen(false);
+        } catch (error) {
+            alert("Error al procesar la venta.");
+        }
     };
 
     return (
@@ -134,15 +152,14 @@ const Catalogo = () => {
                 <div className="header-right-icons">
                     <div className="cart-wrapper" onClick={() => setIsCartOpen(true)}>
                         <i className="fas fa-shopping-bag"></i>
-                        <span id="cartCount">{carrito.length}</span>
+                        <span id="cartCount">{cart.length}</span>
                     </div>
                     <div className="user-icon" onClick={logout}><i className="far fa-user"></i></div>
                 </div>
             </header>
 
-            {/* Banner del boxeador recuperado */}
             <div className="hero-banner-full">
-                <img src="/hero-banner-client.jpg" alt="Banner Boxeo MAKIA" />
+                <img src="/hero-banner-client.jpg" alt="MAKIA Hero" />
             </div>
 
             <div className="store-layout-container">
@@ -170,63 +187,59 @@ const Catalogo = () => {
                 <main className="shop-main-content">
                     <div className="white-search-box">
                         <i className="fas fa-search"></i>
-                        <input type="text" placeholder="Busca nombre o categoría..." value={busqueda} onChange={(e) => setBusqueda(e.target.value)} />
+                        <input type="text" placeholder="Busca por nombre o tipo..." value={busqueda} onChange={(e) => setBusqueda(e.target.value)} />
                     </div>
 
-                    {/* Grid de 3 productos uniforme */}
                     <div className="fixed-grid-3">
-                        {!cargando && productosAMostrar.map((prod) => {
-                            const colorActivo = colorVisual[prod._id] || (prod.colors_available?.[0]);
-                            const imgFinal = prod.variants?.find(v => v.color === colorActivo)?.image || getPrimaryImage(prod);
-
-                            return (
-                                <div key={prod._id} className="makia-product-card">
-                                    <div className="img-frame"><img src={imgFinal} alt={prod.title} className="p-img" /></div>
-                                    <div className="info-frame">
-                                        <h3>{prod.title}</h3>
-                                        <p className="p-price">{getFormattedPriceMXN(prod)}</p>
-                                        
-                                        {/* Círculos de colores desplazables */}
-                                        <div className="swatch-row-carrusel">
-                                            {prod.colors_available?.map(col => (
-                                                <button 
-                                                    key={col} 
-                                                    className={`swatch-circle ${colorActivo === col ? 'active' : ''}`} 
-                                                    style={{ backgroundColor: getColorHex(col) }} 
-                                                    onClick={() => setColorVisual(prev => ({ ...prev, [prod._id]: col }))} 
-                                                />
-                                            ))}
-                                        </div>
-
-                                        <div className="card-footer">
-                                            <select className="makia-size-dropdown" onChange={(e) => setTallasSeleccionadas(prev => ({ ...prev, [prod._id]: e.target.value }))}>
-                                                <option value="">Talla</option>
-                                                {(prod.sizes_available || []).map(t => <option key={t} value={t}>{t}</option>)}
-                                            </select>
-                                            <button className="btn-add-to-bag-makia" onClick={() => agregarAlCarrito(prod, colorActivo)}>AÑADIR A LA BOLSA</button>
-                                        </div>
+                        {!cargando && productosAMostrar.map((prod) => (
+                            <div key={prod._id} className="makia-product-card">
+                                <div className="img-frame"><img src={getPrimaryImage(prod)} alt={prod.title} className="p-img" /></div>
+                                <div className="info-frame">
+                                    <h3>{prod.title}</h3>
+                                    <p className="p-price">${getNumericPriceMXN(prod).toLocaleString()} MXN</p>
+                                    <div className="swatch-row-carrusel">
+                                        {prod.colors_available?.map(col => (
+                                            <div key={col} className="swatch-circle" style={{ backgroundColor: getColorHex(col) }} />
+                                        ))}
+                                    </div>
+                                    <div className="card-footer">
+                                        <select className="makia-size-dropdown" value={tallasSeleccionadas[prod._id] || ""} onChange={(e) => setTallasSeleccionadas(prev => ({ ...prev, [prod._id]: e.target.value }))}>
+                                            <option value="">Talla</option>
+                                            {(prod.sizes_available || []).map(t => <option key={t} value={t}>{t}</option>)}
+                                        </select>
+                                        <button className="btn-add-to-bag-makia" onClick={() => handleAgregar(prod)}>AÑADIR</button>
                                     </div>
                                 </div>
-                            );
-                        })}
+                            </div>
+                        ))}
                     </div>
-                    {busqueda === '' && <PaginationControls page={pagina} totalPages={totalPaginas} onPageChange={setPagina} />}
+                    <PaginationControls page={pagina} totalPages={totalPaginas} onPageChange={setPagina} />
                 </main>
             </div>
 
-            {/* BOLSA LATERAL FUNCIONAL */}
+            {/* BOLSA INTERACTIVA */}
             {isCartOpen && (
                 <div className="cart-modal-overlay" onClick={() => setIsCartOpen(false)}>
                     <div className="cart-modal-panel" onClick={e => e.stopPropagation()}>
-                        <div className="cart-modal-top">
-                            <h2>TU BOLSA</h2>
-                            <span className="close-cart-btn" onClick={() => setIsCartOpen(false)}>&times;</span>
-                        </div>
+                        <div className="cart-modal-top"><h2>TU BOLSA</h2><span onClick={() => setIsCartOpen(false)} style={{cursor:'pointer'}}>&times;</span></div>
                         <div className="cart-modal-list">
-                            {carrito.map((item, i) => (
+                            {cart.map((item, i) => (
                                 <div key={i} className="cart-modal-row">
-                                    <div><p style={{fontWeight:'600'}}>{item.title}</p><small>{item.tallaElegida} | {item.colorElegido}</small></div>
-                                    <p style={{color:'var(--makia-accent)', fontWeight:'800'}}>{item.precioFinal}</p>
+                                    <div style={{flex:1}}>
+                                        <p style={{fontWeight:'600'}}>{item.title}</p>
+                                        <div style={{display:'flex', gap:'10px', marginTop:'5px'}}>
+                                            <select className="mini-dropdown" value={item.selectedSize} onChange={(e) => updateCartItem(i, { ...item, selectedSize: e.target.value })}>
+                                                {(item.sizes_available || []).map(s => <option key={s} value={s}>{s}</option>)}
+                                            </select>
+                                            <div className="qty-controls">
+                                                <button onClick={() => updateCartItem(i, { ...item, quantity: Math.max(1, item.quantity - 1) })}>-</button>
+                                                <span>{item.quantity}</span>
+                                                <button onClick={() => updateCartItem(i, { ...item, quantity: item.quantity + 1 })}>+</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <p style={{fontWeight:'800', color:'var(--makia-accent)'}}>${(getNumericPriceMXN(item) * item.quantity).toLocaleString()}</p>
+                                    <button onClick={() => removeFromCart(i)} className="btn-remove">&times;</button>
                                 </div>
                             ))}
                         </div>

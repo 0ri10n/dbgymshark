@@ -6,27 +6,29 @@ import PaginationControls from '../components/PaginationControls';
 import './Catalogo.css'; 
 
 // --- CONFIGURACIÓN MAKIA ---
-const TIPO_CAMBIO_USD_MXN = 17.00; //
+const TIPO_CAMBIO = 17.00;
 
+// [ARREGLO CATEGORÍAS] Lista exhaustiva para filtros precisos
 const categoryGroups = {
     'Womens': [
-        'Womens Bodysuit', 'Womens Bottoms', 'Womens Crop Top', 'Womens Crop Tops', 'Womens Dress', 
-        'Womens Hoodie', 'Womens Hoodies', 'Womens Jacket', 'Womens Jackets / Outerwear', 'Womens Leggings', 
-        'Womens Long Sleeve Top', 'Womens Ls Tops', 'Womens One Piece', 'Womens One Pieces', 'Womens Pants', 
-        'Womens Pullover', 'Womens Pullovers', 'Womens Shorts', 'Womens Skort', 'Womens Sleeveless Top', 
-        'Womens Sleeveless Tops', 'Womens Socks', 'Womens Sports Bra', 'Womens Sports Bras', 'Womens Ss Tops', 
-        'Womens Sweater', 'Womens Swimwear', 'Womens T-Shirt', 'Womens Tank', 'Womens Tanks', 'Womens Underwear', 'Womens Vest'
+        "Womens Bodysuit", "Womens Bottoms", "Womens Crop Top", "Womens Crop Tops", "Womens Dress", 
+        "Womens Hoodie", "Womens Hoodies", "Womens Jacket", "Womens Jackets / Outerwear", "Womens Leggings", 
+        "Womens Long Sleeve Top", "Womens Ls Tops", "Womens One Piece", "Womens One Pieces", "Womens Pants", 
+        "Womens Pullover", "Womens Pullovers", "Womens Shorts", "Womens Skort", "Womens Sleeveless Top", 
+        "Womens Sleeveless Tops", "Womens Socks", "Womens Sports Bra", "Womens Sports Bras", "Womens Ss Tops", 
+        "Womens Sweater", "Womens Swimwear", "Womens T-Shirt", "Womens Tank", "Womens Tanks", "Womens Underwear", 
+        "Womens Vest", "womens Accessories", "womens Bags", "womens Headwear", "womens Socks"
     ],
     'Mens': [
-        'Mens Baselayer', 'Mens Bottoms', 'Mens Drop Armhole Tank', 'Mens Hoodie', 'Mens Jacket', 'Mens Jackets', 
-        'Mens Jackets / Outerwear', 'Mens Joggers', 'Mens Leggings', 'Mens Long Sleeve Top', 'Mens Ls Tops', 
-        'Mens Outerwear', 'Mens Pants', 'Mens Pullover', 'Mens Pullovers', 'Mens Shirt', 'Mens Shorts', 
-        'Mens Sleeveless Tops', 'Mens Ss Tops', 'Mens Stringer', 'Mens T-Shirt', 'Mens Tank', 'Mens Tops', 
-        'Mens Underwear', 'Mens t', 'mens unisex Bottoms', 'mens unisex Pullovers'
+        "Mens Baselayer", "Mens Bottoms", "Mens Drop Armhole Tank", "Mens Hoodie", "Mens Jacket", "Mens Jackets", 
+        "Mens Jackets / Outerwear", "Mens Joggers", "Mens Leggings", "Mens Long Sleeve Top", "Mens Ls Tops", 
+        "Mens Outerwear", "Mens Pants", "Mens Pullover", "Mens Pullovers", "Mens Shirt", "Mens Shorts", 
+        "Mens Sleeveless Tops", "Mens Ss Tops", "Mens Stringer", "Mens T-Shirt", "Mens Tank", "Mens Tops", 
+        "Mens Underwear", "Mens t", "mens unisex Bottoms", "mens unisex Pullovers"
     ],
     'Accessories': [
-        'Accessories', 'Bag', 'Bags', 'Bottles', 'Footwear', 'Headwear', 'Socks', 'Thirft Bag', 'footwear',
-        'womens Accessories', 'womens Bags', 'womens Headwear', 'womens Socks', 'Misc.', 'Gift Card'
+        "Accessories", "Bag", "Bags", "Bottles", "Footwear", "Gift Card", "Headwear", "Misc.", 
+        "Pants", "Pullovers", "Socks", "Ss Tops", "Thirft Bag", "Underwear", "footwear"
     ]
 };
 
@@ -41,7 +43,6 @@ const getColorHex = (name = "") => {
     return "#555";
 };
 
-// [ARREGLO IMAGEN] Asegura que la imagen principal aparezca siempre
 const getPrimaryImage = (p = {}) => {
     if (!p) return "/placeholder.jpg";
     const img = p.image_principal || p.imagen || p.image_src || (p.variants && p.variants[0]?.image);
@@ -50,8 +51,8 @@ const getPrimaryImage = (p = {}) => {
 };
 
 const Store = () => {
-    const { logout } = useContext(AuthContext);
-    const { cart, addToCart, clearCart } = useContext(CartContext);
+    const { user, logout } = useContext(AuthContext);
+    const { cart, addToCart, removeFromCart, updateCartItem, clearCart } = useContext(CartContext);
     
     const [productos, setProductos] = useState([]);
     const [page, setPage] = useState(1);
@@ -60,7 +61,6 @@ const Store = () => {
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [cargando, setCargando] = useState(true);
 
-    // Filtros simultáneos
     const [catFiltro, setCatFiltro] = useState(null);
     const [precioMax, setPrecioMax] = useState(3500);
     const [tallasSeleccionadas, setTallasSeleccionadas] = useState({});
@@ -75,26 +75,60 @@ const Store = () => {
            .finally(() => setCargando(false));
     }, [page]);
 
-    // [ARREGLO FILTROS] Búsqueda ultra sensible por nombre O categoría parcial
+    // [ARREGLO AÑADIR] Validación de selección de talla obligatoria
+    const handleAgregar = (p) => {
+        const talla = tallasSeleccionadas[p._id];
+        if (!talla) {
+            alert("Por favor selecciona una talla antes de añadir el producto a la bolsa.");
+            return;
+        }
+        addToCart({ ...p, selectedSize: talla, quantity: 1 });
+        setIsCartOpen(true); 
+    };
+
+    // [ARREGLO VENTAS] Registro de pedido en base de datos
+    const handleFinalizarCompra = async () => {
+        if (cart.length === 0) return;
+        
+        const total = cart.reduce((acc, item) => acc + (item.precioMXN || item.price * TIPO_CAMBIO) * item.quantity, 0);
+        
+        const ventaData = {
+            usuario: user?.email || "Invitado",
+            productos: cart.map(item => ({
+                id: item._id,
+                titulo: item.title,
+                talla: item.selectedSize,
+                cantidad: item.quantity,
+                precioUnitario: item.precioMXN || item.price * TIPO_CAMBIO
+            })),
+            total: total,
+            fecha: new Date().toISOString()
+        };
+
+        try {
+            await api.post('/ventas', ventaData);
+            alert("¡Compra finalizada y registrada con éxito!");
+            clearCart();
+            setIsCartOpen(false);
+        } catch (error) {
+            console.error("Error al registrar venta:", error);
+            alert("Hubo un error al procesar la compra.");
+        }
+    };
+
+    // [ARREGLO FILTROS] Búsqueda ultra sensible por nombre y categoría
     const productosAMostrar = productos.filter(p => {
         const query = search.toLowerCase().trim();
-        const pPrecioMXN = p.precioMXN || (Number(p.price) * TIPO_CAMBIO_USD_MXN);
-        const pType = (p.product_type || '').trim().toLowerCase();
+        const pPrecio = p.precioMXN || (Number(p.price) * TIPO_CAMBIO);
+        const pType = (p.product_type || '').trim();
         const pTitle = (p.title || '').toLowerCase();
 
-        // Multi-filtro funcional al mismo tiempo
-        const matchSearch = query === '' || pTitle.includes(query) || pType.includes(query);
-        const matchCat = !catFiltro || categoryGroups[catFiltro].some(t => t.toLowerCase() === pType);
-        const matchPrecio = pPrecioMXN <= precioMax;
+        const matchSearch = query === '' || pTitle.includes(query) || pType.toLowerCase().includes(query);
+        const matchCat = !catFiltro || categoryGroups[catFiltro].includes(pType);
+        const matchPrecio = pPrecio <= precioMax;
 
         return matchSearch && matchCat && matchPrecio;
     });
-
-    const handleFinalizarCompra = () => {
-        alert("¡Pedido en MAKIA realizado con éxito!");
-        if (clearCart) clearCart();
-        setIsCartOpen(false);
-    };
 
     return (
         <div className="client-view">
@@ -109,9 +143,9 @@ const Store = () => {
                 </div>
             </header>
 
-            {/* Banner del boxeador recuperado */}
+            {/* Banner principal del boxeador recuperado */}
             <div className="hero-banner-full">
-                <img src="/hero-banner-client.jpg" alt="Boxer Banner MAKIA" />
+                <img src="/hero-banner-client.jpg" alt="MAKIA Performance" />
             </div>
 
             <div className="store-layout-container">
@@ -120,7 +154,6 @@ const Store = () => {
                         <h2 className="sidebar-h2">Filtros</h2>
                         <button className="clear-filters-btn" onClick={() => {setCatFiltro(null); setPrecioMax(3500); setSearch('');}}>Limpiar</button>
                     </div>
-
                     <div className="filter-group">
                         <h3 className="sidebar-h3">Categoría</h3>
                         {Object.keys(categoryGroups).map(cat => (
@@ -129,74 +162,86 @@ const Store = () => {
                             </div>
                         ))}
                     </div>
-
                     <div className="filter-group">
                         <h3 className="sidebar-h3">Presupuesto: ${precioMax} MXN</h3>
-                        <input type="range" min="0" max="3500" step="100" value={precioMax} onChange={(e) => setPrecioMax(Number(e.target.value))} className="price-slider" />
+                        <input type="range" min="0" max="3500" step="100" value={precioMax} onChange={e => setPrecioMax(Number(e.target.value))} className="price-slider" />
                     </div>
                 </aside>
 
                 <main className="shop-main-content">
                     <div className="white-search-box">
                         <i className="fas fa-search"></i>
-                        <input type="text" placeholder="¿Qué buscas hoy?" value={search} onChange={e => setSearch(e.target.value)} />
+                        <input type="text" placeholder="¿Qué buscas hoy? (ej. Crop, Mens)..." value={search} onChange={e => setSearch(e.target.value)} />
                     </div>
 
-                    {/* Grid de 3 productos uniforme */}
                     <div className="fixed-grid-3">
-                        {!cargando && productosAMostrar.map(p => {
-                            const precioFinal = p.precioMXN || (Number(p.price) * TIPO_CAMBIO_USD_MXN);
-                            return (
-                                <div key={p._id} className="makia-product-card">
-                                    <div className="img-frame">
-                                        <img src={getPrimaryImage(p)} alt={p.title} className="p-img" />
+                        {!cargando && productosAMostrar.map(p => (
+                            <div key={p._id} className="makia-product-card">
+                                <div className="img-frame">
+                                    <img src={getPrimaryImage(p)} className="p-img" alt={p.title} />
+                                </div>
+                                <div className="info-frame">
+                                    <h3>{p.title}</h3>
+                                    <p className="p-price">${(p.precioMXN || p.price * TIPO_CAMBIO).toLocaleString()} MXN</p>
+                                    
+                                    <div className="swatch-row-carrusel">
+                                        {p.colors_available?.map(c => (
+                                            <div key={c} className="swatch-circle" style={{background: getColorHex(c)}} title={c}></div>
+                                        ))}
                                     </div>
-                                    <div className="info-frame">
-                                        <h3>{p.title}</h3>
-                                        <p className="p-price">${precioFinal.toLocaleString('es-MX')} MXN</p>
-                                        
-                                        {/* Círculos de colores desplazables */}
-                                        <div className="swatch-row-carrusel">
-                                            {p.colors_available?.map(c => (
-                                                <div key={c} className="swatch-circle" style={{background: getColorHex(c)}} title={c}></div>
-                                            ))}
-                                        </div>
 
-                                        <div className="card-footer">
-                                            <select className="makia-size-dropdown" onChange={(e) => setTallasSeleccionadas({...tallasSeleccionadas, [p._id]: e.target.value})}>
-                                                <option value="">Talla</option>
-                                                {(p.sizes_available || []).map(s => <option key={s} value={s}>{s}</option>)}
-                                            </select>
-                                            <button className="btn-add-to-bag-makia" onClick={() => {addToCart(p, tallasSeleccionadas[p._id] || 'M'); setIsCartOpen(true);}}>
-                                                AÑADIR A LA BOLSA
-                                            </button>
-                                        </div>
+                                    <div className="card-footer">
+                                        <select className="makia-size-dropdown" value={tallasSeleccionadas[p._id] || ""} onChange={(e) => setTallasSeleccionadas({...tallasSeleccionadas, [p._id]: e.target.value})}>
+                                            <option value="">Selecciona Talla</option>
+                                            {(p.sizes_available || []).map(s => <option key={s} value={s}>{s}</option>)}
+                                        </select>
+                                        <button className="btn-add-to-bag-makia" onClick={() => handleAgregar(p)}>AÑADIR A LA BOLSA</button>
                                     </div>
                                 </div>
-                            );
-                        })}
+                            </div>
+                        ))}
                     </div>
                     <PaginationControls page={page} totalPages={totalPages} onPageChange={setPage} />
                 </main>
             </div>
 
-            {/* BOLSA LATERAL FUNCIONAL */}
+            {/* BOLSA LATERAL INTERACTIVA */}
             {isCartOpen && (
                 <div className="cart-modal-overlay" onClick={() => setIsCartOpen(false)}>
                     <div className="cart-modal-panel" onClick={e => e.stopPropagation()}>
-                        <div className="cart-modal-top"><h2>TU BOLSA</h2><span className="close-cart-btn" onClick={() => setIsCartOpen(false)}>&times;</span></div>
-                        <div className="cart-modal-list">
-                            {cart.map((item, i) => {
-                                const itemPrecio = item.precioMXN || (Number(item.price) * TIPO_CAMBIO_USD_MXN);
-                                return (
-                                    <div key={i} className="cart-modal-row">
-                                        <div><p style={{fontWeight:'600'}}>{item.title}</p><small>{item.talla || 'M'}</small></div>
-                                        <p style={{color:'var(--makia-accent)', fontWeight:'800'}}>${itemPrecio.toLocaleString()} MXN</p>
-                                    </div>
-                                );
-                            })}
+                        <div className="cart-modal-top">
+                            <h2>TU BOLSA</h2>
+                            <span className="close-cart-btn" onClick={() => setIsCartOpen(false)}>&times;</span>
                         </div>
-                        <button className="btn-checkout-makia" onClick={handleFinalizarCompra}>FINALIZAR COMPRA</button>
+                        <div className="cart-modal-list">
+                            {cart.map((item, i) => (
+                                <div key={i} className="cart-modal-row">
+                                    <div style={{flex:1}}>
+                                        <p style={{fontWeight:'600'}}>{item.title}</p>
+                                        <div style={{display:'flex', gap:'10px', marginTop:'5px'}}>
+                                            {/* Cambio de talla en la bolsa */}
+                                            <select className="mini-dropdown" value={item.selectedSize} onChange={(e) => updateCartItem(i, { ...item, selectedSize: e.target.value })}>
+                                                {(item.sizes_available || []).map(s => <option key={s} value={s}>{s}</option>)}
+                                            </select>
+                                            {/* Control de cantidad */}
+                                            <div className="qty-controls">
+                                                <button onClick={() => updateCartItem(i, { ...item, quantity: Math.max(1, item.quantity - 1) })}>-</button>
+                                                <span>{item.quantity}</span>
+                                                <button onClick={() => updateCartItem(i, { ...item, quantity: item.quantity + 1 })}>+</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <p style={{fontWeight:'800', color:'var(--makia-accent)'}}>
+                                        ${((item.precioMXN || item.price * TIPO_CAMBIO) * item.quantity).toLocaleString()}
+                                    </p>
+                                    <button onClick={() => removeFromCart(i)} className="btn-remove">&times;</button>
+                                </div>
+                            ))}
+                            {cart.length === 0 && <p style={{textAlign:'center', padding:'40px', color:'#888'}}>Tu bolsa está vacía.</p>}
+                        </div>
+                        <div className="cart-modal-footer">
+                            <button className="btn-checkout-makia" onClick={handleFinalizarCompra}>FINALIZAR COMPRA</button>
+                        </div>
                     </div>
                 </div>
             )}
