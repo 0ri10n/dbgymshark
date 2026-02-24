@@ -4,7 +4,6 @@ import { useAuth } from '../context/AuthContext';
 import PaginationControls from '../components/PaginationControls';
 import './Catalogo.css';
 
-// --- Lógica de Colores (Intacta como pediste) ---
 const getColorHex = (colorName) => {
     if (!colorName) return "#555";
     const name = colorName.toLowerCase();
@@ -14,6 +13,7 @@ const getColorHex = (colorName) => {
     if (name.includes('red') || name.includes('burgundy')) return "#991b1b";
     if (name.includes('black')) return "#111";
     if (name.includes('white')) return "#fff";
+    if (name.includes('grey')) return "#777";
     return "#555";
 };
 
@@ -59,7 +59,7 @@ const Catalogo = () => {
             colorElegido: colorElegido || (prod.colors_available?.[0] || 'N/A')
         };
         setCarrito([...carrito, item]);
-        setIsCartOpen(true); // Se despliega la bolsa al agregar
+        setIsCartOpen(true);
     };
 
     return (
@@ -128,11 +128,12 @@ const Catalogo = () => {
                                         <h3>{prod.title}</h3>
                                         <p className="price-text">{prod.precioMXN?.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' })}</p>
 
-                                        <div className="swatch-container">
+                                        {/* CARRUSEL DE COLORES */}
+                                        <div className="color-swatch-carousel">
                                             {prod.colors_available?.map(col => (
                                                 <button 
                                                     key={col}
-                                                    className={`dot ${colorActivo === col ? 'active' : ''}`}
+                                                    className={`swatch-dot ${colorActivo === col ? 'active' : ''}`}
                                                     style={{ backgroundColor: getColorHex(col) }}
                                                     onClick={() => setColorVisual(prev => ({ ...prev, [prod._id]: col }))}
                                                     title={col}
@@ -143,17 +144,17 @@ const Catalogo = () => {
                                         <div className="action-footer">
                                             {tallasReales.length > 0 ? (
                                                 <select 
-                                                    className="size-select-makia"
+                                                    className="size-dropdown-makia"
                                                     value={tallasSeleccionadas[prod._id] || ""}
                                                     onChange={(e) => setTallasSeleccionadas(prev => ({ ...prev, [prod._id]: e.target.value }))}
                                                 >
                                                     <option value="">Seleccionar Talla</option>
                                                     {tallasReales.map(t => <option key={t} value={t}>{t}</option>)}
                                                 </select>
-                                            ) : <div className="unique-size">Talla Única</div>}
+                                            ) : <div className="unique-size-label">Talla Única</div>}
 
                                             <button 
-                                                className="add-to-bag-btn-makia"
+                                                className="btn-add-to-bag-makia"
                                                 onClick={() => agregarAlCarrito(prod, colorActivo)}
                                                 disabled={tallasReales.length > 0 && !tallasSeleccionadas[prod._id]}
                                             >
@@ -169,7 +170,6 @@ const Catalogo = () => {
                 </main>
             </div>
 
-            {/* Modal Bolsa Operativo */}
             {isCartOpen && (
                 <div className="cart-overlay-fixed" onClick={() => setIsCartOpen(false)}>
                     <div className="cart-panel-fixed" onClick={e => e.stopPropagation()}>
