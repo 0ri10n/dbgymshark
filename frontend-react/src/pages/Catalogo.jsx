@@ -1,149 +1,48 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { useAuth } from '../context/AuthContext';
-import PaginationControls from '../components/PaginationControls';
-import './Catalogo.css';
+:root {
+    --makia-accent: #d9fb56;
+    --bg-makia: #050508;
+    --sidebar-bg: #0c0f16;
+}
 
-const getColorHex = (colorName) => {
-    if (!colorName) return "#555";
-    const name = colorName.toLowerCase();
-    if (name.includes('blue') || name.includes('teal')) return "#1e3a8a";
-    if (name.includes('pink') || name.includes('fuchsia')) return "#db2777";
-    if (name.includes('green') || name.includes('olive')) return "#2d4d43";
-    if (name.includes('red') || name.includes('burgundy')) return "#991b1b";
-    if (name.includes('black')) return "#111";
-    if (name.includes('white')) return "#fff";
-    return "#555";
-};
+* { box-sizing: border-box; }
+body { margin: 0; font-family: 'Poppins', sans-serif; background-color: var(--bg-makia); color: #fff; }
 
-const getPrimaryImage = (prod = {}) => {
-    const img = prod.image_principal || prod.imagen || (prod.image_src ? prod.image_src.split(',')[0] : '/placeholder.jpg');
-    return img.trim();
-};
+.client-header-makia {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0 5%; background: #000; height: 75px; position: sticky; top: 0; z-index: 1000;
+}
+.logo-text { font-weight: 900; font-size: 30px; letter-spacing: 5px; color: #fff; font-family: 'Arial Black', sans-serif; }
+.header-right-icons { display: flex; gap: 20px; align-items: center; }
+.cart-wrapper, .user-icon { cursor: pointer; font-size: 24px; position: relative; color: #fff; }
 
-const Catalogo = () => {
-    const { logout } = useAuth();
-    const [productos, setProductos] = useState([]);
-    const [carrito, setCarrito] = useState([]);
-    const [busqueda, setBusqueda] = useState('');
-    const [cargando, setCargando] = useState(true);
-    const [tallasSeleccionadas, setTallasSeleccionadas] = useState({});
-    const [colorVisual, setColorVisual] = useState({}); 
-    const [isCartOpen, setIsCartOpen] = useState(false);
-    const [pagina, setPagina] = useState(1);
-    const [totalPaginas, setTotalPaginas] = useState(1);
+#cartCount { position: absolute; top: -10px; right: -12px; background: var(--makia-accent); color: #000; font-size: 11px; padding: 2px 6px; border-radius: 50%; font-weight: bold; }
 
-    useEffect(() => {
-        const cargarCatalogo = async () => {
-            setCargando(true);
-            try {
-                const baseURL = import.meta.env.VITE_API_URL || 'https://dbgymshark-ddk1.onrender.com/api';
-                const respuesta = await axios.get(`${baseURL}/productos?page=${pagina}&search=${busqueda}`);
-                if (respuesta.data.productos) {
-                    setProductos(respuesta.data.productos);
-                    setTotalPaginas(respuesta.data.pagination?.pages || 1);
-                }
-            } catch (error) { console.error('Error MAKIA:', error); }
-            finally { setCargando(false); }
-        };
-        cargarCatalogo();
-    }, [pagina, busqueda]);
+.store-layout-container { display: grid; grid-template-columns: 260px 1fr; max-width: 1440px; margin: 30px auto; padding: 0 5%; gap: 40px; }
+.sidebar-filter-box { background: var(--sidebar-bg); border: 1px solid #1a1e26; padding: 25px; border-radius: 12px; align-self: start; }
+.sidebar-btn-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 15px; }
+.filter-size-btn { background: transparent; color: #fff; border: 1px solid #2f3543; padding: 12px 0; border-radius: 8px; cursor: pointer; }
 
-    const agregarAlCarrito = (prod, colorElegido) => {
-        const item = {
-            ...prod,
-            tallaElegida: tallasSeleccionadas[prod._id] || 'Única',
-            colorElegido: colorElegido || (prod.colors_available?.[0] || 'N/A')
-        };
-        setCarrito([...carrito, item]);
-        setIsCartOpen(true);
-    };
+.white-search-box { display: flex; align-items: center; background: #fff; padding: 10px 15px; border-radius: 4px; width: 100%; max-width: 380px; margin-left: auto; margin-bottom: 30px; }
+.white-search-box input { border: none; outline: none; width: 100%; color: #000; font-weight: 600; margin-left: 10px; }
+.white-search-box i { color: #000; }
 
-    return (
-        <div className="client-view">
-            <header className="client-header-makia">
-                <div className="logo-text">MAKIA</div>
-                <div className="header-right-icons">
-                    <div className="cart-wrapper" onClick={() => setIsCartOpen(true)}>
-                        <i className="fas fa-shopping-bag"></i>
-                        <span id="cartCount">{carrito.length}</span>
-                    </div>
-                    <div className="user-icon" onClick={logout}><i className="far fa-user"></i></div>
-                </div>
-            </header>
+.fixed-grid-3 {
+    display: grid; 
+    grid-template-columns: repeat(3, 1fr) !important; 
+    gap: 30px;
+}
+.makia-product-card { display: flex; flex-direction: column; background: transparent; min-height: 600px; }
+.img-frame { height: 450px; border-radius: 8px; overflow: hidden; background: #111; width: 100%; }
+.p-img { width: 100%; height: 100%; object-fit: cover !important; display: block; }
 
-            <div className="hero-banner-fixed"><img src="/hero-banner-client.jpg" alt="MAKIA Hero" /></div>
+.swatch-row { display: flex; gap: 10px; margin: 15px 0; overflow-x: auto; scrollbar-width: none; padding: 5px 0; }
+.swatch-circle { width: 22px; height: 22px; border-radius: 50% !important; border: 1px solid rgba(255,255,255,0.2); cursor: pointer; flex-shrink: 0; }
+.swatch-circle.active { box-shadow: 0 0 0 2px #000, 0 0 0 4px var(--makia-accent); }
 
-            <div className="store-layout-container">
-                <aside className="sidebar-filter-box">
-                    <h2 className="sidebar-h2">Filtros</h2>
-                    <div className="filter-group">
-                        <h3 className="sidebar-h3">Talla</h3>
-                        <div className="sidebar-btn-grid">
-                            {['XS', 'S', 'M', 'L', 'XL', '2X'].map(t => <button key={t} className="filter-size-btn">{t}</button>)}
-                        </div>
-                    </div>
-                </aside>
+.card-footer { margin-top: auto; display: flex; flex-direction: column; gap: 10px; }
+.makia-size-dropdown { width: 100%; padding: 12px; background: #0c0f16; color: #fff; border: 1px solid #222; border-radius: 6px; cursor: pointer; }
+.btn-add-to-bag-makia { background: #fff; color: #000; border: none; padding: 16px; font-weight: 900; text-transform: uppercase; border-radius: 4px; cursor: pointer; transition: 0.2s; }
+.btn-add-to-bag-makia:hover { background: var(--makia-accent); }
 
-                <main className="shop-main-content">
-                    <div className="search-bar-row">
-                        <div className="white-search-box">
-                            <i className="fas fa-search"></i>
-                            <input type="text" placeholder="¿Qué estás buscando hoy?" value={busqueda} onChange={(e) => setBusqueda(e.target.value)} />
-                        </div>
-                    </div>
-
-                    <div className="fixed-grid-3">
-                        {!cargando && productos.map((prod) => {
-                            const colorActivo = colorVisual[prod._id] || (prod.colors_available?.[0]);
-                            const imagenAMostrar = getPrimaryImage(prod);
-
-                            return (
-                                <div key={prod._id} className="makia-product-card">
-                                    <div className="img-frame">
-                                        <img src={imagenAMostrar} alt={prod.title} className="p-img" />
-                                    </div>
-                                    <div className="info-frame">
-                                        <h3>{prod.title}</h3>
-                                        <p className="p-price">{prod.precioMXN?.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' })}</p>
-                                        <div className="swatch-row-carrusel">
-                                            {prod.colors_available?.map(col => (
-                                                <button key={col} className={`swatch-circle ${colorActivo === col ? 'active' : ''}`} style={{ backgroundColor: getColorHex(col) }} onClick={() => setColorVisual(prev => ({ ...prev, [prod._id]: col }))} />
-                                            ))}
-                                        </div>
-                                        <div className="card-footer">
-                                            <select className="makia-size-dropdown" value={tallasSeleccionadas[prod._id] || ""} onChange={(e) => setTallasSeleccionadas(prev => ({ ...prev, [prod._id]: e.target.value }))}>
-                                                <option value="">Seleccionar Talla</option>
-                                                {(prod.sizes_available || []).map(t => <option key={t} value={t}>{t}</option>)}
-                                            </select>
-                                            <button className="btn-add-to-bag-makia" onClick={() => agregarAlCarrito(prod, colorActivo)}>AÑADIR A LA BOLSA</button>
-                                        </div>
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div>
-                    <PaginationControls page={pagina} totalPages={totalPaginas} onPageChange={setPagina} />
-                </main>
-            </div>
-
-            {isCartOpen && (
-                <div className="cart-modal-overlay" onClick={() => setIsCartOpen(false)}>
-                    <div className="cart-modal-panel" onClick={e => e.stopPropagation()}>
-                        <div className="cart-modal-top"><h2>TU BOLSA</h2><span className="close-cart-btn" onClick={() => setIsCartOpen(false)}>&times;</span></div>
-                        <div className="cart-modal-list">
-                            {carrito.map((item, i) => (
-                                <div key={i} className="cart-modal-row">
-                                    <div><p>{item.title}</p><small>{item.tallaElegida}</small></div>
-                                    <p>{item.precioMXN?.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' })}</p>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            )}
-        </div>
-    );
-};
-
-export default Catalogo;
+.cart-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 2000; display: flex; justify-content: flex-end; }
+.cart-modal-panel { width: 400px; background: #000; height: 100%; padding: 30px; border-left: 1px solid #222; display: flex; flex-direction: column; }
