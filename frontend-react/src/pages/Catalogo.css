@@ -186,7 +186,7 @@ body {
     appearance: none;
     width: 20px;
     height: 20px;
-    background: var(--makia-accent);
+    background: #fff;
     border-radius: 50%;
     cursor: pointer;
     border: 3px solid #000;
