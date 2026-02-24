@@ -127,7 +127,7 @@ const Catalogo = () => {
                                                 {prod.precioMXN?.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' })}
                                             </p>
 
-                                            <div className="swatch-row-carrusel">
+                                            <div className="swatch-row">
                                                 {prod.colors_available?.map(col => (
                                                     <button 
                                                         key={col}
