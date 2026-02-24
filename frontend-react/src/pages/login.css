@@ -124,11 +124,13 @@
 .input-group .fa-eye,
 .input-group .fa-eye-slash {
     position: absolute;
+    right: 12px;
+    left: auto;
     top: 50%;
     transform: translateY(-50%);
     color: rgba(255, 255, 255, 0.72);
-    cursor: pointer; 
-    z-index: 2; 
+    cursor: pointer;
+    z-index: 10;
 }
 
 .input-pass-padding {
