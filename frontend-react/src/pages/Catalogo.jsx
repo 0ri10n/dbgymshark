@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import PaginationControls from '../components/PaginationControls';
 import './Catalogo.css';
 
-// Agrupación de product_type en categorías para el menú desplegable
+// Agrupación exhaustiva de product_type en categorías principales
 const categoryGroups = {
     'Womens': [
         'Womens Bodysuit', 'Womens Bottoms', 'Womens Crop Top', 'Womens Crop Tops', 'Womens Dress', 
@@ -23,7 +23,7 @@ const categoryGroups = {
     ],
     'Accessories': [
         'Accessories', 'Bag', 'Bags', 'Bottles', 'Footwear', 'Headwear', 'Socks', 'Thirft Bag', 'footwear',
-        'womens Accessories', 'womens Bags', 'womens Headwear', 'womens Socks'
+        'womens Accessories', 'womens Bags', 'womens Headwear', 'womens Socks', 'Misc.', 'Gift Card'
     ]
 };
 
@@ -54,10 +54,10 @@ const Catalogo = () => {
     const [pagina, setPagina] = useState(1);
     const [totalPaginas, setTotalPaginas] = useState(1);
 
-    // Estados de Filtros (Sin Talla en sidebar por redundancia)
+    // Filtros simplificados: Sin tallas en sidebar para evitar redundancia
     const [catFiltro, setCatFiltro] = useState(null);
     const [subCatFiltro, setSubCatFiltro] = useState(null);
-    const [precioMax, setPrecioMax] = useState(2500);
+    const [precioMax, setPrecioMax] = useState(3000);
     const [tallasSeleccionadas, setTallasSeleccionadas] = useState({});
     const [colorVisual, setColorVisual] = useState({});
 
@@ -80,11 +80,21 @@ const Catalogo = () => {
         cargarCatalogo();
     }, [pagina, busqueda]);
 
-    // Lógica de filtrado: Categoría, Subcategoría y Precio
+    // Lógica de filtrado mejorada para leer categorías correctamente
     const productosAMostrar = productos.filter(p => {
-        const matchCat = catFiltro ? categoryGroups[catFiltro].includes(p.product_type) : true;
-        const matchSub = subCatFiltro ? p.product_type === subCatFiltro : true;
-        const matchPrecio = (p.price || p.precioMXN || 0) <= precioMax;
+        const typeInDB = (p.product_type || '').trim().toLowerCase();
+        const priceInDB = Number(p.price || p.precioMXN || 0);
+
+        const matchCat = catFiltro 
+            ? categoryGroups[catFiltro].some(type => type.toLowerCase() === typeInDB) 
+            : true;
+        
+        const matchSub = subCatFiltro 
+            ? typeInDB === subCatFiltro.toLowerCase() 
+            : true;
+        
+        const matchPrecio = priceInDB <= precioMax;
+
         return matchCat && matchSub && matchPrecio;
     });
 
@@ -107,9 +117,7 @@ const Catalogo = () => {
                         <i className="fas fa-shopping-bag"></i>
                         <span id="cartCount">{carrito.length}</span>
                     </div>
-                    <div className="user-icon" onClick={logout}>
-                        <i className="far fa-user"></i>
-                    </div>
+                    <div className="user-icon" onClick={logout}><i className="far fa-user"></i></div>
                 </div>
             </header>
 
@@ -119,19 +127,20 @@ const Catalogo = () => {
 
             <div className="store-layout-container">
                 <aside className="sidebar-filter-box">
-                    <h2 className="sidebar-h2">Filtros</h2>
+                    <div className="sidebar-top-row">
+                        <h2 className="sidebar-h2">Filtros</h2>
+                        {(catFiltro || subCatFiltro) && (
+                            <button className="clear-filters-btn" onClick={() => {setCatFiltro(null); setSubCatFiltro(null); setPrecioMax(3000);}}>Limpiar</button>
+                        )}
+                    </div>
                     
-                    {/* Filtro Categoría Desplegable */}
                     <div className="filter-group">
                         <h3 className="sidebar-h3">Categoría</h3>
                         {Object.keys(categoryGroups).map(cat => (
                             <div key={cat} className="category-dropdown-item">
                                 <div 
                                     className={`cat-main-label ${catFiltro === cat ? 'selected' : ''}`} 
-                                    onClick={() => {
-                                        setCatFiltro(catFiltro === cat ? null : cat); 
-                                        setSubCatFiltro(null);
-                                    }}
+                                    onClick={() => {setCatFiltro(catFiltro === cat ? null : cat); setSubCatFiltro(null);}}
                                 >
                                     {cat} <i className={`fas fa-chevron-${catFiltro === cat ? 'up' : 'down'}`}></i>
                                 </div>
@@ -141,7 +150,7 @@ const Catalogo = () => {
                                             <div 
                                                 key={sub} 
                                                 className={`sub-item ${subCatFiltro === sub ? 'active' : ''}`} 
-                                                onClick={() => setSubCatFiltro(subCatFiltro === sub ? null : sub)}
+                                                onClick={() => setSubCatFiltro(sub)}
                                             >
                                                 {sub.replace('Womens ', '').replace('Mens ', '')}
                                             </div>
@@ -152,16 +161,12 @@ const Catalogo = () => {
                         ))}
                     </div>
 
-                    {/* Filtro Precio */}
                     <div className="filter-group">
                         <h3 className="sidebar-h3">Presupuesto: ${precioMax}</h3>
                         <input 
-                            type="range" 
-                            min="0" 
-                            max="3000" 
-                            step="50" 
+                            type="range" min="0" max="3000" step="50" 
                             value={precioMax} 
-                            onChange={(e) => setPrecioMax(parseInt(e.target.value))} 
+                            onChange={(e) => setPrecioMax(Number(e.target.value))} 
                             className="price-slider" 
                         />
                     </div>
@@ -170,15 +175,11 @@ const Catalogo = () => {
                 <main className="shop-main-content">
                     <div className="white-search-box">
                         <i className="fas fa-search"></i>
-                        <input 
-                            type="text" 
-                            placeholder="¿Qué estás buscando hoy?" 
-                            value={busqueda} 
-                            onChange={(e) => setBusqueda(e.target.value)} 
-                        />
+                        <input type="text" placeholder="¿Qué estás buscando hoy?" value={busqueda} onChange={(e) => setBusqueda(e.target.value)} />
                     </div>
 
-                    <div className="fixed-grid-3">
+                    {/* Fila ajustada a 2 productos */}
+                    <div className="fixed-grid-2">
                         {!cargando && productosAMostrar.map((prod) => {
                             const colorActivo = colorVisual[prod._id] || (prod.colors_available?.[0]);
                             const imgAMostrar = prod.variants?.find(v => v.color === colorActivo)?.image || getPrimaryImage(prod);
@@ -236,14 +237,10 @@ const Catalogo = () => {
                         <div className="cart-modal-list">
                             {carrito.map((item, i) => (
                                 <div key={i} className="cart-modal-row">
-                                    <div>
-                                        <p>{item.title}</p>
-                                        <small>{item.tallaElegida} | {item.colorElegido}</small>
-                                    </div>
+                                    <div><p>{item.title}</p><small>{item.tallaElegida} | {item.colorElegido}</small></div>
                                     <p>${item.price || item.precioMXN}</p>
                                 </div>
                             ))}
-                            {carrito.length === 0 && <p style={{textAlign: 'center', padding: '20px'}}>Tu bolsa está vacía.</p>}
                         </div>
                     </div>
                 </div>
