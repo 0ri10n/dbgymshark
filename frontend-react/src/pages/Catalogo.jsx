@@ -5,10 +5,10 @@ import { CartContext } from '../context/CartContext';
 import PaginationControls from '../components/PaginationControls';
 import './Catalogo.css';
 
-// --- CONFIGURACIÓN DE MONEDA ---
-const TIPO_CAMBIO_USD_MXN = 17.00; //
+// --- CONFIGURACIÓN ---
+const TIPO_CAMBIO_USD_MXN = 17.00;
 
-// [ARREGLO CATEGORÍAS] Lista exhaustiva para filtros precisos según tus datos
+// [ARREGLO CATEGORÍAS] Lista exhaustiva proporcionada para filtros exactos
 const categoryGroups = {
     'Womens': [
         "Womens Bodysuit", "Womens Bottoms", "Womens Crop Top", "Womens Crop Tops", "Womens Dress", 
@@ -32,6 +32,7 @@ const categoryGroups = {
     ]
 };
 
+// --- FUNCIONES DE APOYO ---
 const getColorHex = (name = "") => {
     const n = name.toLowerCase();
     if (n.includes('blue')) return "#1e3a8a";
@@ -44,8 +45,17 @@ const getColorHex = (name = "") => {
 };
 
 const getPrimaryImage = (p = {}) => {
+    if (!p) return "/placeholder.jpg";
     const img = p.image_principal || (p.variants && p.variants[0]?.image) || "/placeholder.jpg";
     return typeof img === 'string' && img.includes(',') ? img.split(',')[0].trim() : img;
+};
+
+const getNumericPriceMXN = (prod) => {
+    let valor = Number(prod.precioMXN);
+    if (!valor || isNaN(valor)) {
+        valor = Number(prod.price) * TIPO_CAMBIO_USD_MXN;
+    }
+    return valor || 0;
 };
 
 const Catalogo = () => {
@@ -59,8 +69,8 @@ const Catalogo = () => {
     const [pagina, setPagina] = useState(1);
     const [totalPaginas, setTotalPaginas] = useState(1);
 
-    // Filtros activos
     const [catFiltro, setCatFiltro] = useState(null);
+    const [subCatFiltro, setSubCatFiltro] = useState(null);
     const [precioMax, setPrecioMax] = useState(3500);
     const [tallasSeleccionadas, setTallasSeleccionadas] = useState({});
     const [colorVisual, setColorVisual] = useState({});
@@ -81,25 +91,26 @@ const Catalogo = () => {
         cargarData();
     }, [pagina]);
 
-    // [ARREGLO FILTROS] Búsqueda ultra sensible por nombre y categoría
+    // [ARREGLO BÚSQUEDA] Ultra sensible: busca palabra por palabra en título y categoría
     const productosAMostrar = productos.filter(p => {
-        const query = busqueda.toLowerCase().trim();
-        const pType = (p.product_type || '').trim();
-        const pTitle = (p.title || '').toLowerCase();
-        const pPrecio = p.precioMXN || (p.price * TIPO_CAMBIO_USD_MXN);
+        const keywords = busqueda.toLowerCase().split(' ').filter(k => k);
+        const titulo = (p.title || '').toLowerCase();
+        const tipoDB = (p.product_type || '').trim();
+        const precioPesos = getNumericPriceMXN(p);
 
-        const matchBusqueda = query === '' || pTitle.includes(query) || pType.toLowerCase().includes(query);
-        const matchCat = !catFiltro || categoryGroups[catFiltro].includes(pType);
-        const matchPrecio = pPrecio <= precioMax;
+        const matchSearch = keywords.every(k => titulo.includes(k) || tipoDB.toLowerCase().includes(k));
+        const matchCat = !catFiltro || categoryGroups[catFiltro].includes(tipoDB);
+        const matchSub = !subCatFiltro || tipoDB === subCatFiltro;
+        const matchPrecio = precioPesos <= precioMax;
 
-        return matchBusqueda && matchCat && matchPrecio;
+        return matchSearch && matchCat && matchSub && matchPrecio;
     });
 
     // [ARREGLO AÑADIR] Validación obligatoria de talla
     const handleAgregar = (p) => {
         const talla = tallasSeleccionadas[p._id];
         if (!talla) {
-            alert("Vania, selecciona una talla antes de añadir el producto a la bolsa.");
+            alert("Vania, selecciona una talla antes de añadir a la bolsa.");
             return;
         }
         addToCart({ 
@@ -114,8 +125,8 @@ const Catalogo = () => {
     // [ARREGLO VENTAS] Registro de pedido en base de datos
     const handleFinalizarCompra = async () => {
         if (cart.length === 0) return;
+        const total = cart.reduce((acc, item) => acc + (getNumericPriceMXN(item) * item.quantity), 0);
         
-        const total = cart.reduce((acc, item) => acc + (item.precioMXN || item.price * TIPO_CAMBIO_USD_MXN) * item.quantity, 0);
         const ventaData = {
             usuario: user?.email || "Invitado",
             productos: cart.map(item => ({
@@ -123,7 +134,7 @@ const Catalogo = () => {
                 titulo: item.title,
                 talla: item.selectedSize,
                 cantidad: item.quantity,
-                precioUnitario: item.precioMXN || item.price * TIPO_CAMBIO_USD_MXN
+                precioUnitario: getNumericPriceMXN(item)
             })),
             total: total,
             fecha: new Date().toISOString()
@@ -132,11 +143,11 @@ const Catalogo = () => {
         try {
             const baseURL = import.meta.env.VITE_API_URL || 'https://dbgymshark-ddk1.onrender.com/api';
             await axios.post(`${baseURL}/ventas`, ventaData);
-            alert("¡Venta registrada con éxito en la base de datos de MAKIA!");
+            alert("¡Venta registrada con éxito en MAKIA!");
             clearCart();
             setIsCartOpen(false);
         } catch (error) {
-            alert("Error al procesar la venta. Inténtalo de nuevo.");
+            alert("Error al registrar la venta.");
         }
     };
 
@@ -153,7 +164,6 @@ const Catalogo = () => {
                 </div>
             </header>
 
-            {/* Banner superior */}
             <div className="hero-banner-full">
                 <img src="/hero-banner-client.jpg" alt="MAKIA Performance" />
             </div>
@@ -162,8 +172,7 @@ const Catalogo = () => {
                 <aside className="sidebar-filter-box">
                     <div className="sidebar-top-row">
                         <h2 className="sidebar-h2">Filtros</h2>
-                        {/* [ARREGLO] Botón limpiar verde-amarillo sin recuadro blanco */}
-                        <button className="clear-filters-btn" onClick={() => {setCatFiltro(null); setBusqueda(''); setPrecioMax(3500);}}>Limpiar</button>
+                        <button className="clear-filters-btn" onClick={() => {setCatFiltro(null); setSubCatFiltro(null); setBusqueda(''); setPrecioMax(3500);}}>Limpiar</button>
                     </div>
                     
                     <div className="filter-group">
@@ -176,7 +185,7 @@ const Catalogo = () => {
                                 {catFiltro === cat && (
                                     <div className="sub-cat-list">
                                         {categoryGroups[cat].map(sub => (
-                                            <div key={sub} className="sub-item" onClick={() => setBusqueda(sub)}>
+                                            <div key={sub} className={`sub-item ${subCatFiltro === sub ? 'active' : ''}`} onClick={() => setSubCatFiltro(sub)}>
                                                 {sub.replace('Womens ', '').replace('Mens ', '')}
                                             </div>
                                         ))}
@@ -195,10 +204,9 @@ const Catalogo = () => {
                 <main className="shop-main-content">
                     <div className="white-search-box">
                         <i className="fas fa-search"></i>
-                        <input type="text" placeholder="Busca por nombre o tipo de prenda..." value={busqueda} onChange={(e) => setBusqueda(e.target.value)} />
+                        <input type="text" placeholder="Busca nombre o tipo de prenda..." value={busqueda} onChange={(e) => setBusqueda(e.target.value)} />
                     </div>
 
-                    {/* [ARREGLO] Grid de 3 productos uniforme */}
                     <div className="fixed-grid-3">
                         {!cargando && productosAMostrar.map((prod) => {
                             const colorActivo = colorVisual[prod._id] || prod.colors_available?.[0];
@@ -209,9 +217,8 @@ const Catalogo = () => {
                                     <div className="img-frame"><img src={imgFinal} alt={prod.title} className="p-img" /></div>
                                     <div className="info-frame">
                                         <h3>{prod.title}</h3>
-                                        <p className="p-price">${(prod.precioMXN || prod.price * TIPO_CAMBIO_USD_MXN).toLocaleString()} MXN</p>
+                                        <p className="p-price">${getNumericPriceMXN(prod).toLocaleString()} MXN</p>
                                         
-                                        {/* [ARREGLO] Círculos de colores desplazables */}
                                         <div className="swatch-row-carrusel">
                                             {prod.colors_available?.map(col => (
                                                 <button 
@@ -225,10 +232,10 @@ const Catalogo = () => {
 
                                         <div className="card-footer">
                                             <select className="makia-size-dropdown" value={tallasSeleccionadas[prod._id] || ""} onChange={(e) => setTallasSeleccionadas(prev => ({ ...prev, [prod._id]: e.target.value }))}>
-                                                <option value="">Selecciona Talla</option>
+                                                <option value="">Talla</option>
                                                 {(prod.sizes_available || []).map(t => <option key={t} value={t}>{t}</option>)}
                                             </select>
-                                            <button className="btn-add-to-bag-makia" onClick={() => handleAgregar(prod)}>AÑADIR A LA BOLSA</button>
+                                            <button className="btn-add-to-bag-makia" onClick={() => handleAgregar(prod)}>AÑADIR</button>
                                         </div>
                                     </div>
                                 </div>
@@ -239,7 +246,7 @@ const Catalogo = () => {
                 </main>
             </div>
 
-            {/* [ARREGLO] BOLSA INTERACTIVA */}
+            {/* BOLSA INTERACTIVA */}
             {isCartOpen && (
                 <div className="cart-modal-overlay" onClick={() => setIsCartOpen(false)}>
                     <div className="cart-modal-panel" onClick={e => e.stopPropagation()}>
@@ -253,11 +260,9 @@ const Catalogo = () => {
                                     <div style={{flex:1}}>
                                         <p style={{fontWeight:'600'}}>{item.title}</p>
                                         <div style={{display:'flex', gap:'10px', marginTop:'5px'}}>
-                                            {/* Cambio de talla en tiempo real */}
                                             <select className="mini-dropdown" value={item.selectedSize} onChange={(e) => updateCartItem(i, { ...item, selectedSize: e.target.value })}>
                                                 {item.sizes_available?.map(s => <option key={s} value={s}>{s}</option>)}
                                             </select>
-                                            {/* Control de cantidad */}
                                             <div className="qty-controls">
                                                 <button onClick={() => updateCartItem(i, { ...item, quantity: Math.max(1, item.quantity - 1) })}>-</button>
                                                 <span>{item.quantity}</span>
@@ -265,11 +270,10 @@ const Catalogo = () => {
                                             </div>
                                         </div>
                                     </div>
-                                    <p style={{fontWeight:'800', color:'var(--makia-accent)'}}>${((item.precioMXN || item.price * TIPO_CAMBIO_USD_MXN) * item.quantity).toLocaleString()}</p>
+                                    <p style={{fontWeight:'800', color:'var(--makia-accent)'}}>${(getNumericPriceMXN(item) * item.quantity).toLocaleString()}</p>
                                     <button onClick={() => removeFromCart(i)} className="btn-remove">&times;</button>
                                 </div>
                             ))}
-                            {cart.length === 0 && <p style={{textAlign:'center', marginTop:'50px', color: '#666'}}>Tu bolsa está vacía.</p>}
                         </div>
                         <button className="btn-checkout-makia" onClick={handleFinalizarCompra}>FINALIZAR COMPRA</button>
                     </div>
