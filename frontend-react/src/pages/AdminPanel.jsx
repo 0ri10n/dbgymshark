@@ -4,8 +4,6 @@ import { useAuth } from '../context/AuthContext';
 import PaginationControls from '../components/PaginationControls';
 import './AdminPanel.css';
 const TABLE_NAME = 'productos'; 
-const [editando, setEditando] = useState(null);
-const [tempData, setTempData] = useState({});
 const baseURL = import.meta.env.VITE_API_URL || 'https://dbgymshark.onrender.com/api';
 
 const AdminPanel = () => {
@@ -15,6 +13,8 @@ const AdminPanel = () => {
     const [totalPaginas, setTotalPaginas] = useState(1);
     const [cargando, setCargando] = useState(false);
     const totalPaginasSeguras = Math.max(Number(totalPaginas) || 1, 1);
+    const [editando, setEditando] = useState(null);
+    const [tempData, setTempData] = useState({});
 
     useEffect(() => {
         const obtenerProductos = async () => {
@@ -129,7 +129,7 @@ const AdminPanel = () => {
                 <section className="admin-actions">
                     <div className="admin-section-header">
                         <h2>Gestion de Catalogo (DBGymshark)</h2>
-                        <button className="admin-add-btn">
+                        <button className="admin-add-btn" onClick={crearProducto}>
                             + Agregar Nuevo Producto
                         </button>
                     </div>
