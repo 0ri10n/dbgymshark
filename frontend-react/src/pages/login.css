@@ -160,10 +160,13 @@
 }
 
 .link-register {
-    margin-top: 14px;
-    display: inline-block;
+    display: block; 
+    text-align: center; 
+    margin-top: 24px; 
     color: rgba(255, 255, 255, 0.8);
     text-decoration: none;
+    font-size: 0.9rem;
+    transition: color 0.2s ease;
 }
 
 .link-register:hover,
