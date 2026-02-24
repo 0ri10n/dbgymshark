@@ -5,34 +5,32 @@ import { CartContext } from '../context/CartContext';
 import PaginationControls from '../components/PaginationControls';
 import './Catalogo.css';
 
-// --- CONFIGURACIÓN ---
-const TIPO_CAMBIO_USD_MXN = 17.00; //
+const TIPO_CAMBIO_USD_MXN = 17.00;
 
-// [ARREGLO CATEGORÍAS] Lista exhaustiva con los nombres propios exactos para que el filtro responda
+// [ARREGLO CATEGORÍAS] Lista exhaustiva basada en tu base de datos para filtros exactos
 const categoryGroups = {
     'Womens': [
-        'Womens Bodysuit', 'Womens Bottoms', 'Womens Crop Top', 'Womens Crop Tops', 'Womens Dress', 
-        'Womens Hoodie', 'Womens Hoodies', 'Womens Jacket', 'Womens Jackets / Outerwear', 'Womens Leggings', 
-        'Womens Long Sleeve Top', 'Womens Ls Tops', 'Womens One Piece', 'Womens One Pieces', 'Womens Pants', 
-        'Womens Pullover', 'Womens Pullovers', 'Womens Shorts', 'Womens Skort', 'Womens Sleeveless Top', 
-        'Womens Sleeveless Tops', 'Womens Socks', 'Womens Sports Bra', 'Womens Sports Bras', 'Womens Ss Tops', 
-        'Womens Sweater', 'Womens Swimwear', 'Womens T-Shirt', 'Womens Tank', 'Womens Tanks', 'Womens Underwear', 
-        'Womens Vest', 'womens Accessories', 'womens Bags', 'womens Headwear', 'womens Socks'
+        "Womens Bodysuit", "Womens Bottoms", "Womens Crop Top", "Womens Crop Tops", "Womens Dress", 
+        "Womens Hoodie", "Womens Hoodies", "Womens Jacket", "Womens Jackets / Outerwear", "Womens Leggings", 
+        "Womens Long Sleeve Top", "Womens Ls Tops", "Womens One Piece", "Womens One Pieces", "Womens Pants", 
+        "Womens Pullover", "Womens Pullovers", "Womens Shorts", "Womens Skort", "Womens Sleeveless Top", 
+        "Womens Sleeveless Tops", "Womens Socks", "Womens Sports Bra", "Womens Sports Bras", "Womens Ss Tops", 
+        "Womens Sweater", "Womens Swimwear", "Womens T-Shirt", "Womens Tank", "Womens Tanks", "Womens Underwear", 
+        "Womens Vest", "womens Accessories", "womens Bags", "womens Headwear", "womens Socks"
     ],
     'Mens': [
-        'Mens Baselayer', 'Mens Bottoms', 'Mens Drop Armhole Tank', 'Mens Hoodie', 'Mens Jacket', 'Mens Jackets', 
-        'Mens Jackets / Outerwear', 'Mens Joggers', 'Mens Leggings', 'Mens Long Sleeve Top', 'Mens Ls Tops', 
-        'Mens Outerwear', 'Mens Pants', 'Mens Pullover', 'Mens Pullovers', 'Mens Shirt', 'Mens Shorts', 
-        'Mens Sleeveless Tops', 'Mens Ss Tops', 'Mens Stringer', 'Mens T-Shirt', 'Mens Tank', 'Mens Tops', 
-        'Mens Underwear', 'Mens t', 'mens unisex Bottoms', 'mens unisex Pullovers'
+        "Mens Baselayer", "Mens Bottoms", "Mens Drop Armhole Tank", "Mens Hoodie", "Mens Jacket", "Mens Jackets", 
+        "Mens Jackets / Outerwear", "Mens Joggers", "Mens Leggings", "Mens Long Sleeve Top", "Mens Ls Tops", 
+        "Mens Outerwear", "Mens Pants", "Mens Pullover", "Mens Pullovers", "Mens Shirt", "Mens Shorts", 
+        "Mens Sleeveless Tops", "Mens Ss Tops", "Mens Stringer", "Mens T-Shirt", "Mens Tank", "Mens Tops", 
+        "Mens Underwear", "Mens t", "mens unisex Bottoms", "mens unisex Pullovers"
     ],
     'Accessories': [
-        'Accessories', 'Bag', 'Bags', 'Bottles', 'Footwear', 'Gift Card', 'Headwear', 'Misc.', 
-        'Pants', 'Pullovers', 'Socks', 'Ss Tops', 'Thirft Bag', 'Underwear', 'footwear'
+        "Accessories", "Bag", "Bags", "Bottles", "Footwear", "Gift Card", "Headwear", "Misc.", 
+        "Pants", "Pullovers", "Socks", "Ss Tops", "Thirft Bag", "Underwear", "footwear"
     ]
 };
 
-// --- FUNCIONES DE APOYO ---
 const getColorHex = (name = "") => {
     const n = name.toLowerCase();
     if (n.includes('blue')) return "#1e3a8a";
@@ -45,17 +43,10 @@ const getColorHex = (name = "") => {
 };
 
 const getPrimaryImage = (p = {}) => {
-    if (!p) return "/placeholder.jpg";
-    const img = p.image_principal || (p.variants && p.variants[0]?.image) || "/placeholder.jpg";
-    return typeof img === 'string' && img.includes(',') ? img.split(',')[0].trim() : img;
-};
-
-const getNumericPriceMXN = (prod) => {
-    let valor = Number(prod.precioMXN);
-    if (!valor || isNaN(valor)) {
-        valor = Number(prod.price) * TIPO_CAMBIO_USD_MXN;
-    }
-    return valor || 0;
+    // Intenta obtener la imagen de varios campos comunes en tu estructura JSON
+    const img = p.image_principal || p.imagen || p.image_src || (p.variants && p.variants[0]?.image);
+    if (typeof img === 'string' && img.includes(',')) return img.split(',')[0].trim();
+    return img || "/placeholder.jpg";
 };
 
 const Catalogo = () => {
@@ -70,7 +61,6 @@ const Catalogo = () => {
     const [totalPaginas, setTotalPaginas] = useState(1);
 
     const [catFiltro, setCatFiltro] = useState(null);
-    const [subCatFiltro, setSubCatFiltro] = useState(null);
     const [precioMax, setPrecioMax] = useState(3500);
     const [tallasSeleccionadas, setTallasSeleccionadas] = useState({});
     const [colorVisual, setColorVisual] = useState({});
@@ -91,56 +81,64 @@ const Catalogo = () => {
         cargarData();
     }, [pagina]);
 
-    // [ARREGLO BÚSQUEDA] Sensible a nombre O product_type para mayor precisión
+    // [ARREGLO BÚSQUEDA] Ultra sensible: busca palabra por palabra en título y product_type
     const productosAMostrar = productos.filter(p => {
-        const query = busqueda.toLowerCase().trim();
+        const keywords = busqueda.toLowerCase().split(' ').filter(k => k);
         const titulo = (p.title || '').toLowerCase();
         const tipoDB = (p.product_type || '').trim();
-        const precioPesos = getNumericPriceMXN(p);
+        const precioPesos = p.precioMXN || (Number(p.price) * TIPO_CAMBIO_USD_MXN);
 
-        // Busca en ambos campos
-        const matchSearch = query === '' || titulo.includes(query) || tipoDB.toLowerCase().includes(query);
+        const matchSearch = keywords.every(k => titulo.includes(k) || tipoDB.toLowerCase().includes(k));
         const matchCat = !catFiltro || categoryGroups[catFiltro].includes(tipoDB);
-        const matchSub = !subCatFiltro || tipoDB === subCatFiltro;
         const matchPrecio = precioPesos <= precioMax;
 
-        return matchSearch && matchCat && matchSub && matchPrecio;
+        return matchSearch && matchCat && matchPrecio;
     });
 
+    // [ARREGLO AÑADIR] Bloqueo si no hay talla seleccionada
     const handleAgregar = (p) => {
         const talla = tallasSeleccionadas[p._id];
         if (!talla) {
-            alert("Vania, selecciona una talla antes de añadir a la bolsa.");
+            alert("Vania, por favor selecciona una talla antes de añadir a la bolsa.");
             return;
         }
         addToCart({ 
             ...p, 
             selectedSize: talla, 
-            quantity: 1, 
-            selectedColor: colorVisual[p._id] || p.colors_available?.[0] 
+            quantity: 1,
+            selectedColor: colorVisual[p._id] || p.colors_available?.[0]
         });
         setIsCartOpen(true); 
     };
 
+    // [ARREGLO VENTAS] Registro de pedido en la base de datos
     const handleFinalizarCompra = async () => {
         if (cart.length === 0) return;
-        const total = cart.reduce((acc, item) => acc + (getNumericPriceMXN(item) * item.quantity), 0);
+        
+        const total = cart.reduce((acc, item) => acc + (item.precioMXN || item.price * TIPO_CAMBIO_USD_MXN) * item.quantity, 0);
+        
         const ventaData = {
             usuario: user?.email || "Invitado",
             productos: cart.map(item => ({
-                id: item._id, titulo: item.title, talla: item.selectedSize, cantidad: item.quantity, precioUnitario: getNumericPriceMXN(item)
+                id: item._id,
+                titulo: item.title,
+                talla: item.selectedSize,
+                cantidad: item.quantity,
+                precioUnitario: item.precioMXN || item.price * TIPO_CAMBIO_USD_MXN
             })),
-            total,
+            total: total,
             fecha: new Date().toISOString()
         };
 
         try {
             const baseURL = import.meta.env.VITE_API_URL || 'https://dbgymshark-ddk1.onrender.com/api';
-            await axios.post(`${baseURL}/ventas`, ventaData); //
-            alert("¡Venta registrada con éxito en MAKIA!");
+            await axios.post(`${baseURL}/ventas`, ventaData);
+            alert("¡Compra registrada con éxito en MAKIA!");
             clearCart();
             setIsCartOpen(false);
-        } catch (error) { alert("Error al registrar la venta."); }
+        } catch (error) {
+            alert("Error al registrar la venta en la base de datos.");
+        }
     };
 
     return (
@@ -157,14 +155,15 @@ const Catalogo = () => {
             </header>
 
             <div className="hero-banner-full">
-                <img src="/hero-banner-client.jpg" alt="MAKIA Hero" />
+                <img src="/hero-banner-client.jpg" alt="MAKIA Performance" />
             </div>
 
             <div className="store-layout-container">
                 <aside className="sidebar-filter-box">
                     <div className="sidebar-top-row">
                         <h2 className="sidebar-h2">Filtros</h2>
-                        <button className="clear-filters-btn" onClick={() => {setCatFiltro(null); setSubCatFiltro(null); setBusqueda(''); setPrecioMax(3500);}}>Limpiar</button>
+                        {/* Botón limpiar neón */}
+                        <button className="clear-filters-btn" onClick={() => {setCatFiltro(null); setBusqueda(''); setPrecioMax(3500);}}>Limpiar</button>
                     </div>
                     
                     <div className="filter-group">
@@ -177,8 +176,8 @@ const Catalogo = () => {
                                 {catFiltro === cat && (
                                     <div className="sub-cat-list">
                                         {categoryGroups[cat].map(sub => (
-                                            <div key={sub} className={`sub-item ${subCatFiltro === sub ? 'active' : ''}`} onClick={() => setSubCatFiltro(sub)}>
-                                                {sub} {/* Mostramos el nombre completo como pediste */}
+                                            <div key={sub} className="sub-item" onClick={() => setBusqueda(sub)}>
+                                                {sub} {/* Lista con nombres completos de tu DB */}
                                             </div>
                                         ))}
                                     </div>
@@ -196,7 +195,7 @@ const Catalogo = () => {
                 <main className="shop-main-content">
                     <div className="white-search-box">
                         <i className="fas fa-search"></i>
-                        <input type="text" placeholder="Busca por nombre o tipo de prenda..." value={busqueda} onChange={(e) => setBusqueda(e.target.value)} />
+                        <input type="text" placeholder="Busca nombre o tipo de prenda (ej. Ss Tops)..." value={busqueda} onChange={(e) => setBusqueda(e.target.value)} />
                     </div>
 
                     <div className="fixed-grid-3">
@@ -209,12 +208,19 @@ const Catalogo = () => {
                                     <div className="img-frame"><img src={imgFinal} alt={prod.title} className="p-img" /></div>
                                     <div className="info-frame">
                                         <h3>{prod.title}</h3>
-                                        <p className="p-price">${getNumericPriceMXN(prod).toLocaleString()} MXN</p>
+                                        <p className="p-price">${(prod.precioMXN || prod.price * TIPO_CAMBIO_USD_MXN).toLocaleString()} MXN</p>
+                                        
                                         <div className="swatch-row-carrusel">
                                             {prod.colors_available?.map(col => (
-                                                <button key={col} className={`swatch-circle ${colorActivo === col ? 'active' : ''}`} style={{ backgroundColor: getColorHex(col) }} onClick={() => setColorVisual(prev => ({ ...prev, [prod._id]: col }))} />
+                                                <button 
+                                                    key={col} 
+                                                    className={`swatch-circle ${colorActivo === col ? 'active' : ''}`} 
+                                                    style={{ backgroundColor: getColorHex(col) }} 
+                                                    onClick={() => setColorVisual(prev => ({ ...prev, [prod._id]: col }))} 
+                                                />
                                             ))}
                                         </div>
+
                                         <div className="card-footer">
                                             <select className="makia-size-dropdown" value={tallasSeleccionadas[prod._id] || ""} onChange={(e) => setTallasSeleccionadas(prev => ({ ...prev, [prod._id]: e.target.value }))}>
                                                 <option value="">Selecciona Talla</option>
@@ -231,19 +237,25 @@ const Catalogo = () => {
                 </main>
             </div>
 
+            {/* BOLSA INTERACTIVA */}
             {isCartOpen && (
                 <div className="cart-modal-overlay" onClick={() => setIsCartOpen(false)}>
                     <div className="cart-modal-panel" onClick={e => e.stopPropagation()}>
-                        <div className="cart-modal-top"><h2>TU BOLSA</h2><span onClick={() => setIsCartOpen(false)} style={{cursor:'pointer', fontSize: '24px'}}>&times;</span></div>
+                        <div className="cart-modal-top">
+                            <h2>TU BOLSA</h2>
+                            <span onClick={() => setIsCartOpen(false)} style={{cursor:'pointer', fontSize: '24px'}}>&times;</span>
+                        </div>
                         <div className="cart-modal-list">
                             {cart.map((item, i) => (
                                 <div key={i} className="cart-modal-row">
                                     <div style={{flex:1}}>
                                         <p style={{fontWeight:'600'}}>{item.title}</p>
                                         <div style={{display:'flex', gap:'10px', marginTop:'5px'}}>
+                                            {/* Cambio de talla en bolsa */}
                                             <select className="mini-dropdown" value={item.selectedSize} onChange={(e) => updateCartItem(i, { ...item, selectedSize: e.target.value })}>
                                                 {item.sizes_available?.map(s => <option key={s} value={s}>{s}</option>)}
                                             </select>
+                                            {/* Control de cantidad */}
                                             <div className="qty-controls">
                                                 <button onClick={() => updateCartItem(i, { ...item, quantity: Math.max(1, item.quantity - 1) })}>-</button>
                                                 <span>{item.quantity}</span>
@@ -251,7 +263,7 @@ const Catalogo = () => {
                                             </div>
                                         </div>
                                     </div>
-                                    <p style={{fontWeight:'800', color:'var(--makia-accent)'}}>${(getNumericPriceMXN(item) * item.quantity).toLocaleString()}</p>
+                                    <p style={{fontWeight:'800', color:'var(--makia-accent)'}}>${((item.precioMXN || item.price * TIPO_CAMBIO_USD_MXN) * item.quantity).toLocaleString()}</p>
                                     <button onClick={() => removeFromCart(i)} className="btn-remove">&times;</button>
                                 </div>
                             ))}
