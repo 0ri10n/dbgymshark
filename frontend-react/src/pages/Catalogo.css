@@ -186,7 +186,7 @@ body {
     appearance: none;
     width: 20px;
     height: 20px;
-    background: #fff;
+    background: var(--makia-accent);
     border-radius: 50%;
     cursor: pointer;
     border: 3px solid #000;
@@ -266,7 +266,7 @@ body {
 .p-price {
     font-size: 19px;
     font-weight: 800;
-    color: var(--makia-accent);
+    color: #fff;
     margin-bottom: 20px;
 }
 
