@@ -4,24 +4,27 @@ import { useAuth } from '../context/AuthContext';
 import PaginationControls from '../components/PaginationControls';
 import './Catalogo.css';
 
-// RESOLUTOR INTELIGENTE DE COLORES
+// Mantenemos tu lógica de colores que ya está perfecta
+const COLOR_MAP = {
+    "Midnight Blue": "#1e3a8a",
+    "Lats Blue": "#3b82f6",
+    "Base Green Marl": "#2d4d43",
+    "White": "#ffffff",
+    "Black": "#000000",
+    "Evening Teal": "#134e4a",
+    "Burgundy": "#7f1d1d",
+    "Core Olive": "#3f6212",
+    "Charcoal": "#374151",
+    "Mars Red": "#b91c1c",
+    "Deep Teal": "#014d4e",
+    "Dragon Pink": "#c026d3",
+    "Digital Teal": "#008b8b"
+};
+
 const getColorHex = (colorName) => {
     if (!colorName) return "#555";
-    const name = colorName.toLowerCase();
-
-    if (name.includes('blue') || name.includes('teal') || name.includes('aqua')) return "#1e3a8a";
-    if (name.includes('pink') || name.includes('fuchsia') || name.includes('berry')) return "#db2777";
-    if (name.includes('green') || name.includes('olive') || name.includes('aloe')) return "#2d4d43";
-    if (name.includes('red') || name.includes('burgundy') || name.includes('maroon')) return "#991b1b";
-    if (name.includes('orange') || name.includes('apricot')) return "#ea580c";
-    if (name.includes('purple') || name.includes('violet') || name.includes('lilac')) return "#7e22ce";
-    if (name.includes('black') || name.includes('charcoal') || name.includes('asphalt')) return "#111";
-    if (name.includes('white') || name.includes('ecru')) return "#fff";
-    if (name.includes('grey') || name.includes('ash')) return "#777";
-    if (name.includes('brown') || name.includes('truffle')) return "#451a03";
-    if (name.includes('yellow')) return "#eab308";
-
-    return "#555"; // Color por defecto si no encuentra palabra clave
+    const baseColor = colorName.split('/')[0].trim();
+    return COLOR_MAP[baseColor] || "#555"; 
 };
 
 const getPrimaryImage = (prod = {}) => {
@@ -65,7 +68,7 @@ const Catalogo = () => {
         const item = {
             ...prod,
             tallaElegida: tallasReales.length > 0 ? tallasSeleccionadas[prod._id] : 'Única',
-            colorElegido: colorElegido || (prod.colors_available?.[0] || 'Único')
+            colorElegido: colorElegido || (prod.colors_available?.[0] || 'N/A')
         };
         setCarrito([...carrito, item]);
         setIsCartOpen(true);
@@ -73,41 +76,37 @@ const Catalogo = () => {
 
     return (
         <div className="client-view">
-            {/* HEADER CORREGIDO */}
-            <header className="header-original-makia">
-                <div className="logo-makia-font">MAKIA</div>
-                <div className="header-right-tools">
-                    <div className="cart-tool" onClick={() => setIsCartOpen(true)}>
+            <header className="client-header">
+                <div className="logo">MAKIA</div>
+                <div className="header-icons">
+                    <div className="cart-wrapper" onClick={() => setIsCartOpen(true)}>
                         <i className="fas fa-shopping-bag"></i>
-                        <span className="cart-count-badge">{carrito.length}</span>
+                        <span id="cartCount">{carrito.length}</span>
                     </div>
-                    <div className="user-tool" onClick={logout}>
+                    <div className="user-menu-container" onClick={logout}>
                         <i className="far fa-user"></i>
                     </div>
                 </div>
             </header>
 
-            <div className="hero-banner-original">
+            <div className="hero-banner">
                 <img src="/hero-banner-client.jpg" alt="MAKIA Hero" />
             </div>
 
-            <div className="store-main-layout">
-                {/* FILTROS ORIGINALES */}
-                <aside className="sidebar-filters-box">
-                    <h2 className="f-title">Filtros</h2>
-                    <div className="f-section">
+            <div className="store-layout">
+                <aside className="filters-sidebar">
+                    <h2 className="sidebar-title">Filtros</h2>
+                    <div className="filter-section">
                         <h3>Talla</h3>
-                        <div className="f-size-grid">
-                            {['XS', 'S', 'M', 'L', 'XL', '2X'].map(t => (
-                                <button key={t} className="f-btn">{t}</button>
-                            ))}
+                        <div className="size-grid">
+                            {['XS', 'S', 'M', 'L', 'XL', '2X'].map(t => <button key={t} className="sidebar-btn">{t}</button>)}
                         </div>
                     </div>
                 </aside>
 
-                <main className="shop-content-area">
-                    <div className="search-controls-row">
-                        <div className="white-search-bar">
+                <main className="shop-content">
+                    <div className="shop-controls">
+                        <div className="search-bar">
                             <i className="fas fa-search"></i>
                             <input 
                                 type="text" 
@@ -118,8 +117,8 @@ const Catalogo = () => {
                         </div>
                     </div>
 
-                    {/* GRID FORZADO DE 3 PRODUCTOS */}
-                    <div className="products-grid-3">
+                    {/* USAMOS LA NUEVA CLASE PARA LAS 3 COLUMNAS */}
+                    <div className="products-grid-fixed">
                         {cargando ? (
                             <div className="loading-container"><p>Cargando MAKIA...</p></div>
                         ) : (
@@ -130,21 +129,21 @@ const Catalogo = () => {
                                 const imagenAMostrar = varianteColor?.image || getPrimaryImage(prod);
 
                                 return (
-                                    <div key={prod._id} className="card-product-makia">
-                                        <div className="img-container">
-                                            <img src={imagenAMostrar} alt={prod.title} className="p-img" />
+                                    <div key={prod._id} className="product-card-original">
+                                        <div className="product-img-frame">
+                                            <img src={imagenAMostrar} alt={prod.title} className="p-img-fit" />
                                         </div>
-                                        <div className="info-container">
-                                            <h3 className="p-title">{prod.title}</h3>
-                                            <p className="p-price">
+                                        <div className="product-details-frame">
+                                            <h3>{prod.title}</h3>
+                                            <p className="price-label">
                                                 {prod.precioMXN?.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' })}
                                             </p>
 
-                                            <div className="swatch-row">
+                                            <div className="color-swatches-row">
                                                 {prod.colors_available?.map(col => (
                                                     <button 
                                                         key={col}
-                                                        className={`swatch ${colorActivo === col ? 'active' : ''}`}
+                                                        className={`swatch-circle ${colorActivo === col ? 'active' : ''}`}
                                                         style={{ backgroundColor: getColorHex(col) }}
                                                         onClick={() => setColorVisual(prev => ({ ...prev, [prod._id]: col }))}
                                                         title={col}
@@ -152,20 +151,20 @@ const Catalogo = () => {
                                                 ))}
                                             </div>
 
-                                            <div className="actions-footer">
+                                            <div className="actions-container">
                                                 {tallasReales.length > 0 ? (
                                                     <select 
-                                                        className="dropdown-size-makia"
+                                                        className="size-dropdown-makia"
                                                         value={tallasSeleccionadas[prod._id] || ""}
                                                         onChange={(e) => setTallasSeleccionadas(prev => ({ ...prev, [prod._id]: e.target.value }))}
                                                     >
-                                                        <option value="">Seleccionar Talla</option>
+                                                        <option value="">Selecciona Talla</option>
                                                         {tallasReales.map(t => <option key={t} value={t}>{t}</option>)}
                                                     </select>
-                                                ) : <div className="label-unique">Talla Única</div>}
+                                                ) : <div className="unique-box-label">Talla Única</div>}
 
                                                 <button 
-                                                    className="buy-btn-makia"
+                                                    className="add-bag-btn-makia"
                                                     onClick={() => agregarAlCarrito(prod, colorActivo)}
                                                     disabled={tallasReales.length > 0 && !tallasSeleccionadas[prod._id]}
                                                 >
