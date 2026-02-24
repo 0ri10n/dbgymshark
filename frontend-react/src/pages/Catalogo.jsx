@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import PaginationControls from '../components/PaginationControls';
 import './Catalogo.css';
 
-// MAPA DE COLORES RECARGADO: Para que coincidan con tus fotos
+// MAPA DE COLORES EXTENDIDO: Traduce los nombres del CSV a colores reales
 const COLOR_MAP = {
     "Midnight Blue": "#1e3a8a",
     "Lats Blue": "#3b82f6",
@@ -17,10 +17,9 @@ const COLOR_MAP = {
     "Charcoal": "#374151",
     "Mars Red": "#b91c1c",
     "Deep Teal": "#014d4e",
-    "Aesthete Blue": "#4a90e2",
-    "Digital Teal": "#008b8b",
-    "Dragon Pink": "#c026d3", // El fucsia que se ve en la foto
-    "Bright Fuchsia": "#db2777"
+    "Dragon Pink": "#c026d3", // Fucsia brillante
+    "Berry": "#86198f",
+    "Woodland Green": "#14532d"
 };
 
 const getColorHex = (colorName) => {
@@ -40,6 +39,8 @@ const Catalogo = () => {
     const [carrito, setCarrito] = useState([]);
     const [busqueda, setBusqueda] = useState('');
     const [cargando, setCargando] = useState(true);
+    
+    // ESTADOS PARA INTERACTIVIDAD
     const [tallasSeleccionadas, setTallasSeleccionadas] = useState({});
     const [colorVisual, setColorVisual] = useState({}); 
     const [isCartOpen, setIsCartOpen] = useState(false);
@@ -70,47 +71,47 @@ const Catalogo = () => {
         const item = {
             ...prod,
             tallaElegida: tallasReales.length > 0 ? tallasSeleccionadas[prod._id] : 'Única',
-            colorElegido: colorElegido || (prod.colors_available?.[0] || 'N/A')
+            colorElegido: colorElegido || (prod.colors_available?.[0] || 'Único')
         };
         setCarrito([...carrito, item]);
-        setIsCartOpen(true);
+        setIsCartOpen(true); // Abre la bolsa automáticamente
     };
 
     return (
         <div className="client-view">
-            <header className="client-header-makia">
-                <div className="logo-original">MAKIA</div>
-                <div className="header-right-icons">
-                    <div className="cart-btn" onClick={() => setIsCartOpen(true)}>
+            <header className="client-header">
+                <div className="logo">MAKIA</div>
+                <div className="header-icons">
+                    <div className="cart-wrapper" onClick={() => setIsCartOpen(true)}>
                         <i className="fas fa-shopping-bag"></i>
-                        <span className="cart-dot-count">{carrito.length}</span>
+                        <span id="cartCount">{carrito.length}</span>
                     </div>
-                    <div className="user-btn" onClick={logout}>
+                    <div className="user-menu-container" onClick={logout}>
                         <i className="far fa-user"></i>
                     </div>
                 </div>
             </header>
 
-            <div className="hero-banner-fixed">
+            <div className="hero-banner">
                 <img src="/hero-banner-client.jpg" alt="MAKIA Hero" />
             </div>
 
-            <div className="store-container-layout">
-                <aside className="filters-sidebar-fixed">
-                    <h2 className="f-title">Filtros</h2>
-                    <div className="f-group">
+            <div className="store-layout">
+                <aside className="filters-sidebar">
+                    <h2 className="sidebar-title">Filtros</h2>
+                    <div className="filter-section">
                         <h3>Talla</h3>
-                        <div className="f-size-grid">
+                        <div className="size-grid">
                             {['XS', 'S', 'M', 'L', 'XL', '2X'].map(t => (
-                                <button key={t} className="f-size-btn">{t}</button>
+                                <button key={t} className="filter-btn">{t}</button>
                             ))}
                         </div>
                     </div>
                 </aside>
 
-                <main className="shop-main-content">
-                    <div className="shop-search-container">
-                        <div className="search-bar-makia">
+                <main className="shop-content">
+                    <div className="shop-controls">
+                        <div className="search-bar">
                             <i className="fas fa-search"></i>
                             <input 
                                 type="text" 
@@ -121,7 +122,7 @@ const Catalogo = () => {
                         </div>
                     </div>
 
-                    <div className="products-grid-3-columns">
+                    <div className="products-grid-three">
                         {cargando ? (
                             <div className="loading-container"><p>Cargando MAKIA...</p></div>
                         ) : (
@@ -132,21 +133,21 @@ const Catalogo = () => {
                                 const imagenAMostrar = varianteColor?.image || getPrimaryImage(prod);
 
                                 return (
-                                    <div key={prod._id} className="card-makia">
-                                        <div className="card-img-holder">
+                                    <div key={prod._id} className="product-card">
+                                        <div className="product-image-container">
                                             <img src={imagenAMostrar} alt={prod.title} className="product-img" />
                                         </div>
-                                        <div className="card-content-holder">
+                                        <div className="product-info">
                                             <h3>{prod.title}</h3>
-                                            <p className="price-tag">
+                                            <p className="price">
                                                 {prod.precioMXN?.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' })}
                                             </p>
 
-                                            <div className="swatch-carousel">
+                                            <div className="color-dots-row">
                                                 {prod.colors_available?.map(col => (
                                                     <button 
                                                         key={col}
-                                                        className={`swatch-dot ${colorActivo === col ? 'active' : ''}`}
+                                                        className={`color-dot ${colorActivo === col ? 'active' : ''}`}
                                                         style={{ backgroundColor: getColorHex(col) }}
                                                         onClick={() => setColorVisual(prev => ({ ...prev, [prod._id]: col }))}
                                                         title={col}
@@ -154,20 +155,20 @@ const Catalogo = () => {
                                                 ))}
                                             </div>
 
-                                            <div className="card-actions-fixed">
+                                            <div className="action-row">
                                                 {tallasReales.length > 0 ? (
                                                     <select 
-                                                        className="dropdown-size"
+                                                        className="size-dropdown-makia"
                                                         value={tallasSeleccionadas[prod._id] || ""}
                                                         onChange={(e) => setTallasSeleccionadas(prev => ({ ...prev, [prod._id]: e.target.value }))}
                                                     >
-                                                        <option value="">Seleccionar Talla</option>
+                                                        <option value="">Selecciona Talla</option>
                                                         {tallasReales.map(t => <option key={t} value={t}>{t}</option>)}
                                                     </select>
-                                                ) : <div className="unique-box">Talla Única</div>}
+                                                ) : <div className="unique-size-label">Talla Única</div>}
 
                                                 <button 
-                                                    className="btn-add-to-bag"
+                                                    className="btn-add-bag"
                                                     onClick={() => agregarAlCarrito(prod, colorActivo)}
                                                     disabled={tallasReales.length > 0 && !tallasSeleccionadas[prod._id]}
                                                 >
@@ -184,21 +185,22 @@ const Catalogo = () => {
                 </main>
             </div>
 
+            {/* MODAL DE LA BOLSA (Overlay completo) */}
             {isCartOpen && (
-                <div className="cart-fixed-overlay" onClick={() => setIsCartOpen(false)}>
-                    <div className="cart-fixed-panel" onClick={e => e.stopPropagation()}>
-                        <div className="cart-fixed-header">
+                <div className="cart-modal-overlay" onClick={() => setIsCartOpen(false)}>
+                    <div className="cart-modal-container" onClick={e => e.stopPropagation()}>
+                        <div className="cart-modal-header">
                             <h2>TU BOLSA</h2>
-                            <span className="close-cart-icon" onClick={() => setIsCartOpen(false)}>&times;</span>
+                            <span className="close-x" onClick={() => setIsCartOpen(false)}>&times;</span>
                         </div>
-                        <div className="cart-fixed-list">
+                        <div className="cart-modal-items">
                             {carrito.map((item, i) => (
-                                <div key={i} className="cart-fixed-item">
-                                    <div>
+                                <div key={i} className="cart-item-row">
+                                    <div className="item-txt">
                                         <p>{item.title}</p>
                                         <small>{item.tallaElegida} | {item.colorElegido}</small>
                                     </div>
-                                    <p>{item.precioMXN?.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' })}</p>
+                                    <p className="item-p">{item.precioMXN?.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' })}</p>
                                 </div>
                             ))}
                         </div>
