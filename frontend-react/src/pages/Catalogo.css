@@ -2,125 +2,65 @@
     --makia-accent: #d9fb56;
     --bg-makia: #050508;
     --sidebar-bg: #0c0f16;
-    --border-color: #1a1e26;
-    --page-pad: 5%;
 }
 
 * { box-sizing: border-box; }
 body { margin: 0; font-family: 'Poppins', sans-serif; background-color: var(--bg-makia); color: #fff; }
 
-.client-view {
-    min-height: 100vh;
-    background: radial-gradient(circle at top left, #192038 0%, var(--bg-makia) 42%);
-}
-
 /* --- HEADER ORIGINAL --- */
 .client-header-makia {
     display: flex; justify-content: space-between; align-items: center;
-    padding: 0 var(--page-pad); background: #000; height: 75px;
-    position: sticky; top: 0; z-index: 1000; border-bottom: 1px solid #1a1a1a;
+    padding: 0 5%; background: #000; height: 75px; position: sticky; top: 0; z-index: 1000; border-bottom: 1px solid #1a1a1a;
 }
 .logo-text { font-weight: 900; font-size: 30px; letter-spacing: 5px; color: #fff; font-family: 'Arial Black', sans-serif; }
 .header-right-icons { display: flex; gap: 20px; align-items: center; }
 .cart-wrapper, .user-icon { cursor: pointer; font-size: 24px; position: relative; color: #fff; }
-
-#cartCount {
-    position: absolute; top: -10px; right: -12px;
-    background: var(--makia-accent); color: #000;
-    font-size: 11px; padding: 2px 6px; border-radius: 50%; font-weight: bold;
-}
+#cartCount { position: absolute; top: -10px; right: -12px; background: var(--makia-accent); color: #000; font-size: 11px; padding: 2px 6px; border-radius: 50%; font-weight: bold; }
 
 /* --- BANNER --- */
 .hero-banner-fixed { width: 100%; height: 320px; overflow: hidden; }
 .hero-banner-fixed img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
 /* --- LAYOUT Y FILTROS LATERALES --- */
-.store-layout-container {
-    display: grid; grid-template-columns: 260px 1fr;
-    max-width: 1400px; margin: 30px auto; padding: 0 var(--page-pad); gap: 40px;
-}
-.sidebar-filter-box {
-    background: var(--sidebar-bg); border: 1px solid var(--border-color);
-    padding: 25px; border-radius: 12px; align-self: start;
-}
-.sidebar-btn-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-.filter-size-btn {
-    background: transparent; color: #fff; border: 1px solid #2f3543;
-    padding: 10px 0; border-radius: 8px; cursor: pointer; transition: 0.2s;
-}
-.filter-size-btn:hover { border-color: var(--makia-accent); }
+.store-layout-container { display: grid; grid-template-columns: 260px 1fr; max-width: 1440px; margin: 30px auto; padding: 0 5%; gap: 40px; }
+.sidebar-filter-box { background: var(--sidebar-bg); border: 1px solid #1a1e26; padding: 25px; border-radius: 12px; align-self: start; }
+.sidebar-btn-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 15px; }
+.filter-size-btn { background: transparent; color: #fff; border: 1px solid #2f3543; padding: 12px 0; border-radius: 8px; cursor: pointer; transition: 0.2s; }
 
 /* --- BUSCADOR BLANCO --- */
 .search-bar-row { display: flex; justify-content: flex-end; margin-bottom: 30px; }
-.white-search-box {
-    display: flex; align-items: center; background: #fff;
-    padding: 10px 15px; border-radius: 4px; width: 100%; max-width: 380px;
-}
-.white-search-box input { border: none; outline: none; width: 100%; color: #000; font-weight: 600; margin-left: 10px; }
-.white-search-box i { color: #000; font-size: 18px; }
+.white-search-box { display: flex; align-items: center; background: #fff; padding: 10px 15px; border-radius: 4px; width: 100%; max-width: 380px; }
+.white-search-box input { border: none; outline: none; width: 100%; color: #000; font-weight: 600; }
+.white-search-box i { color: #000; font-size: 18px; margin-right: 10px; }
 
-/* --- GRID DE 3 PRODUCTOS (IMAGEN PEQUEÑA) --- */
+/* --- GRID DE 3 PRODUCTOS (DISTRIBUCIÓN ORIGINAL) --- */
 .fixed-grid-3 {
     display: grid; 
-    grid-template-columns: repeat(3, 1fr) !important; /* FORZAMOS 3 COLUMNAS */
-    gap: 30px;
+    grid-template-columns: repeat(3, 1fr) !important; /* SIEMPRE 3 COLUMNAS */
+    gap: 35px;
 }
-
-.makia-product-card {
-    display: flex; flex-direction: column; background: transparent;
-    min-height: 480px; /* TAMAÑO MÁS PEQUEÑO */
-}
-
+.makia-product-card { display: flex; flex-direction: column; background: transparent; }
 .img-frame { 
-    height: 280px; /* IMAGEN MÁS PEQUEÑA */
+    height: 450px; /* ALTO VERTICAL ORIGINAL */
     border-radius: 8px; overflow: hidden; background: #111; 
 }
 .p-img { width: 100%; height: 100%; object-fit: cover; display: block; }
-
-.info-frame { padding: 15px 0; display: flex; flex-direction: column; flex-grow: 1; }
-.info-frame h3 { font-size: 13px; font-weight: 400; color: #ccc; margin: 0 0 5px; }
-.p-price { font-weight: 700; font-size: 15px; margin-bottom: 15px; }
+.info-frame { padding: 15px 0; flex-grow: 1; }
+.info-frame h3 { font-size: 14px; font-weight: 400; color: #ccc; margin-bottom: 5px; }
+.p-price { font-weight: 700; font-size: 17px; margin-bottom: 15px; }
 
 /* --- COLORES (CÍRCULOS PERFECTOS Y CARRUSEL) --- */
-.swatch-row { 
-    display: flex; gap: 10px; margin-bottom: 20px; padding: 5px 2px;
-    overflow-x: auto; scrollbar-width: none;
-}
-.swatch-row::-webkit-scrollbar { display: none; }
-.swatch-circle {
-    width: 20px; height: 20px; border-radius: 50% !important;
-    border: 1px solid rgba(255,255,255,0.2); cursor: pointer; flex-shrink: 0;
-}
-.swatch-circle.active { box-shadow: 0 0 0 2px #000, 0 0 0 4px var(--makia-accent); }
+.swatch-row-carrusel { display: flex; gap: 12px; margin-bottom: 20px; padding: 5px 0; overflow-x: auto; scrollbar-width: none; }
+.swatch-row-carrusel::-webkit-scrollbar { display: none; }
+.swatch-circle { width: 22px; height: 22px; border-radius: 50% !important; border: 1px solid rgba(255,255,255,0.2); cursor: pointer; flex-shrink: 0; }
+.swatch-circle.active { box-shadow: 0 0 0 2px #000, 0 0 0 4px var(--makia-accent); transform: scale(1.1); }
 
-/* --- ACCIONES PREMIUM (DROPDOWN Y BOTÓN) --- */
-.card-footer { margin-top: auto; display: flex; flex-direction: column; gap: 10px; }
-
-.makia-size-dropdown {
-    width: 100%; padding: 10px; background: #0c0f16; color: #fff; 
-    border: 1px solid #222; border-radius: 6px; cursor: pointer;
-    appearance: none;
-    background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
-    background-repeat: no-repeat; background-position: right 10px center; background-size: 18px;
-}
-
-.unique-size-label { padding: 10px; color: #555; text-align: center; background: #111; border-radius: 6px; font-size: 12px; }
-
-.btn-add-to-bag-makia {
-    background: #fff; color: #000; border: none; padding: 14px; 
-    font-weight: 900; text-transform: uppercase; border-radius: 4px; 
-    cursor: pointer; transition: 0.2s;
-}
+/* --- ACCIONES PREMIUM --- */
+.card-footer { display: flex; flex-direction: column; gap: 12px; margin-top: auto; }
+.makia-size-dropdown { width: 100%; padding: 12px; background: #0c0f16; color: #fff; border: 1px solid #222; border-radius: 6px; cursor: pointer; }
+.btn-add-to-bag-makia { background: #fff; color: #000; border: none; padding: 16px; font-weight: 900; text-transform: uppercase; border-radius: 4px; cursor: pointer; }
 .btn-add-to-bag-makia:hover:not(:disabled) { background: var(--makia-accent); }
 
-/* --- BOLSA MODAL --- */
+/* --- BOLSA MODAL (OPERATIVA) --- */
 .cart-modal-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.8); z-index: 2000; display: flex; justify-content: flex-end; }
-.cart-modal-panel { width: min(90vw, 400px); background: #000; height: 100vh; padding: 30px; border-left: 1px solid var(--border-color); display: flex; flex-direction: column; }
-.cart-modal-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-.close-cart-btn { font-size: 32px; cursor: pointer; color: #fff; }
-.cart-modal-list { flex-grow: 1; overflow-y: auto; }
-.cart-modal-row { display: flex; justify-content: space-between; padding: 15px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
-
-/* --- RESPONSIVE --- */
-@media (max-width: 1024px) { .fixed-grid-3 { grid-template-columns: repeat(2, 1fr) !important; } }
-@media (max-width: 650px) { .store-layout-container { grid-template-columns: 1fr; } .fixed-grid-3 { grid-template-columns: 1fr !important; } .sidebar-filter-box { display: none; } }
+.cart-modal-panel { width: min(90vw, 400px); background: #000; height: 100vh; padding: 30px; border-left: 1px solid #222; display: flex; flex-direction: column; }
