@@ -6,29 +6,29 @@ import PaginationControls from '../components/PaginationControls';
 import './Catalogo.css';
 
 // --- CONFIGURACIÓN ---
-const TIPO_CAMBIO_USD_MXN = 17.00;
+const TIPO_CAMBIO_USD_MXN = 17.00; //
 
-// [ARREGLO CATEGORÍAS] Lista exhaustiva proporcionada para filtros exactos
+// [ARREGLO CATEGORÍAS] Lista exhaustiva con los nombres propios exactos para que el filtro responda
 const categoryGroups = {
     'Womens': [
-        "Womens Bodysuit", "Womens Bottoms", "Womens Crop Top", "Womens Crop Tops", "Womens Dress", 
-        "Womens Hoodie", "Womens Hoodies", "Womens Jacket", "Womens Jackets / Outerwear", "Womens Leggings", 
-        "Womens Long Sleeve Top", "Womens Ls Tops", "Womens One Piece", "Womens One Pieces", "Womens Pants", 
-        "Womens Pullover", "Womens Pullovers", "Womens Shorts", "Womens Skort", "Womens Sleeveless Top", 
-        "Womens Sleeveless Tops", "Womens Socks", "Womens Sports Bra", "Womens Sports Bras", "Womens Ss Tops", 
-        "Womens Sweater", "Womens Swimwear", "Womens T-Shirt", "Womens Tank", "Womens Tanks", "Womens Underwear", "Womens Vest"
+        'Womens Bodysuit', 'Womens Bottoms', 'Womens Crop Top', 'Womens Crop Tops', 'Womens Dress', 
+        'Womens Hoodie', 'Womens Hoodies', 'Womens Jacket', 'Womens Jackets / Outerwear', 'Womens Leggings', 
+        'Womens Long Sleeve Top', 'Womens Ls Tops', 'Womens One Piece', 'Womens One Pieces', 'Womens Pants', 
+        'Womens Pullover', 'Womens Pullovers', 'Womens Shorts', 'Womens Skort', 'Womens Sleeveless Top', 
+        'Womens Sleeveless Tops', 'Womens Socks', 'Womens Sports Bra', 'Womens Sports Bras', 'Womens Ss Tops', 
+        'Womens Sweater', 'Womens Swimwear', 'Womens T-Shirt', 'Womens Tank', 'Womens Tanks', 'Womens Underwear', 
+        'Womens Vest', 'womens Accessories', 'womens Bags', 'womens Headwear', 'womens Socks'
     ],
     'Mens': [
-        "Mens Baselayer", "Mens Bottoms", "Mens Drop Armhole Tank", "Mens Hoodie", "Mens Jacket", "Mens Jackets", 
-        "Mens Jackets / Outerwear", "Mens Joggers", "Mens Leggings", "Mens Long Sleeve Top", "Mens Ls Tops", 
-        "Mens Outerwear", "Mens Pants", "Mens Pullover", "Mens Pullovers", "Mens Shirt", "Mens Shorts", 
-        "Mens Sleeveless Tops", "Mens Ss Tops", "Mens Stringer", "Mens T-Shirt", "Mens Tank", "Mens Tops", 
-        "Mens Underwear", "Mens t", "mens unisex Bottoms", "mens unisex Pullovers"
+        'Mens Baselayer', 'Mens Bottoms', 'Mens Drop Armhole Tank', 'Mens Hoodie', 'Mens Jacket', 'Mens Jackets', 
+        'Mens Jackets / Outerwear', 'Mens Joggers', 'Mens Leggings', 'Mens Long Sleeve Top', 'Mens Ls Tops', 
+        'Mens Outerwear', 'Mens Pants', 'Mens Pullover', 'Mens Pullovers', 'Mens Shirt', 'Mens Shorts', 
+        'Mens Sleeveless Tops', 'Mens Ss Tops', 'Mens Stringer', 'Mens T-Shirt', 'Mens Tank', 'Mens Tops', 
+        'Mens Underwear', 'Mens t', 'mens unisex Bottoms', 'mens unisex Pullovers'
     ],
     'Accessories': [
-        "Accessories", "Bag", "Bags", "Bottles", "Footwear", "Gift Card", "Headwear", "Misc.", 
-        "Pants", "Pullovers", "Socks", "Ss Tops", "Thirft Bag", "Underwear", "footwear", 
-        "womens Accessories", "womens Bags", "womens Headwear", "womens Socks"
+        'Accessories', 'Bag', 'Bags', 'Bottles', 'Footwear', 'Gift Card', 'Headwear', 'Misc.', 
+        'Pants', 'Pullovers', 'Socks', 'Ss Tops', 'Thirft Bag', 'Underwear', 'footwear'
     ]
 };
 
@@ -85,20 +85,21 @@ const Catalogo = () => {
                     setProductos(res.data.productos);
                     setTotalPaginas(res.data.pagination?.pages || 1);
                 }
-            } catch (e) { console.error("Error al cargar productos:", e); }
+            } catch (e) { console.error("Error MAKIA:", e); }
             finally { setCargando(false); }
         };
         cargarData();
     }, [pagina]);
 
-    // [ARREGLO BÚSQUEDA] Ultra sensible: busca palabra por palabra en título y categoría
+    // [ARREGLO BÚSQUEDA] Sensible a nombre O product_type para mayor precisión
     const productosAMostrar = productos.filter(p => {
-        const keywords = busqueda.toLowerCase().split(' ').filter(k => k);
+        const query = busqueda.toLowerCase().trim();
         const titulo = (p.title || '').toLowerCase();
         const tipoDB = (p.product_type || '').trim();
         const precioPesos = getNumericPriceMXN(p);
 
-        const matchSearch = keywords.every(k => titulo.includes(k) || tipoDB.toLowerCase().includes(k));
+        // Busca en ambos campos
+        const matchSearch = query === '' || titulo.includes(query) || tipoDB.toLowerCase().includes(query);
         const matchCat = !catFiltro || categoryGroups[catFiltro].includes(tipoDB);
         const matchSub = !subCatFiltro || tipoDB === subCatFiltro;
         const matchPrecio = precioPesos <= precioMax;
@@ -106,7 +107,6 @@ const Catalogo = () => {
         return matchSearch && matchCat && matchSub && matchPrecio;
     });
 
-    // [ARREGLO AÑADIR] Validación obligatoria de talla
     const handleAgregar = (p) => {
         const talla = tallasSeleccionadas[p._id];
         if (!talla) {
@@ -122,33 +122,25 @@ const Catalogo = () => {
         setIsCartOpen(true); 
     };
 
-    // [ARREGLO VENTAS] Registro de pedido en base de datos
     const handleFinalizarCompra = async () => {
         if (cart.length === 0) return;
         const total = cart.reduce((acc, item) => acc + (getNumericPriceMXN(item) * item.quantity), 0);
-        
         const ventaData = {
             usuario: user?.email || "Invitado",
             productos: cart.map(item => ({
-                id: item._id,
-                titulo: item.title,
-                talla: item.selectedSize,
-                cantidad: item.quantity,
-                precioUnitario: getNumericPriceMXN(item)
+                id: item._id, titulo: item.title, talla: item.selectedSize, cantidad: item.quantity, precioUnitario: getNumericPriceMXN(item)
             })),
-            total: total,
+            total,
             fecha: new Date().toISOString()
         };
 
         try {
             const baseURL = import.meta.env.VITE_API_URL || 'https://dbgymshark-ddk1.onrender.com/api';
-            await axios.post(`${baseURL}/ventas`, ventaData);
+            await axios.post(`${baseURL}/ventas`, ventaData); //
             alert("¡Venta registrada con éxito en MAKIA!");
             clearCart();
             setIsCartOpen(false);
-        } catch (error) {
-            alert("Error al registrar la venta.");
-        }
+        } catch (error) { alert("Error al registrar la venta."); }
     };
 
     return (
@@ -165,7 +157,7 @@ const Catalogo = () => {
             </header>
 
             <div className="hero-banner-full">
-                <img src="/hero-banner-client.jpg" alt="MAKIA Performance" />
+                <img src="/hero-banner-client.jpg" alt="MAKIA Hero" />
             </div>
 
             <div className="store-layout-container">
@@ -186,7 +178,7 @@ const Catalogo = () => {
                                     <div className="sub-cat-list">
                                         {categoryGroups[cat].map(sub => (
                                             <div key={sub} className={`sub-item ${subCatFiltro === sub ? 'active' : ''}`} onClick={() => setSubCatFiltro(sub)}>
-                                                {sub.replace('Womens ', '').replace('Mens ', '')}
+                                                {sub} {/* Mostramos el nombre completo como pediste */}
                                             </div>
                                         ))}
                                     </div>
@@ -204,7 +196,7 @@ const Catalogo = () => {
                 <main className="shop-main-content">
                     <div className="white-search-box">
                         <i className="fas fa-search"></i>
-                        <input type="text" placeholder="Busca nombre o tipo de prenda..." value={busqueda} onChange={(e) => setBusqueda(e.target.value)} />
+                        <input type="text" placeholder="Busca por nombre o tipo de prenda..." value={busqueda} onChange={(e) => setBusqueda(e.target.value)} />
                     </div>
 
                     <div className="fixed-grid-3">
@@ -218,21 +210,14 @@ const Catalogo = () => {
                                     <div className="info-frame">
                                         <h3>{prod.title}</h3>
                                         <p className="p-price">${getNumericPriceMXN(prod).toLocaleString()} MXN</p>
-                                        
                                         <div className="swatch-row-carrusel">
                                             {prod.colors_available?.map(col => (
-                                                <button 
-                                                    key={col} 
-                                                    className={`swatch-circle ${colorActivo === col ? 'active' : ''}`} 
-                                                    style={{ backgroundColor: getColorHex(col) }} 
-                                                    onClick={() => setColorVisual(prev => ({ ...prev, [prod._id]: col }))} 
-                                                />
+                                                <button key={col} className={`swatch-circle ${colorActivo === col ? 'active' : ''}`} style={{ backgroundColor: getColorHex(col) }} onClick={() => setColorVisual(prev => ({ ...prev, [prod._id]: col }))} />
                                             ))}
                                         </div>
-
                                         <div className="card-footer">
                                             <select className="makia-size-dropdown" value={tallasSeleccionadas[prod._id] || ""} onChange={(e) => setTallasSeleccionadas(prev => ({ ...prev, [prod._id]: e.target.value }))}>
-                                                <option value="">Talla</option>
+                                                <option value="">Selecciona Talla</option>
                                                 {(prod.sizes_available || []).map(t => <option key={t} value={t}>{t}</option>)}
                                             </select>
                                             <button className="btn-add-to-bag-makia" onClick={() => handleAgregar(prod)}>AÑADIR</button>
@@ -246,14 +231,10 @@ const Catalogo = () => {
                 </main>
             </div>
 
-            {/* BOLSA INTERACTIVA */}
             {isCartOpen && (
                 <div className="cart-modal-overlay" onClick={() => setIsCartOpen(false)}>
                     <div className="cart-modal-panel" onClick={e => e.stopPropagation()}>
-                        <div className="cart-modal-top">
-                            <h2>TU BOLSA</h2>
-                            <span onClick={() => setIsCartOpen(false)} style={{cursor:'pointer', fontSize: '24px'}}>&times;</span>
-                        </div>
+                        <div className="cart-modal-top"><h2>TU BOLSA</h2><span onClick={() => setIsCartOpen(false)} style={{cursor:'pointer', fontSize: '24px'}}>&times;</span></div>
                         <div className="cart-modal-list">
                             {cart.map((item, i) => (
                                 <div key={i} className="cart-modal-row">
