@@ -4,10 +4,10 @@ import { useAuth } from '../context/AuthContext';
 import PaginationControls from '../components/PaginationControls';
 import './Catalogo.css';
 
-// --- CONFIGURACIÓN ---
-const TIPO_CAMBIO_USD_MXN = 17.00; // Conversión a pesos mexicanos
+// --- CONFIGURACIÓN DE MONEDA ---
+const TIPO_CAMBIO_USD_MXN = 17.00; //
 
-// Categorías blindadas para el filtro
+// Mapeo exhaustivo de categorías para filtros robustos
 const categoryGroups = {
     'Womens': [
         'Womens Bodysuit', 'Womens Bottoms', 'Womens Crop Top', 'Womens Crop Tops', 'Womens Dress', 
@@ -43,6 +43,14 @@ const getColorHex = (name = "") => {
     return "#555";
 };
 
+// [ARREGLO IMAGEN] Función para asegurar que la imagen principal aparezca
+const getPrimaryImage = (p = {}) => {
+    if (!p) return "/placeholder.jpg";
+    const img = p.image_principal || p.imagen || p.image_src || (p.variants && p.variants[0]?.image);
+    if (typeof img === 'string' && img.includes(',')) return img.split(',')[0].trim();
+    return img || "/placeholder.jpg";
+};
+
 const getNumericPriceMXN = (prod) => {
     let valor = Number(prod.precioMXN);
     if (!valor || isNaN(valor)) {
@@ -66,7 +74,7 @@ const Catalogo = () => {
     const [pagina, setPagina] = useState(1);
     const [totalPaginas, setTotalPaginas] = useState(1);
 
-    // Filtros
+    // Estados de Filtros
     const [catFiltro, setCatFiltro] = useState(null);
     const [subCatFiltro, setSubCatFiltro] = useState(null);
     const [precioMax, setPrecioMax] = useState(3500);
@@ -89,13 +97,14 @@ const Catalogo = () => {
         cargarData();
     }, [pagina]);
 
-    // [ARREGLO] Búsqueda parcial y filtros de categoría robustos
+    // [ARREGLO BÚSQUEDA] Búsqueda ultra sensible (nombre o categoría)
     const productosAMostrar = productos.filter(p => {
+        const query = busqueda.toLowerCase().trim();
         const titulo = (p.title || '').toLowerCase();
         const tipoDB = (p.product_type || '').trim().toLowerCase();
         const precioPesos = getNumericPriceMXN(p);
 
-        const matchBusqueda = busqueda === '' || titulo.includes(busqueda.toLowerCase());
+        const matchBusqueda = query === '' || titulo.includes(query) || tipoDB.includes(query);
         const matchCat = catFiltro ? categoryGroups[catFiltro].some(t => t.toLowerCase() === tipoDB) : true;
         const matchSub = subCatFiltro ? tipoDB === subCatFiltro.toLowerCase().trim() : true;
         const matchPrecio = precioPesos <= precioMax;
@@ -103,7 +112,6 @@ const Catalogo = () => {
         return matchBusqueda && matchCat && matchSub && matchPrecio;
     });
 
-    // [ARREGLO COMPRA] Agrega y abre la bolsa automáticamente
     const agregarAlCarrito = (prod, colorElegido) => {
         const item = { 
             ...prod, 
@@ -113,6 +121,13 @@ const Catalogo = () => {
         };
         setCarrito([...carrito, item]);
         setIsCartOpen(true); 
+    };
+
+    // [ARREGLO FINALIZAR COMPRA] Función funcional que limpia la bolsa
+    const handleFinalizarCompra = () => {
+        alert("¡Pedido en MAKIA realizado con éxito! Gracias por tu preferencia.");
+        setCarrito([]);
+        setIsCartOpen(false);
     };
 
     return (
@@ -164,14 +179,14 @@ const Catalogo = () => {
                 <main className="shop-main-content">
                     <div className="white-search-box">
                         <i className="fas fa-search"></i>
-                        <input type="text" placeholder="Buscar productos (ej. Vit)..." value={busqueda} onChange={(e) => setBusqueda(e.target.value)} />
+                        <input type="text" placeholder="Busca por nombre o tipo..." value={busqueda} onChange={(e) => setBusqueda(e.target.value)} />
                     </div>
 
-                    {/* [ARREGLO] Grid de 3 productos */}
+                    {/* Grid de 3 productos */}
                     <div className="fixed-grid-3">
                         {!cargando && productosAMostrar.map((prod) => {
                             const colorActivo = colorVisual[prod._id] || (prod.colors_available?.[0]);
-                            const imgFinal = prod.variants?.find(v => v.color === colorActivo)?.image || prod.image_principal;
+                            const imgFinal = prod.variants?.find(v => v.color === colorActivo)?.image || getPrimaryImage(prod);
 
                             return (
                                 <div key={prod._id} className="makia-product-card">
@@ -180,7 +195,7 @@ const Catalogo = () => {
                                         <h3>{prod.title}</h3>
                                         <p className="p-price">{getFormattedPriceMXN(prod)}</p>
                                         
-                                        {/* [ARREGLO] Círculos de colores desplazables */}
+                                        {/* Círculos de colores desplazables */}
                                         <div className="swatch-row-carrusel">
                                             {prod.colors_available?.map(col => (
                                                 <button 
@@ -224,7 +239,7 @@ const Catalogo = () => {
                                 </div>
                             ))}
                         </div>
-                        <button className="btn-checkout-makia">FINALIZAR COMPRA</button>
+                        <button className="btn-checkout-makia" onClick={handleFinalizarCompra}>FINALIZAR COMPRA</button>
                     </div>
                 </div>
             )}
