@@ -186,6 +186,7 @@ const Catalogo = () => {
                                     <p>{item.precioMXN?.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' })}</p>
                                 </div>
                             ))}
+                            {carrito.length === 0 && <p style={{textAlign: 'center', padding: '20px'}}>Tu bolsa está vacía.</p>}
                         </div>
                     </div>
                 </div>
