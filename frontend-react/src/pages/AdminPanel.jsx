@@ -3,6 +3,10 @@ import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import PaginationControls from '../components/PaginationControls';
 import './AdminPanel.css';
+const TABLE_NAME = 'productos'; 
+const [editando, setEditando] = useState(null);
+const [tempData, setTempData] = useState({});
+const baseURL = import.meta.env.VITE_API_URL || 'https://dbgymshark.onrender.com/api';
 
 const AdminPanel = () => {
     const { user, logout } = useAuth();
@@ -16,7 +20,6 @@ const AdminPanel = () => {
         const obtenerProductos = async () => {
             setCargando(true);
             try {
-                const baseURL = import.meta.env.VITE_API_URL || 'https://dbgymshark.onrender.com/api';
                 const url = `${baseURL}/productos?page=${pagina}&limit=20`;
                 const respuesta = await axios.get(url);
 
@@ -38,6 +41,62 @@ const AdminPanel = () => {
 
         obtenerProductos();
     }, [pagina]);
+
+    const eliminarProducto = async (id) => {
+        if (!window.confirm('¿Eliminar este registro?')) return;
+        try {
+            await axios.delete(`${baseURL}/admin/tablas/${TABLE_NAME}/${id}`);
+            setProductos(productos.filter(p => p._id !== id));
+        } catch (error) {
+            alert('Error al eliminar');
+        }
+    };
+
+    const editarProducto = async (producto) => {
+        const nuevoTitulo = prompt("Nuevo título:", producto.title);
+        if (!nuevoTitulo) return;
+
+        try {
+            await axios.put(`${baseURL}/admin/tablas/${TABLE_NAME}/${producto._id}`, 
+                { title: nuevoTitulo },
+                { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }}
+            );
+            obtenerProductos();
+        } catch (error) {
+            alert('Error al editar');
+        }
+    };
+
+    const crearProducto = async () => {
+        const title = prompt("Nombre del nuevo producto:");
+        const precioMXN = prompt("Precio:");
+        
+        if (!title || !precioMXN) return;
+
+        try {
+            await axios.post(`${baseURL}/admin/tablas/${TABLE_NAME}`, 
+                { title, precioMXN: Number(precioMXN), product_type: 'Nuevo' },
+                { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }}
+            );
+            obtenerProductos();
+        } catch (error) {
+            alert('Error al crear');
+        }
+    };
+
+    const guardarCambios = async (id) => {
+        try {
+            await axios.put(`${baseURL}/admin/tablas/${TABLE_NAME}/${id}`, tempData, {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+            });
+            setEditando(null);
+            setProductos(productos.map(p => p._id === id ? { ...p, ...tempData } : p));
+            alert('Cambios guardados');
+        } catch (error) {
+            console.error("Error al editar:", error);
+            alert('Error al guardar cambios');
+        }
+    };
 
     return (
         <div className="admin-container">
@@ -91,12 +150,48 @@ const AdminPanel = () => {
                                 <tbody>
                                     {productos.map((prod) => (
                                         <tr key={prod._id}>
-                                            <td data-label="Titulo">{prod.title || prod.nombre || 'Producto'}</td>
-                                            <td data-label="Precio (MXN)">${prod.precioMXN}</td>
+                                            {/* Celda de Título */}
+                                            <td data-label="Titulo">
+                                                {editando === prod._id ? (
+                                                    <input 
+                                                    className="admin-input-edit"
+                                                    defaultValue={prod.title || prod.nombre} 
+                                                    onChange={e => setTempData({...tempData, title: e.target.value})} 
+                                                    />
+                                                ) : (
+                                                    prod.title || prod.nombre || 'Producto'
+                                                    )}
+                                                    </td>
+                                                    
+                                            {/* Celda de Precio */}
+                                                <td data-label="Precio (MXN)">
+                                                    {editando === prod._id ? (
+                                                        <input 
+                                                        type="number" 
+                                                        className="admin-input-edit"
+                                                        defaultValue={prod.precioMXN} 
+                                                        onChange={e => setTempData({...tempData, precioMXN: Number(e.target.value)})} 
+                                                        />
+                                                    ) : (
+                                                        `$${prod.precioMXN}`
+                                                        )}
+                                                        </td>
+                                            {/* Celda de Tipo */}
                                             <td data-label="Tipo">{prod.product_type || 'N/A'}</td>
-                                            <td data-label="Acciones" className="admin-row-actions">
-                                                <button className="admin-edit-btn">Editar</button>
-                                                <button className="admin-delete-btn">Eliminar</button>
+                                                                        
+                                            {/* Celda de Acciones */}
+                                            <td className="admin-row-actions">
+                                                {editando === prod._id ? (
+                                                    <>
+                                                        <button onClick={() => guardarCambios(prod._id)} className="admin-save-btn">Guardar</button>
+                                                        <button onClick={() => setEditando(null)} className="admin-cancel-btn">Cancelar</button>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <button onClick={() => { setEditando(prod._id); setTempData(prod); }} className="admin-edit-btn">Editar</button>
+                                                        <button onClick={() => eliminarProducto(prod._id)} className="admin-delete-btn">Eliminar</button>
+                                                    </>
+                                                )}
                                             </td>
                                         </tr>
                                     ))}
