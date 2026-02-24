@@ -4,188 +4,192 @@ import { useAuth } from '../context/AuthContext';
 import PaginationControls from '../components/PaginationControls';
 import './Catalogo.css';
 
+const getColorHex = (colorName) => {
+    if (!colorName) return "#555";
+    const name = colorName.toLowerCase();
+    if (name.includes('blue') || name.includes('teal')) return "#1e3a8a";
+    if (name.includes('pink') || name.includes('fuchsia')) return "#db2777";
+    if (name.includes('green') || name.includes('olive')) return "#2d4d43";
+    if (name.includes('red') || name.includes('burgundy')) return "#991b1b";
+    if (name.includes('black')) return "#111";
+    if (name.includes('white')) return "#fff";
+    if (name.includes('grey')) return "#777";
+    return "#555";
+};
+
 const getPrimaryImage = (prod = {}) => {
-    const directCandidates = [prod.imagen, prod.image_principal, prod.imagenUrl]
-        .map((value) => String(value || '').trim())
-        .filter(Boolean);
-
-    if (directCandidates.length > 0) {
-        return directCandidates[0];
-    }
-
-    const rawImageSrc = String(prod.image_src || '').trim();
-    if (!rawImageSrc) return '/placeholder.jpg';
-
-    return rawImageSrc
-        .split(',')
-        .map((item) => item.trim())
-        .find(Boolean) || '/placeholder.jpg';
+    const img = prod.image_principal || prod.imagen || (prod.image_src ? prod.image_src.split(',')[0] : '/placeholder.jpg');
+    return img.trim();
 };
 
 const Catalogo = () => {
     const { logout } = useAuth();
-    const [isCartOpen, setIsCartOpen] = useState(false);
-    const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-    const [isFiltersOpen, setIsFiltersOpen] = useState(false);
-    const [showSuccessModal, setShowSuccessModal] = useState(false);
-
     const [productos, setProductos] = useState([]);
     const [carrito, setCarrito] = useState([]);
     const [busqueda, setBusqueda] = useState('');
     const [cargando, setCargando] = useState(true);
-
+    const [tallasSeleccionadas, setTallasSeleccionadas] = useState({});
+    const [colorVisual, setColorVisual] = useState({}); 
+    const [isCartOpen, setIsCartOpen] = useState(false);
     const [pagina, setPagina] = useState(1);
     const [totalPaginas, setTotalPaginas] = useState(1);
-    const totalPaginasSeguras = Math.max(totalPaginas || 1, 1);
 
     useEffect(() => {
         const cargarCatalogo = async () => {
             setCargando(true);
             try {
                 const baseURL = import.meta.env.VITE_API_URL || 'https://dbgymshark-ddk1.onrender.com/api';
-                const url = `${baseURL}/productos?page=${pagina}&limit=20`;
-                const respuesta = await axios.get(url);
-
+                const respuesta = await axios.get(`${baseURL}/productos?page=${pagina}&search=${busqueda}`);
                 if (respuesta.data.productos) {
-                    const paginasRaw = respuesta.data.paginasTotales || respuesta.data.pagination?.pages || 1;
-                    const paginas = Math.max(Number(paginasRaw) || 1, 1);
                     setProductos(respuesta.data.productos);
-                    setTotalPaginas(paginas);
-                } else {
-                    setProductos(Array.isArray(respuesta.data) ? respuesta.data : []);
-                    setTotalPaginas(1);
+                    setTotalPaginas(respuesta.data.pagination?.pages || 1);
                 }
-            } catch (error) {
-                console.error('Error al conectar con MAKIA API:', error);
-            } finally {
-                setCargando(false);
-            }
+            } catch (error) { console.error('Error MAKIA:', error); }
+            finally { setCargando(false); }
         };
-
         cargarCatalogo();
-    }, [pagina]);
+    }, [pagina, busqueda]);
 
-    useEffect(() => {
-        const onResize = () => {
-            if (window.innerWidth > 768) {
-                setIsFiltersOpen(false);
-                document.body.style.overflow = '';
-            }
+    const agregarAlCarrito = (prod, colorElegido) => {
+        const item = {
+            ...prod,
+            tallaElegida: tallasSeleccionadas[prod._id] || 'Única',
+            colorElegido: colorElegido || (prod.colors_available?.[0] || 'N/A')
         };
-        window.addEventListener('resize', onResize);
-        return () => window.removeEventListener('resize', onResize);
-    }, []);
-
-    const agregarAlCarrito = (prod) => {
-        setCarrito([...carrito, prod]);
-        setShowSuccessModal(true);
+        setCarrito([...carrito, item]);
+        setIsCartOpen(true);
     };
-
-    const productosFiltrados = productos.filter((p) => {
-        const nombre = (p.nombre || p.title || '').toLowerCase();
-        return nombre.includes(busqueda.toLowerCase());
-    });
-
-    const toggleCart = () => setIsCartOpen(!isCartOpen);
-    const toggleUserMenu = () => setIsUserMenuOpen(!isUserMenuOpen);
-    const toggleFilters = () => setIsFiltersOpen(!isFiltersOpen);
-    const closeFilters = () => setIsFiltersOpen(false);
 
     return (
         <div className="client-view">
-            <header className="client-header">
-                <div className="logo">MAKIA</div>
-                <div className="header-icons">
-                    <div className="cart-wrapper" onClick={toggleCart}>
+            <header className="client-header-makia">
+                <div className="logo-text">MAKIA</div>
+                <div className="header-right-icons">
+                    <div className="cart-wrapper" onClick={() => setIsCartOpen(true)}>
                         <i className="fas fa-shopping-bag"></i>
                         <span id="cartCount">{carrito.length}</span>
                     </div>
-                    <div className="user-menu-container" onClick={toggleUserMenu}>
+                    <div className="user-icon" onClick={logout}>
                         <i className="far fa-user"></i>
-                        {isUserMenuOpen && (
-                            <div className="user-dropdown">
-                                <button id="logoutBtn" onClick={logout}>Cerrar Sesion</button>
-                            </div>
-                        )}
                     </div>
                 </div>
             </header>
 
-            <div className="hero-banner">
-                <img src="/hero-banner-client.jpg" alt="Banner Hero" />
+            <div className="hero-banner-fixed">
+                <img src="/hero-banner-client.jpg" alt="MAKIA Hero" />
             </div>
 
-            <div className="store-layout">
-                <aside id="catalog-filters" className={`filters-sidebar ${isFiltersOpen ? 'is-open' : ''}`}>
-                    <div className="filters-sidebar-header">
-                        <h2 className="sidebar-title">Filtros</h2>
-                        <button type="button" className="filters-close-btn" onClick={closeFilters}>&times;</button>
-                    </div>
-                    <div className="filter-section">
-                        <h3>Talla</h3>
-                        <div className="size-grid">
-                            {['XS', 'S', 'M', 'L', 'XL', '2X'].map((talla) => (
-                                <button key={talla}>{talla}</button>
+            <div className="store-layout-container">
+                <aside className="sidebar-filter-box">
+                    <h2 className="sidebar-h2">Filtros</h2>
+                    <div className="filter-group">
+                        <h3 className="sidebar-h3">Talla</h3>
+                        <div className="sidebar-btn-grid">
+                            {['XS', 'S', 'M', 'L', 'XL', '2X'].map(t => (
+                                <button key={t} className="filter-size-btn">{t}</button>
                             ))}
                         </div>
                     </div>
                 </aside>
 
-                <main className="shop-content">
-                    <div className="shop-controls">
-                        <button type="button" className="filters-toggle-btn" onClick={toggleFilters}>Filtros</button>
-                        <div className="search-bar">
+                <main className="shop-main-content">
+                    <div className="search-bar-row">
+                        <div className="white-search-box">
                             <i className="fas fa-search"></i>
-                            <input
-                                type="text"
-                                placeholder="Que estas buscando hoy?"
-                                value={busqueda}
-                                onChange={(e) => setBusqueda(e.target.value)}
+                            <input 
+                                type="text" 
+                                placeholder="¿Qué estás buscando hoy?" 
+                                value={busqueda} 
+                                onChange={(e) => setBusqueda(e.target.value)} 
                             />
                         </div>
                     </div>
 
-                    <div className="products-grid">
+                    <div className="fixed-grid-3">
                         {cargando ? (
-                            <div className="loading-container"><p>Conectando con el servidor...</p></div>
+                            <div className="loading-container"><p>Cargando MAKIA...</p></div>
                         ) : (
-                            productosFiltrados.map((prod) => (
-                                <div key={prod._id} className="product-card">
-                                    <div className="product-image-container">
-                                        <img
-                                            src={getPrimaryImage(prod)}
-                                            alt={prod.nombre || prod.title || 'Producto'}
-                                            className="product-img"
-                                        />
+                            productos.map((prod) => {
+                                const tallasReales = (prod.sizes_available || []).filter(t => t !== 'Única' && t !== 'N/A' && t !== 'Default Title');
+                                const colorActivo = colorVisual[prod._id] || (prod.colors_available?.[0]);
+                                const variant = prod.variants?.find(v => v.color === colorActivo);
+                                const imagenAMostrar = variant?.image || getPrimaryImage(prod);
+
+                                return (
+                                    <div key={prod._id} className="makia-product-card">
+                                        <div className="img-frame">
+                                            <img src={imagenAMostrar} alt={prod.title} className="p-img" />
+                                        </div>
+                                        <div className="info-frame">
+                                            <h3>{prod.title}</h3>
+                                            <p className="p-price">
+                                                {prod.precioMXN?.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' })}
+                                            </p>
+
+                                            <div className="swatch-row-carrusel">
+                                                {prod.colors_available?.map(col => (
+                                                    <button 
+                                                        key={col}
+                                                        className={`swatch-circle ${colorActivo === col ? 'active' : ''}`}
+                                                        style={{ backgroundColor: getColorHex(col) }}
+                                                        onClick={() => setColorVisual(prev => ({ ...prev, [prod._id]: col }))}
+                                                        title={col}
+                                                    />
+                                                ))}
+                                            </div>
+
+                                            <div className="card-footer">
+                                                {tallasReales.length > 0 ? (
+                                                    <select 
+                                                        className="makia-size-dropdown"
+                                                        value={tallasSeleccionadas[prod._id] || ""}
+                                                        onChange={(e) => setTallasSeleccionadas(prev => ({ ...prev, [prod._id]: e.target.value }))}
+                                                    >
+                                                        <option value="">Seleccionar Talla</option>
+                                                        {tallasReales.map(t => <option key={t} value={t}>{t}</option>)}
+                                                    </select>
+                                                ) : <div className="unique-size-label">Talla Única</div>}
+
+                                                <button 
+                                                    className="btn-add-to-bag-makia"
+                                                    onClick={() => agregarAlCarrito(prod, colorActivo)}
+                                                    disabled={tallasReales.length > 0 && !tallasSeleccionadas[prod._id]}
+                                                >
+                                                    {tallasReales.length > 0 && !tallasSeleccionadas[prod._id] ? 'SELECCIONA TALLA' : 'AÑADIR A LA BOLSA'}
+                                                </button>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div className="product-info">
-                                        <h3>{prod.nombre || prod.title || 'Producto'}</h3>
-                                        <p className="price">
-                                            {prod.precioMXN?.toLocaleString('es-MX', {
-                                                style: 'currency',
-                                                currency: 'MXN',
-                                            }) || '$0.00 MXN'}
-                                        </p>
-                                        <button className="add-to-cart-btn" onClick={() => agregarAlCarrito(prod)}>
-                                            Anadir a la bolsa
-                                        </button>
-                                    </div>
-                                </div>
-                            ))
+                                );
+                            })
                         )}
                     </div>
-
-                    <PaginationControls
-                        page={pagina}
-                        totalPages={totalPaginasSeguras}
-                        onPageChange={(nextPage) => {
-                            setPagina(nextPage);
-                            window.scrollTo(0, 0);
-                        }}
-                    />
+                    <PaginationControls page={pagina} totalPages={totalPaginas} onPageChange={setPagina} />
                 </main>
             </div>
-            {/* Modal Bolsa y Éxito omitidos por brevedad pero se mantienen igual */}
+
+            {isCartOpen && (
+                <div className="cart-modal-overlay" onClick={() => setIsCartOpen(false)}>
+                    <div className="cart-modal-panel" onClick={e => e.stopPropagation()}>
+                        <div className="cart-modal-top">
+                            <h2>TU BOLSA</h2>
+                            <span className="close-cart-btn" onClick={() => setIsCartOpen(false)}>&times;</span>
+                        </div>
+                        <div className="cart-modal-list">
+                            {carrito.map((item, i) => (
+                                <div key={i} className="cart-modal-row">
+                                    <div className="item-details">
+                                        <p>{item.title}</p>
+                                        <small>{item.tallaElegida} | {item.colorElegido}</small>
+                                    </div>
+                                    <p>{item.precioMXN?.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' })}</p>
+                                </div>
+                            ))}
+                            {carrito.length === 0 && <p style={{textAlign: 'center', padding: '20px'}}>Tu bolsa está vacía.</p>}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
