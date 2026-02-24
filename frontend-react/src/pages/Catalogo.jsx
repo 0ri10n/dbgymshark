@@ -5,10 +5,10 @@ import { CartContext } from '../context/CartContext';
 import PaginationControls from '../components/PaginationControls';
 import './Catalogo.css';
 
-// --- CONFIGURACIÓN ---
+// --- CONFIGURACIÓN DE MONEDA ---
 const TIPO_CAMBIO_USD_MXN = 17.00; //
 
-// [ARREGLO CATEGORÍAS] Lista exhaustiva para que el filtro sea exacto
+// [ARREGLO CATEGORÍAS] Lista exhaustiva para filtros precisos según tus datos
 const categoryGroups = {
     'Womens': [
         "Womens Bodysuit", "Womens Bottoms", "Womens Crop Top", "Womens Crop Tops", "Womens Dress", 
@@ -16,8 +16,7 @@ const categoryGroups = {
         "Womens Long Sleeve Top", "Womens Ls Tops", "Womens One Piece", "Womens One Pieces", "Womens Pants", 
         "Womens Pullover", "Womens Pullovers", "Womens Shorts", "Womens Skort", "Womens Sleeveless Top", 
         "Womens Sleeveless Tops", "Womens Socks", "Womens Sports Bra", "Womens Sports Bras", "Womens Ss Tops", 
-        "Womens Sweater", "Womens Swimwear", "Womens T-Shirt", "Womens Tank", "Womens Tanks", "Womens Underwear", 
-        "Womens Vest", "womens Accessories", "womens Bags", "womens Headwear", "womens Socks"
+        "Womens Sweater", "Womens Swimwear", "Womens T-Shirt", "Womens Tank", "Womens Tanks", "Womens Underwear", "Womens Vest"
     ],
     'Mens': [
         "Mens Baselayer", "Mens Bottoms", "Mens Drop Armhole Tank", "Mens Hoodie", "Mens Jacket", "Mens Jackets", 
@@ -28,11 +27,10 @@ const categoryGroups = {
     ],
     'Accessories': [
         "Accessories", "Bag", "Bags", "Bottles", "Footwear", "Gift Card", "Headwear", "Misc.", 
-        "Pants", "Pullovers", "Socks", "Ss Tops", "Thirft Bag", "Underwear", "footwear"
+        "Pants", "Pullovers", "Socks", "Ss Tops", "Thirft Bag", "Underwear", "footwear", 
+        "womens Accessories", "womens Bags", "womens Headwear", "womens Socks"
     ]
 };
-
-// --- FUNCIONES DE APOYO ---
 
 const getColorHex = (name = "") => {
     const n = name.toLowerCase();
@@ -46,18 +44,8 @@ const getColorHex = (name = "") => {
 };
 
 const getPrimaryImage = (p = {}) => {
-    if (!p) return "/placeholder.jpg";
-    const img = p.image_principal || p.imagen || p.image_src || (p.variants && p.variants[0]?.image);
-    if (typeof img === 'string' && img.includes(',')) return img.split(',')[0].trim();
-    return img || "/placeholder.jpg";
-};
-
-const getNumericPriceMXN = (prod) => {
-    let valor = Number(prod.precioMXN);
-    if (!valor || isNaN(valor)) {
-        valor = Number(prod.price) * TIPO_CAMBIO_USD_MXN;
-    }
-    return valor || 0;
+    const img = p.image_principal || (p.variants && p.variants[0]?.image) || "/placeholder.jpg";
+    return typeof img === 'string' && img.includes(',') ? img.split(',')[0].trim() : img;
 };
 
 const Catalogo = () => {
@@ -71,9 +59,11 @@ const Catalogo = () => {
     const [pagina, setPagina] = useState(1);
     const [totalPaginas, setTotalPaginas] = useState(1);
 
+    // Filtros activos
     const [catFiltro, setCatFiltro] = useState(null);
     const [precioMax, setPrecioMax] = useState(3500);
     const [tallasSeleccionadas, setTallasSeleccionadas] = useState({});
+    const [colorVisual, setColorVisual] = useState({});
 
     useEffect(() => {
         const cargarData = async () => {
@@ -85,34 +75,39 @@ const Catalogo = () => {
                     setProductos(res.data.productos);
                     setTotalPaginas(res.data.pagination?.pages || 1);
                 }
-            } catch (e) { console.error("Error MAKIA:", e); }
+            } catch (e) { console.error("Error al cargar productos:", e); }
             finally { setCargando(false); }
         };
         cargarData();
     }, [pagina]);
 
-    // [ARREGLO BÚSQUEDA] Sensible a nombre O categoría
+    // [ARREGLO FILTROS] Búsqueda ultra sensible por nombre y categoría
     const productosAMostrar = productos.filter(p => {
         const query = busqueda.toLowerCase().trim();
-        const titulo = (p.title || '').toLowerCase();
-        const tipoDB = (p.product_type || '').trim();
-        const precioPesos = getNumericPriceMXN(p);
+        const pType = (p.product_type || '').trim();
+        const pTitle = (p.title || '').toLowerCase();
+        const pPrecio = p.precioMXN || (p.price * TIPO_CAMBIO_USD_MXN);
 
-        const matchSearch = query === '' || titulo.includes(query) || tipoDB.toLowerCase().includes(query);
-        const matchCat = !catFiltro || categoryGroups[catFiltro].includes(tipoDB);
-        const matchPrecio = precioPesos <= precioMax;
+        const matchBusqueda = query === '' || pTitle.includes(query) || pType.toLowerCase().includes(query);
+        const matchCat = !catFiltro || categoryGroups[catFiltro].includes(pType);
+        const matchPrecio = pPrecio <= precioMax;
 
-        return matchSearch && matchCat && matchPrecio;
+        return matchBusqueda && matchCat && matchPrecio;
     });
 
     // [ARREGLO AÑADIR] Validación obligatoria de talla
     const handleAgregar = (p) => {
         const talla = tallasSeleccionadas[p._id];
         if (!talla) {
-            alert("Vania, debes seleccionar una talla antes de añadir a la bolsa.");
+            alert("Vania, selecciona una talla antes de añadir el producto a la bolsa.");
             return;
         }
-        addToCart({ ...p, selectedSize: talla, quantity: 1 });
+        addToCart({ 
+            ...p, 
+            selectedSize: talla, 
+            quantity: 1, 
+            selectedColor: colorVisual[p._id] || p.colors_available?.[0] 
+        });
         setIsCartOpen(true); 
     };
 
@@ -120,7 +115,7 @@ const Catalogo = () => {
     const handleFinalizarCompra = async () => {
         if (cart.length === 0) return;
         
-        const total = cart.reduce((acc, item) => acc + (getNumericPriceMXN(item) * item.quantity), 0);
+        const total = cart.reduce((acc, item) => acc + (item.precioMXN || item.price * TIPO_CAMBIO_USD_MXN) * item.quantity, 0);
         const ventaData = {
             usuario: user?.email || "Invitado",
             productos: cart.map(item => ({
@@ -128,7 +123,7 @@ const Catalogo = () => {
                 titulo: item.title,
                 talla: item.selectedSize,
                 cantidad: item.quantity,
-                precioUnitario: getNumericPriceMXN(item)
+                precioUnitario: item.precioMXN || item.price * TIPO_CAMBIO_USD_MXN
             })),
             total: total,
             fecha: new Date().toISOString()
@@ -137,11 +132,11 @@ const Catalogo = () => {
         try {
             const baseURL = import.meta.env.VITE_API_URL || 'https://dbgymshark-ddk1.onrender.com/api';
             await axios.post(`${baseURL}/ventas`, ventaData);
-            alert("¡Venta registrada con éxito en MAKIA!");
+            alert("¡Venta registrada con éxito en la base de datos de MAKIA!");
             clearCart();
             setIsCartOpen(false);
         } catch (error) {
-            alert("Error al procesar la venta.");
+            alert("Error al procesar la venta. Inténtalo de nuevo.");
         }
     };
 
@@ -154,26 +149,39 @@ const Catalogo = () => {
                         <i className="fas fa-shopping-bag"></i>
                         <span id="cartCount">{cart.length}</span>
                     </div>
-                    <div className="user-icon" onClick={logout}><i className="far fa-user"></i></div>
+                    <div className="user-icon" onClick={logout} style={{cursor:'pointer'}}><i className="far fa-user"></i></div>
                 </div>
             </header>
 
+            {/* Banner superior */}
             <div className="hero-banner-full">
-                <img src="/hero-banner-client.jpg" alt="MAKIA Hero" />
+                <img src="/hero-banner-client.jpg" alt="MAKIA Performance" />
             </div>
 
             <div className="store-layout-container">
                 <aside className="sidebar-filter-box">
                     <div className="sidebar-top-row">
                         <h2 className="sidebar-h2">Filtros</h2>
-                        <button className="clear-filters-btn" onClick={() => {setCatFiltro(null); setPrecioMax(3500); setBusqueda('');}}>Limpiar</button>
+                        {/* [ARREGLO] Botón limpiar verde-amarillo sin recuadro blanco */}
+                        <button className="clear-filters-btn" onClick={() => {setCatFiltro(null); setBusqueda(''); setPrecioMax(3500);}}>Limpiar</button>
                     </div>
                     
                     <div className="filter-group">
                         <h3 className="sidebar-h3">Categoría</h3>
                         {Object.keys(categoryGroups).map(cat => (
-                            <div key={cat} className={`cat-main-label ${catFiltro === cat ? 'selected' : ''}`} onClick={() => setCatFiltro(catFiltro === cat ? null : cat)}>
-                                {cat} <i className={`fas fa-chevron-${catFiltro === cat ? 'up' : 'down'}`}></i>
+                            <div key={cat}>
+                                <div className={`cat-main-label ${catFiltro === cat ? 'selected' : ''}`} onClick={() => setCatFiltro(catFiltro === cat ? null : cat)}>
+                                    {cat} <i className={`fas fa-chevron-${catFiltro === cat ? 'up' : 'down'}`}></i>
+                                </div>
+                                {catFiltro === cat && (
+                                    <div className="sub-cat-list">
+                                        {categoryGroups[cat].map(sub => (
+                                            <div key={sub} className="sub-item" onClick={() => setBusqueda(sub)}>
+                                                {sub.replace('Womens ', '').replace('Mens ', '')}
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         ))}
                     </div>
@@ -187,50 +195,69 @@ const Catalogo = () => {
                 <main className="shop-main-content">
                     <div className="white-search-box">
                         <i className="fas fa-search"></i>
-                        <input type="text" placeholder="Busca por nombre o tipo..." value={busqueda} onChange={(e) => setBusqueda(e.target.value)} />
+                        <input type="text" placeholder="Busca por nombre o tipo de prenda..." value={busqueda} onChange={(e) => setBusqueda(e.target.value)} />
                     </div>
 
+                    {/* [ARREGLO] Grid de 3 productos uniforme */}
                     <div className="fixed-grid-3">
-                        {!cargando && productosAMostrar.map((prod) => (
-                            <div key={prod._id} className="makia-product-card">
-                                <div className="img-frame"><img src={getPrimaryImage(prod)} alt={prod.title} className="p-img" /></div>
-                                <div className="info-frame">
-                                    <h3>{prod.title}</h3>
-                                    <p className="p-price">${getNumericPriceMXN(prod).toLocaleString()} MXN</p>
-                                    <div className="swatch-row-carrusel">
-                                        {prod.colors_available?.map(col => (
-                                            <div key={col} className="swatch-circle" style={{ backgroundColor: getColorHex(col) }} />
-                                        ))}
-                                    </div>
-                                    <div className="card-footer">
-                                        <select className="makia-size-dropdown" value={tallasSeleccionadas[prod._id] || ""} onChange={(e) => setTallasSeleccionadas(prev => ({ ...prev, [prod._id]: e.target.value }))}>
-                                            <option value="">Talla</option>
-                                            {(prod.sizes_available || []).map(t => <option key={t} value={t}>{t}</option>)}
-                                        </select>
-                                        <button className="btn-add-to-bag-makia" onClick={() => handleAgregar(prod)}>AÑADIR</button>
+                        {!cargando && productosAMostrar.map((prod) => {
+                            const colorActivo = colorVisual[prod._id] || prod.colors_available?.[0];
+                            const imgFinal = prod.variants?.find(v => v.color === colorActivo)?.image || getPrimaryImage(prod);
+
+                            return (
+                                <div key={prod._id} className="makia-product-card">
+                                    <div className="img-frame"><img src={imgFinal} alt={prod.title} className="p-img" /></div>
+                                    <div className="info-frame">
+                                        <h3>{prod.title}</h3>
+                                        <p className="p-price">${(prod.precioMXN || prod.price * TIPO_CAMBIO_USD_MXN).toLocaleString()} MXN</p>
+                                        
+                                        {/* [ARREGLO] Círculos de colores desplazables */}
+                                        <div className="swatch-row-carrusel">
+                                            {prod.colors_available?.map(col => (
+                                                <button 
+                                                    key={col} 
+                                                    className={`swatch-circle ${colorActivo === col ? 'active' : ''}`} 
+                                                    style={{ backgroundColor: getColorHex(col) }} 
+                                                    onClick={() => setColorVisual(prev => ({ ...prev, [prod._id]: col }))} 
+                                                />
+                                            ))}
+                                        </div>
+
+                                        <div className="card-footer">
+                                            <select className="makia-size-dropdown" value={tallasSeleccionadas[prod._id] || ""} onChange={(e) => setTallasSeleccionadas(prev => ({ ...prev, [prod._id]: e.target.value }))}>
+                                                <option value="">Selecciona Talla</option>
+                                                {(prod.sizes_available || []).map(t => <option key={t} value={t}>{t}</option>)}
+                                            </select>
+                                            <button className="btn-add-to-bag-makia" onClick={() => handleAgregar(prod)}>AÑADIR A LA BOLSA</button>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
-                    <PaginationControls page={pagina} totalPages={totalPaginas} onPageChange={setPagina} />
+                    {busqueda === '' && <PaginationControls page={pagina} totalPages={totalPaginas} onPageChange={setPagina} />}
                 </main>
             </div>
 
-            {/* BOLSA INTERACTIVA */}
+            {/* [ARREGLO] BOLSA INTERACTIVA */}
             {isCartOpen && (
                 <div className="cart-modal-overlay" onClick={() => setIsCartOpen(false)}>
                     <div className="cart-modal-panel" onClick={e => e.stopPropagation()}>
-                        <div className="cart-modal-top"><h2>TU BOLSA</h2><span onClick={() => setIsCartOpen(false)} style={{cursor:'pointer'}}>&times;</span></div>
+                        <div className="cart-modal-top">
+                            <h2>TU BOLSA</h2>
+                            <span onClick={() => setIsCartOpen(false)} style={{cursor:'pointer', fontSize: '24px'}}>&times;</span>
+                        </div>
                         <div className="cart-modal-list">
                             {cart.map((item, i) => (
                                 <div key={i} className="cart-modal-row">
                                     <div style={{flex:1}}>
                                         <p style={{fontWeight:'600'}}>{item.title}</p>
                                         <div style={{display:'flex', gap:'10px', marginTop:'5px'}}>
+                                            {/* Cambio de talla en tiempo real */}
                                             <select className="mini-dropdown" value={item.selectedSize} onChange={(e) => updateCartItem(i, { ...item, selectedSize: e.target.value })}>
-                                                {(item.sizes_available || []).map(s => <option key={s} value={s}>{s}</option>)}
+                                                {item.sizes_available?.map(s => <option key={s} value={s}>{s}</option>)}
                                             </select>
+                                            {/* Control de cantidad */}
                                             <div className="qty-controls">
                                                 <button onClick={() => updateCartItem(i, { ...item, quantity: Math.max(1, item.quantity - 1) })}>-</button>
                                                 <span>{item.quantity}</span>
@@ -238,10 +265,11 @@ const Catalogo = () => {
                                             </div>
                                         </div>
                                     </div>
-                                    <p style={{fontWeight:'800', color:'var(--makia-accent)'}}>${(getNumericPriceMXN(item) * item.quantity).toLocaleString()}</p>
+                                    <p style={{fontWeight:'800', color:'var(--makia-accent)'}}>${((item.precioMXN || item.price * TIPO_CAMBIO_USD_MXN) * item.quantity).toLocaleString()}</p>
                                     <button onClick={() => removeFromCart(i)} className="btn-remove">&times;</button>
                                 </div>
                             ))}
+                            {cart.length === 0 && <p style={{textAlign:'center', marginTop:'50px', color: '#666'}}>Tu bolsa está vacía.</p>}
                         </div>
                         <button className="btn-checkout-makia" onClick={handleFinalizarCompra}>FINALIZAR COMPRA</button>
                     </div>

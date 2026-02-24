@@ -1,9 +1,9 @@
 :root {
-    --makia-accent: #d9fb56; /* Verde neón MAKIA */
+    --makia-accent: #d9fb56; /* Verde neón característico */
     --bg-dark: #050508;
     --sidebar-bg: #0c0f16;
     --border-color: #1a1e26;
-    --text-gray: #888;
+    --text-muted: #888;
 }
 
 * {
@@ -15,9 +15,10 @@ body {
     font-family: 'Poppins', sans-serif;
     background-color: var(--bg-dark);
     color: #fff;
+    overflow-x: hidden;
 }
 
-/* --- HEADER --- */
+/* --- HEADER MAKIA --- */
 .client-header-makia {
     display: flex;
     justify-content: space-between;
@@ -36,6 +37,7 @@ body {
     font-size: 32px;
     letter-spacing: 6px;
     color: #fff;
+    font-family: 'Arial Black', sans-serif;
 }
 
 .header-right-icons {
@@ -44,10 +46,11 @@ body {
     align-items: center;
 }
 
-.cart-wrapper {
+.cart-wrapper, .user-icon {
     cursor: pointer;
     font-size: 26px;
     position: relative;
+    color: #fff;
 }
 
 #cartCount {
@@ -62,11 +65,12 @@ body {
     font-weight: bold;
 }
 
-/* --- BANNER PRINCIPAL (BOXER) --- */
+/* --- BANNER PRINCIPAL --- */
 .hero-banner-full {
     width: 100%;
-    height: 480px;
+    height: 450px;
     overflow: hidden;
+    background: #000;
 }
 
 .hero-banner-full img {
@@ -76,7 +80,7 @@ body {
     display: block;
 }
 
-/* --- LAYOUT PRINCIPAL --- */
+/* --- LAYOUT Y SIDEBAR --- */
 .store-layout-container {
     display: grid;
     grid-template-columns: 300px 1fr;
@@ -86,7 +90,6 @@ body {
     gap: 40px;
 }
 
-/* --- SIDEBAR DE FILTROS --- */
 .sidebar-filter-box {
     background: var(--sidebar-bg);
     border: 1px solid var(--border-color);
@@ -97,65 +100,88 @@ body {
     top: 100px;
 }
 
+.sidebar-top-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+/* [ARREGLO] Botón Limpiar: Solo texto verde neón en la esquina */
+.clear-filters-btn {
+    background: none !important;
+    border: none !important;
+    color: var(--makia-accent) !important;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 0;
+    text-transform: capitalize;
+}
+
 .sidebar-h2 {
     font-size: 24px;
-    margin: 0 0 25px;
+    margin: 0;
 }
 
 .sidebar-h3 {
     font-size: 14px;
     text-transform: uppercase;
-    color: var(--text-gray);
+    color: var(--text-muted);
     letter-spacing: 1px;
     margin-bottom: 20px;
 }
 
+.filter-group {
+    margin-bottom: 35px;
+}
+
+/* CATEGORÍAS */
 .cat-main-label {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 14px;
     background: rgba(255, 255, 255, 0.03);
-    border-radius: 8px;
+    border-radius: 10px;
     cursor: pointer;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
     font-size: 15px;
-    transition: 0.3s;
 }
 
-.cat-main-label:hover, .cat-main-label.selected {
+.cat-main-label.selected {
     color: var(--makia-accent);
     background: rgba(217, 251, 86, 0.05);
 }
 
 .sub-cat-list {
     margin-top: 5px;
-    padding-left: 10px;
-    max-height: 300px;
-    overflow-y: auto; /* Para manejar la lista larga de categorías */
+    padding-left: 12px;
+    max-height: 250px;
+    overflow-y: auto;
     border-left: 1px solid #222;
-    margin-bottom: 20px;
 }
 
 .sub-item {
     padding: 8px 0;
     font-size: 13px;
-    color: #777;
+    color: #666;
     cursor: pointer;
 }
 
 .sub-item.active {
     color: var(--makia-accent);
+    font-weight: 600;
 }
 
-/* --- SLIDER DE PRECIO --- */
+/* SLIDER DE PRECIO */
 .price-slider {
     width: 100%;
     height: 6px;
     background: #222;
     border-radius: 5px;
     outline: none;
-    appearance: none; /* Estándar para evitar errores en VSC */
+    appearance: none; /* Propiedad estándar corregida */
     margin-top: 15px;
 }
 
@@ -193,11 +219,11 @@ body {
 
 .fixed-grid-3 {
     display: grid;
-    grid-template-columns: repeat(3, 1fr) !important; /* Forzado a 3 columnas */
+    grid-template-columns: repeat(3, 1fr) !important;
     gap: 30px;
 }
 
-/* --- TARJETA MAKIA --- */
+/* --- TARJETA PRODUCTO MAKIA --- */
 .makia-product-card {
     display: flex;
     flex-direction: column;
@@ -206,23 +232,19 @@ body {
     border-radius: 15px;
     overflow: hidden;
     height: 100%;
-    transition: 0.3s;
 }
 
-.makia-product-card:hover {
-    border-color: #333;
-}
-
+/* [ARREGLO] Imagen llena la tarjeta sin franjas */
 .img-frame {
     width: 100%;
-    height: 450px; /* Tamaño vertical portrait */
+    height: 450px; 
     overflow: hidden;
 }
 
 .p-img {
     width: 100%;
     height: 100%;
-    object-fit: cover !important; /* Llena toda la tarjeta */
+    object-fit: cover !important;
     display: block;
 }
 
@@ -236,7 +258,7 @@ body {
 .info-frame h3 {
     font-size: 18px;
     margin: 0 0 10px;
-    font-weight: 600;
+    color: #eee;
 }
 
 .p-price {
@@ -246,17 +268,29 @@ body {
     margin-bottom: 20px;
 }
 
+/* [ARREGLO] Círculos de colores desplazables */
 .swatch-row-carrusel {
     display: flex;
     gap: 10px;
     margin-bottom: 20px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    width: 100%;
 }
+
+.swatch-row-carrusel::-webkit-scrollbar { display: none; }
 
 .swatch-circle {
     width: 22px;
     height: 22px;
     border-radius: 50% !important;
     border: 1px solid rgba(255,255,255,0.2);
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.swatch-circle.active {
+    box-shadow: 0 0 0 2px #000, 0 0 0 3px var(--makia-accent);
 }
 
 .card-footer {
@@ -338,7 +372,7 @@ body {
     border-bottom: 1px solid #111;
 }
 
-/* --- CONTROLES DE LA BOLSA --- */
+/* CONTROLES DE LA BOLSA */
 .mini-dropdown {
     background: #111;
     color: #fff;
@@ -346,30 +380,32 @@ body {
     padding: 4px;
     border-radius: 4px;
     font-size: 12px;
+    cursor: pointer;
 }
 
 .qty-controls {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     background: #111;
-    border-radius: 4px;
-    padding: 4px 10px;
+    border-radius: 6px;
+    padding: 5px 12px;
 }
 
 .qty-controls button {
     background: none;
     border: none;
     color: var(--makia-accent);
-    font-size: 18px;
+    font-size: 20px;
     cursor: pointer;
+    font-weight: bold;
 }
 
 .btn-remove {
     background: none;
     border: none;
     color: #ff4b4b;
-    font-size: 24px;
+    font-size: 26px;
     cursor: pointer;
 }
 
@@ -383,6 +419,11 @@ body {
     text-transform: uppercase;
     border-radius: 6px;
     cursor: pointer;
-    margin-top: 20px;
+    margin-top: 25px;
     font-size: 14px;
+    transition: 0.3s;
+}
+
+.btn-checkout-makia:hover {
+    background: var(--makia-accent);
 }
