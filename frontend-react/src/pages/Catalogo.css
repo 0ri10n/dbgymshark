@@ -29,32 +29,42 @@ body { margin: 0; font-family: 'Poppins', sans-serif; background-color: var(--bg
 .white-search-box input { border: none; outline: none; width: 100%; color: #000; font-weight: 600; margin-left: 10px; }
 .white-search-box i { color: #000; }
 
-/* --- GRID DE 3 PRODUCTOS (TAMAÑO UNIFORME DEFINITIVO) --- */
+/* --- GRID DE 3 PRODUCTOS (UNIFORMIDAD TOTAL) --- */
 .fixed-grid-3 {
     display: grid; 
-    grid-template-columns: repeat(3, 1fr) !important; /* FUERZA 3 POR FILA */
+    grid-template-columns: repeat(3, 1fr) !important; /* SIEMPRE 3 POR FILA */
     gap: 30px;
 }
 
-.makia-product-card { display: flex; flex-direction: column; background: transparent; min-height: 600px; }
+.makia-product-card { 
+    display: flex; 
+    flex-direction: column; 
+    background: transparent; 
+    min-height: 650px; /* Asegura que todas las tarjetas midan lo mismo */
+}
 
 .img-frame { 
-    height: 420px; /* ALTO FIJO PARA TODAS LAS IMÁGENES */
-    border-radius: 8px; overflow: hidden; background: #111; 
+    height: 450px; /* ALTO FIJO PARA TODAS LAS IMÁGENES */
+    border-radius: 8px; 
+    overflow: hidden; 
+    background: #111; 
     width: 100%;
 }
 
 .p-img { 
-    width: 100%; height: 100%; 
-    object-fit: cover !important; /* EL SECRETO: RECORTA SIN DEFORMAR */
+    width: 100%; 
+    height: 100%; 
+    object-fit: cover !important; /* EL SECRETO: LLENA EL ESPACIO SIN DEFORMAR */
     display: block; 
 }
 
-/* --- COLORES CIRCULARES Y ACCIONES --- */
+/* --- COLORES CIRCULARES Y CARRUSEL --- */
 .swatch-row-carrusel { display: flex; gap: 12px; margin: 15px 0; overflow-x: auto; scrollbar-width: none; padding: 5px 0; }
+.swatch-row-carrusel::-webkit-scrollbar { display: none; }
 .swatch-circle { width: 22px; height: 22px; border-radius: 50% !important; border: 1px solid rgba(255,255,255,0.2); cursor: pointer; flex-shrink: 0; }
-.swatch-circle.active { box-shadow: 0 0 0 2px #000, 0 0 0 4px var(--makia-accent); }
+.swatch-circle.active { box-shadow: 0 0 0 2px #000, 0 0 0 4px var(--makia-accent); transform: scale(1.1); }
 
+/* --- ACCIONES Y BOTONES --- */
 .card-footer { margin-top: auto; display: flex; flex-direction: column; gap: 10px; }
 .makia-size-dropdown {
     width: 100%; padding: 12px; background: #0c0f16; color: #fff; border: 1px solid #222; border-radius: 6px; cursor: pointer;

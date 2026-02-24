@@ -72,7 +72,7 @@ const Catalogo = () => {
                 </div>
             </header>
 
-            <div className="hero-banner-fixed"><img src="/hero-banner-client.jpg" alt="Banner" /></div>
+            <div className="hero-banner-fixed"><img src="/hero-banner-client.jpg" alt="MAKIA Hero" /></div>
 
             <div className="store-layout-container">
                 <aside className="sidebar-filter-box">
@@ -104,7 +104,7 @@ const Catalogo = () => {
                                         <img src={imagenAMostrar} alt={prod.title} className="p-img" />
                                     </div>
                                     <div className="info-frame">
-                                        <h3 className="p-title-text">{prod.title}</h3>
+                                        <h3>{prod.title}</h3>
                                         <p className="p-price">{prod.precioMXN?.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' })}</p>
                                         <div className="swatch-row-carrusel">
                                             {prod.colors_available?.map(col => (
