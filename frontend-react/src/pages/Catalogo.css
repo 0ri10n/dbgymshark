@@ -7,60 +7,61 @@
 * { box-sizing: border-box; }
 body { margin: 0; font-family: 'Poppins', sans-serif; background-color: var(--bg-makia); color: #fff; }
 
-/* --- HEADER ORIGINAL --- */
+/* --- HEADER Y LOGO --- */
 .client-header-makia {
     display: flex; justify-content: space-between; align-items: center;
-    padding: 0 5%; background: #000; height: 75px; position: sticky; top: 0; z-index: 1000; border-bottom: 1px solid #1a1a1a;
+    padding: 0 5%; background: #000; height: 75px;
+    position: sticky; top: 0; z-index: 1000; border-bottom: 1px solid #1a1a1a;
 }
 .logo-text { font-weight: 900; font-size: 30px; letter-spacing: 5px; color: #fff; font-family: 'Arial Black', sans-serif; }
 .header-right-icons { display: flex; gap: 20px; align-items: center; }
-.cart-wrapper, .user-icon { cursor: pointer; font-size: 24px; position: relative; color: #fff; }
-#cartCount { position: absolute; top: -10px; right: -12px; background: var(--makia-accent); color: #000; font-size: 11px; padding: 2px 6px; border-radius: 50%; font-weight: bold; }
+.cart-wrapper, .user-icon { cursor: pointer; font-size: 24px; color: #fff; position: relative; }
 
-/* --- BANNER --- */
-.hero-banner-fixed { width: 100%; height: 320px; overflow: hidden; }
-.hero-banner-fixed img { width: 100%; height: 100%; object-fit: cover; display: block; }
-
-/* --- LAYOUT Y FILTROS LATERALES --- */
-.store-layout-container { display: grid; grid-template-columns: 260px 1fr; max-width: 1440px; margin: 30px auto; padding: 0 5%; gap: 40px; }
-.sidebar-filter-box { background: var(--sidebar-bg); border: 1px solid #1a1e26; padding: 25px; border-radius: 12px; align-self: start; }
+/* --- FILTROS IZQUIERDOS --- */
+.store-layout-container {
+    display: grid; grid-template-columns: 260px 1fr;
+    max-width: 1400px; margin: 30px auto; padding: 0 5%; gap: 40px;
+}
+.sidebar-filter-box {
+    background: var(--sidebar-bg); border: 1px solid #1a1e26;
+    padding: 25px; border-radius: 12px; align-self: start;
+}
 .sidebar-btn-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 15px; }
-.filter-size-btn { background: transparent; color: #fff; border: 1px solid #2f3543; padding: 12px 0; border-radius: 8px; cursor: pointer; transition: 0.2s; }
-
-/* --- BUSCADOR BLANCO --- */
-.search-bar-row { display: flex; justify-content: flex-end; margin-bottom: 30px; }
-.white-search-box { display: flex; align-items: center; background: #fff; padding: 10px 15px; border-radius: 4px; width: 100%; max-width: 380px; }
-.white-search-box input { border: none; outline: none; width: 100%; color: #000; font-weight: 600; }
-.white-search-box i { color: #000; font-size: 18px; margin-right: 10px; }
+.filter-size-btn { background: transparent; color: #fff; border: 1px solid #2f3543; padding: 10px 0; border-radius: 8px; cursor: pointer; }
 
 /* --- GRID DE 3 PRODUCTOS (DISTRIBUCIÓN ORIGINAL) --- */
 .fixed-grid-3 {
     display: grid; 
-    grid-template-columns: repeat(3, 1fr) !important; /* SIEMPRE 3 COLUMNAS */
-    gap: 35px;
+    grid-template-columns: repeat(3, 1fr) !important; /* FORZAMOS 3 COLUMNAS */
+    gap: 30px;
 }
-.makia-product-card { display: flex; flex-direction: column; background: transparent; }
+.makia-product-card { display: flex; flex-direction: column; background: transparent; min-height: 580px; }
+
 .img-frame { 
-    height: 450px; /* ALTO VERTICAL ORIGINAL */
+    height: 400px; /* Recuperamos la altura portrait original */
     border-radius: 8px; overflow: hidden; background: #111; 
 }
 .p-img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.info-frame { padding: 15px 0; flex-grow: 1; }
-.info-frame h3 { font-size: 14px; font-weight: 400; color: #ccc; margin-bottom: 5px; }
-.p-price { font-weight: 700; font-size: 17px; margin-bottom: 15px; }
 
-/* --- COLORES (CÍRCULOS PERFECTOS Y CARRUSEL) --- */
-.swatch-row-carrusel { display: flex; gap: 12px; margin-bottom: 20px; padding: 5px 0; overflow-x: auto; scrollbar-width: none; }
-.swatch-row-carrusel::-webkit-scrollbar { display: none; }
-.swatch-circle { width: 22px; height: 22px; border-radius: 50% !important; border: 1px solid rgba(255,255,255,0.2); cursor: pointer; flex-shrink: 0; }
+/* --- COLORES CIRCULARES Y CARRUSEL --- */
+.swatch-row { display: flex; gap: 10px; margin: 15px 0; overflow-x: auto; padding: 5px 0; }
+.swatch-circle { 
+    width: 22px; height: 22px; border-radius: 50% !important; 
+    border: 1px solid rgba(255,255,255,0.2); cursor: pointer; flex-shrink: 0; 
+}
 .swatch-circle.active { box-shadow: 0 0 0 2px #000, 0 0 0 4px var(--makia-accent); transform: scale(1.1); }
 
-/* --- ACCIONES PREMIUM --- */
-.card-footer { display: flex; flex-direction: column; gap: 12px; margin-top: auto; }
-.makia-size-dropdown { width: 100%; padding: 12px; background: #0c0f16; color: #fff; border: 1px solid #222; border-radius: 6px; cursor: pointer; }
-.btn-add-to-bag-makia { background: #fff; color: #000; border: none; padding: 16px; font-weight: 900; text-transform: uppercase; border-radius: 4px; cursor: pointer; }
-.btn-add-to-bag-makia:hover:not(:disabled) { background: var(--makia-accent); }
+/* --- ACCIONES PREMIUM (DROPDOWN Y BOTÓN) --- */
+.makia-size-dropdown {
+    width: 100%; padding: 12px; background: #0c0f16; color: #fff; border: 1px solid #222; border-radius: 6px; 
+    appearance: none; background-image: url("data:image/svg+xml;..."); background-repeat: no-repeat; background-position: right 10px center;
+}
+.btn-add-to-bag-makia {
+    background: #fff; color: #000; border: none; padding: 16px; font-weight: 900; 
+    text-transform: uppercase; border-radius: 4px; cursor: pointer; transition: 0.3s;
+}
+.btn-add-to-bag-makia:hover { background: var(--makia-accent); }
 
-/* --- BOLSA MODAL (OPERATIVA) --- */
-.cart-modal-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.8); z-index: 2000; display: flex; justify-content: flex-end; }
-.cart-modal-panel { width: min(90vw, 400px); background: #000; height: 100vh; padding: 30px; border-left: 1px solid #222; display: flex; flex-direction: column; }
+/* --- BOLSA MODAL --- */
+.cart-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 2000; display: flex; justify-content: flex-end; }
+.cart-modal-panel { width: 400px; background: #000; height: 100%; padding: 30px; border-left: 1px solid #222; display: flex; flex-direction: column; }

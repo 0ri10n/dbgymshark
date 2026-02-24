@@ -13,6 +13,7 @@ const getColorHex = (colorName) => {
     if (name.includes('red') || name.includes('burgundy')) return "#991b1b";
     if (name.includes('black')) return "#111";
     if (name.includes('white')) return "#fff";
+    if (name.includes('grey')) return "#777";
     return "#555";
 };
 
@@ -50,10 +51,9 @@ const Catalogo = () => {
     }, [pagina, busqueda]);
 
     const agregarAlCarrito = (prod, colorElegido) => {
-        const tallasReales = (prod.sizes_available || []).filter(t => t !== 'Única' && t !== 'N/A' && t !== 'Default Title');
         const item = {
             ...prod,
-            tallaElegida: tallasReales.length > 0 ? tallasSeleccionadas[prod._id] : 'Única',
+            tallaElegida: tallasSeleccionadas[prod._id] || 'Única',
             colorElegido: colorElegido || (prod.colors_available?.[0] || 'N/A')
         };
         setCarrito([...carrito, item]);
@@ -69,11 +69,15 @@ const Catalogo = () => {
                         <i className="fas fa-shopping-bag"></i>
                         <span id="cartCount">{carrito.length}</span>
                     </div>
-                    <div className="user-icon" onClick={logout}><i className="far fa-user"></i></div>
+                    <div className="user-icon" onClick={logout}>
+                        <i className="far fa-user"></i>
+                    </div>
                 </div>
             </header>
 
-            <div className="hero-banner-fixed"><img src="/hero-banner-client.jpg" alt="MAKIA Hero" /></div>
+            <div className="hero-banner-fixed">
+                <img src="/hero-banner-client.jpg" alt="MAKIA Hero" />
+            </div>
 
             <div className="store-layout-container">
                 <aside className="sidebar-filter-box">
@@ -92,7 +96,12 @@ const Catalogo = () => {
                     <div className="search-bar-row">
                         <div className="white-search-box">
                             <i className="fas fa-search"></i>
-                            <input type="text" placeholder="¿Qué estás buscando hoy?" value={busqueda} onChange={(e) => setBusqueda(e.target.value)} />
+                            <input 
+                                type="text" 
+                                placeholder="¿Qué estás buscando hoy?" 
+                                value={busqueda} 
+                                onChange={(e) => setBusqueda(e.target.value)} 
+                            />
                         </div>
                     </div>
 
@@ -101,7 +110,6 @@ const Catalogo = () => {
                             <div className="loading-container"><p>Cargando MAKIA...</p></div>
                         ) : (
                             productos.map((prod) => {
-                                const tallasReales = (prod.sizes_available || []).filter(t => t !== 'Única' && t !== 'N/A' && t !== 'Default Title');
                                 const colorActivo = colorVisual[prod._id] || (prod.colors_available?.[0]);
                                 const varianteColor = prod.variants?.find(v => v.color === colorActivo);
                                 const imagenAMostrar = varianteColor?.image || getPrimaryImage(prod);
@@ -113,20 +121,31 @@ const Catalogo = () => {
                                         </div>
                                         <div className="info-frame">
                                             <h3>{prod.title}</h3>
-                                            <p className="p-price">{prod.precioMXN?.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' })}</p>
-                                            <div className="swatch-row-carrusel">
+                                            <p className="p-price">
+                                                {prod.precioMXN?.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' })}
+                                            </p>
+                                            <div className="swatch-row">
                                                 {prod.colors_available?.map(col => (
-                                                    <button key={col} className={`swatch-circle ${colorActivo === col ? 'active' : ''}`} style={{ backgroundColor: getColorHex(col) }} onClick={() => setColorVisual(prev => ({ ...prev, [prod._id]: col }))} />
+                                                    <button 
+                                                        key={col}
+                                                        className={`swatch-circle ${colorActivo === col ? 'active' : ''}`}
+                                                        style={{ backgroundColor: getColorHex(col) }}
+                                                        onClick={() => setColorVisual(prev => ({ ...prev, [prod._id]: col }))}
+                                                    />
                                                 ))}
                                             </div>
                                             <div className="card-footer">
-                                                {tallasReales.length > 0 ? (
-                                                    <select className="makia-size-dropdown" value={tallasSeleccionadas[prod._id] || ""} onChange={(e) => setTallasSeleccionadas(prev => ({ ...prev, [prod._id]: e.target.value }))}>
-                                                        <option value="">Seleccionar Talla</option>
-                                                        {tallasReales.map(t => <option key={t} value={t}>{t}</option>)}
-                                                    </select>
-                                                ) : <div className="unique-size-label">Talla Única</div>}
-                                                <button className="btn-add-to-bag-makia" onClick={() => agregarAlCarrito(prod, colorActivo)} disabled={tallasReales.length > 0 && !tallasSeleccionadas[prod._id]}>AÑADIR A LA BOLSA</button>
+                                                <select 
+                                                    className="makia-size-dropdown"
+                                                    value={tallasSeleccionadas[prod._id] || ""}
+                                                    onChange={(e) => setTallasSeleccionadas(prev => ({ ...prev, [prod._id]: e.target.value }))}
+                                                >
+                                                    <option value="">Seleccionar Talla</option>
+                                                    {(prod.sizes_available || []).map(t => <option key={t} value={t}>{t}</option>)}
+                                                </select>
+                                                <button className="btn-add-to-bag-makia" onClick={() => agregarAlCarrito(prod, colorActivo)}>
+                                                    AÑADIR A LA BOLSA
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
@@ -141,15 +160,20 @@ const Catalogo = () => {
             {isCartOpen && (
                 <div className="cart-modal-overlay" onClick={() => setIsCartOpen(false)}>
                     <div className="cart-modal-panel" onClick={e => e.stopPropagation()}>
-                        <div className="cart-modal-top"><h2>TU BOLSA</h2><span className="close-cart-btn" onClick={() => setIsCartOpen(false)}>&times;</span></div>
+                        <div className="cart-modal-top">
+                            <h2>TU BOLSA</h2>
+                            <span className="close-cart-btn" onClick={() => setIsCartOpen(false)}>&times;</span>
+                        </div>
                         <div className="cart-modal-list">
                             {carrito.map((item, i) => (
                                 <div key={i} className="cart-modal-row">
-                                    <div><p>{item.title}</p><small>{item.tallaElegida}</small></div>
+                                    <div className="item-details">
+                                        <p>{item.title}</p>
+                                        <small>{item.tallaElegida}</small>
+                                    </div>
                                     <p>{item.precioMXN?.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' })}</p>
                                 </div>
                             ))}
-                            {carrito.length === 0 && <p style={{textAlign:'center', padding:'20px'}}>Tu bolsa está vacía.</p>}
                         </div>
                     </div>
                 </div>
