@@ -6,9 +6,9 @@ import PaginationControls from '../components/PaginationControls';
 import './Catalogo.css'; 
 
 // --- CONFIGURACIÓN DE MONEDA ---
-const TIPO_CAMBIO_USD_MXN = 17.00; // Tipo de cambio para conversión
+const TIPO_CAMBIO_USD_MXN = 17.00; //
 
-// Agrupación de product_type en categorías principales
+// Agrupación exhaustiva de categorías para que el filtro no falle
 const categoryGroups = {
     'Womens': [
         'Womens Bodysuit', 'Womens Bottoms', 'Womens Crop Top', 'Womens Crop Tops', 'Womens Dress', 
@@ -31,6 +31,18 @@ const categoryGroups = {
     ]
 };
 
+const getColorHex = (name = "") => {
+    const n = name.toLowerCase();
+    if (n.includes('blue')) return "#1e3a8a";
+    if (n.includes('pink')) return "#db2777";
+    if (n.includes('green')) return "#2d4d43";
+    if (n.includes('red')) return "#991b1b";
+    if (n.includes('black')) return "#111";
+    if (n.includes('white')) return "#fff";
+    if (n.includes('grey') || n.includes('gray')) return "#555";
+    return "#777";
+};
+
 const Store = () => {
     const { logout } = useContext(AuthContext);
     const { cart, addToCart } = useContext(CartContext);
@@ -42,7 +54,7 @@ const Store = () => {
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [cargando, setCargando] = useState(true);
 
-    // Estados de Filtros
+    // Filtros
     const [catFiltro, setCatFiltro] = useState(null);
     const [subCatFiltro, setSubCatFiltro] = useState(null);
     const [precioMax, setPrecioMax] = useState(3500);
@@ -58,41 +70,26 @@ const Store = () => {
            .finally(() => setCargando(false));
     }, [page]);
 
-    // --- FUNCIONES UTILITARIAS ---
-
-    const getNumericPriceMXN = (prod) => {
-        let valor = Number(prod.precioMXN);
-        if (!valor || isNaN(valor)) {
-            valor = Number(prod.price) * TIPO_CAMBIO_USD_MXN;
-        }
-        return valor || 0;
-    };
-
-    const getFormattedPriceMXN = (prod) => {
-        const valor = getNumericPriceMXN(prod);
-        return valor.toLocaleString('es-MX', {
-            style: 'currency',
-            currency: 'MXN'
-        }) + " MXN";
-    };
-
-    // [ARREGLO BOTÓN COMPRA] Función para agregar y abrir bolsa
+    // [ARREGLO] Función de compra que despliega la bolsa automáticamente
     const handleAgregarALaBolsa = (p) => {
         const talla = tallasSeleccionadas[p._id] || 'M';
         addToCart(p, talla);
         setIsCartOpen(true); 
     };
 
-    // Lógica de filtrado en frontend
+    // [ARREGLO FILTROS] Búsqueda parcial y categorías blindadas
     const productosAMostrar = productos.filter(p => {
-        const titulo = (p.title || '').toLowerCase();
-        const tipoDB = (p.product_type || '').trim().toLowerCase();
-        const precioPesos = getNumericPriceMXN(p);
-
-        const matchSearch = search === '' || titulo.includes(search.toLowerCase());
-        const matchCat = catFiltro ? categoryGroups[catFiltro].some(t => t.toLowerCase() === tipoDB) : true;
-        const matchSub = subCatFiltro ? tipoDB === subCatFiltro.toLowerCase() : true;
-        const matchPrecio = precioPesos <= precioMax;
+        const pPrecioMXN = p.precioMXN || (Number(p.price) * TIPO_CAMBIO_USD_MXN);
+        const pType = (p.product_type || '').trim().toLowerCase();
+        const pTitle = (p.title || '').toLowerCase();
+        
+        // Reacciona a palabras parciales
+        const matchSearch = search === '' || pTitle.includes(search.toLowerCase());
+        
+        // Filtro de categorías robusto
+        const matchCat = catFiltro ? categoryGroups[catFiltro].some(t => t.toLowerCase() === pType) : true;
+        const matchSub = subCatFiltro ? pType === subCatFiltro.toLowerCase() : true;
+        const matchPrecio = pPrecioMXN <= precioMax;
 
         return matchSearch && matchCat && matchSub && matchPrecio;
     });
@@ -110,15 +107,13 @@ const Store = () => {
                 </div>
             </header>
 
-            <div className="hero-banner-full">
-                <img src="/hero-banner-client.jpg" alt="MAKIA Hero" />
-            </div>
-
             <div className="store-layout-container">
                 <aside className="sidebar-filter-box">
                     <div className="sidebar-top-row">
                         <h2 className="sidebar-h2">Filtros</h2>
-                        <button className="clear-filters-btn" onClick={() => {setCatFiltro(null); setSubCatFiltro(null); setPrecioMax(3500); setSearch('');}}>Limpiar</button>
+                        {(catFiltro || subCatFiltro || search !== '' || precioMax < 3500) && (
+                            <button className="clear-filters-btn" onClick={() => {setCatFiltro(null); setSubCatFiltro(null); setPrecioMax(3500); setSearch('');}}>Limpiar</button>
+                        )}
                     </div>
 
                     <div className="filter-group">
@@ -162,40 +157,62 @@ const Store = () => {
                 <main className="shop-main-content">
                     <div className="white-search-box">
                         <i className="fas fa-search"></i>
-                        <input type="text" placeholder="¿Qué buscas hoy?" value={search} onChange={e => setSearch(e.target.value)} />
+                        {/* [ARREGLO] Búsqueda parcial activada */}
+                        <input 
+                            type="text" 
+                            placeholder="Buscar productos (ej. Vit)..." 
+                            value={search} 
+                            onChange={e => setSearch(e.target.value)} 
+                        />
                     </div>
 
-                    <div className="fixed-grid-2">
-                        {!cargando && productosAMostrar.map(p => (
-                            <div key={p._id} className="makia-product-card">
-                                <div className="img-frame">
-                                    <img src={p.image_principal} alt={p.title} className="p-img" />
-                                </div>
-                                <div className="info-frame">
-                                    <h3>{p.title}</h3>
-                                    <p className="p-price">{getFormattedPriceMXN(p)}</p>
-                                    <div className="card-footer">
-                                        <select 
-                                            className="makia-size-dropdown" 
-                                            onChange={(e) => setTallasSeleccionadas({...tallasSeleccionadas, [p._id]: e.target.value})}
-                                        >
-                                            <option value="">Seleccionar Talla</option>
-                                            {(p.sizes_available || []).map(s => <option key={s} value={s}>{s}</option>)}
-                                        </select>
-                                        {/* [CORRECCIÓN BOTÓN] Botón con acción funcional */}
-                                        <button className="btn-add-to-bag-makia" onClick={() => handleAgregarALaBolsa(p)}>
-                                            AÑADIR A LA BOLSA
-                                        </button>
+                    {/* [ARREGLO] Grid de 3 productos */}
+                    <div className="fixed-grid-3">
+                        {!cargando && productosAMostrar.map(p => {
+                            const pPrecioMXN = p.precioMXN || (Number(p.price) * TIPO_CAMBIO_USD_MXN);
+                            return (
+                                <div key={p._id} className="makia-product-card">
+                                    <div className="img-frame">
+                                        <img src={p.image_principal} alt={p.title} className="p-img" />
+                                    </div>
+                                    <div className="info-frame">
+                                        <h3>{p.title}</h3>
+                                        <p className="p-price">${pPrecioMXN.toLocaleString('es-MX')} MXN</p>
+                                        
+                                        {/* [ARREGLO] Círculos de colores desplazables */}
+                                        <div className="swatch-row-carrusel">
+                                            {p.colors_available?.map(c => (
+                                                <div 
+                                                    key={c} 
+                                                    className="swatch-circle" 
+                                                    style={{background: getColorHex(c)}} 
+                                                    title={c}
+                                                ></div>
+                                            ))}
+                                        </div>
+
+                                        <div className="card-footer">
+                                            <select 
+                                                className="makia-size-dropdown" 
+                                                onChange={(e) => setTallasSeleccionadas({...tallasSeleccionadas, [p._id]: e.target.value})}
+                                            >
+                                                <option value="">Talla</option>
+                                                {(p.sizes_available || []).map(s => <option key={s} value={s}>{s}</option>)}
+                                            </select>
+                                            <button className="btn-add-to-bag-makia" onClick={() => handleAgregarALaBolsa(p)}>
+                                                AÑADIR A LA BOLSA
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                     <PaginationControls page={page} totalPages={totalPages} onPageChange={setPage} />
                 </main>
             </div>
 
-            {/* BOLSA LATERAL FUNCIONAL */}
+            {/* BOLSA LATERAL QUE SE ABRE AL COMPRAR */}
             {isCartOpen && (
                 <div className="cart-modal-overlay" onClick={() => setIsCartOpen(false)}>
                     <div className="cart-modal-panel" onClick={e => e.stopPropagation()}>
@@ -204,17 +221,15 @@ const Store = () => {
                             <span className="close-cart-btn" onClick={() => setIsCartOpen(false)}>&times;</span>
                         </div>
                         <div className="cart-modal-list">
-                            {cart.map((item, i) => (
-                                <div key={i} className="cart-modal-row">
-                                    <div>
-                                        <p style={{fontWeight:'600'}}>{item.title}</p>
-                                        <small>{item.talla || 'M'}</small>
+                            {cart.map((item, i) => {
+                                const itemPrecio = item.precioMXN || (Number(item.price) * TIPO_CAMBIO_USD_MXN);
+                                return (
+                                    <div key={i} className="cart-modal-row">
+                                        <div><p style={{fontWeight:'600'}}>{item.title}</p><small>{item.talla || 'M'}</small></div>
+                                        <p style={{color:'var(--makia-accent)', fontWeight:'800'}}>${itemPrecio.toLocaleString()} MXN</p>
                                     </div>
-                                    <p style={{color:'var(--makia-accent)', fontWeight:'800'}}>
-                                        {getFormattedPriceMXN(item)}
-                                    </p>
-                                </div>
-                            ))}
+                                );
+                            })}
                             {cart.length === 0 && <p style={{textAlign:'center', padding:'40px', color:'#888'}}>Tu bolsa está vacía.</p>}
                         </div>
                         <div className="cart-modal-footer">
