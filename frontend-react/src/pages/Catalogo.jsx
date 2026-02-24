@@ -61,7 +61,7 @@ const Catalogo = () => {
             colorElegido: colorElegido || (prod.colors_available?.[0] || 'Único')
         };
         setCarrito([...carrito, item]);
-        setIsCartOpen(true);
+        setIsCartOpen(true); // Abre la bolsa automáticamente al añadir
     };
 
     return (
@@ -84,7 +84,6 @@ const Catalogo = () => {
             </div>
 
             <div className="store-layout-container">
-                {/* FILTROS ORIGINALES RECUPERADOS */}
                 <aside className="sidebar-filter-box">
                     <h2 className="sidebar-h2">Filtros</h2>
                     <div className="filter-group">
@@ -98,7 +97,6 @@ const Catalogo = () => {
                 </aside>
 
                 <main className="shop-main-content">
-                    {/* BUSCADOR BLANCO RECUPERADO */}
                     <div className="search-bar-row">
                         <div className="white-search-box">
                             <i className="fas fa-search"></i>
@@ -111,7 +109,6 @@ const Catalogo = () => {
                         </div>
                     </div>
 
-                    {/* GRID DE 3 PRODUCTOS FIJO */}
                     <div className="fixed-grid-3">
                         {cargando ? (
                             <div className="loading-container"><p>Cargando MAKIA...</p></div>
@@ -174,6 +171,30 @@ const Catalogo = () => {
                     <PaginationControls page={pagina} totalPages={totalPaginas} onPageChange={setPagina} />
                 </main>
             </div>
+
+            {/* MODAL DE LA BOLSA (Overlay completo añadido) */}
+            {isCartOpen && (
+                <div className="cart-modal-overlay" onClick={() => setIsCartOpen(false)}>
+                    <div className="cart-modal-panel" onClick={e => e.stopPropagation()}>
+                        <div className="cart-modal-top">
+                            <h2>TU BOLSA</h2>
+                            <span className="close-cart-btn" onClick={() => setIsCartOpen(false)}>&times;</span>
+                        </div>
+                        <div className="cart-modal-list">
+                            {carrito.length === 0 ? <p style={{textAlign: 'center', padding: '20px'}}>Tu bolsa está vacía</p> : carrito.map((item, i) => (
+                                <div key={i} className="cart-modal-row">
+                                    <div className="item-details-box">
+                                        <p className="item-name">{item.title}</p>
+                                        <small className="item-meta">{item.tallaElegida} | {item.colorElegido}</small>
+                                    </div>
+                                    <p className="item-price-val">{item.precioMXN?.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' })}</p>
+                                </div>
+                            ))}
+                        </div>
+                        {carrito.length > 0 && <button className="checkout-btn-makia">PAGAR</button>}
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
