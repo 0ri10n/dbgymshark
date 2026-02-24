@@ -138,11 +138,14 @@
 }
 
 .forgot-pass {
-    display: inline-block;
-    margin-bottom: 14px;
+    display: block; 
+    text-align: right; 
+    margin-top: 4px; 
+    margin-bottom: 20px; 
     color: rgba(255, 255, 255, 0.72);
     text-decoration: none;
-    font-size: 0.82rem;
+    font-size: 0.82rem; 
+    transition: color 0.2s ease; 
 }
 
 .btn-login {
