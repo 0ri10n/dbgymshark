@@ -4,6 +4,9 @@ import { useAuth } from '../context/AuthContext';
 import PaginationControls from '../components/PaginationControls';
 import './Catalogo.css';
 
+// --- CONFIGURACIÓN DE MONEDA ---
+const TIPO_CAMBIO_USD_MXN = 17.00; // Tipo de cambio fijo para conversión
+
 // Agrupación exhaustiva de product_type en categorías principales
 const categoryGroups = {
     'Womens': [
@@ -27,6 +30,8 @@ const categoryGroups = {
     ]
 };
 
+// --- FUNCIONES DE FORMATEO Y APOYO ---
+
 const getColorHex = (colorName) => {
     if (!colorName) return "#555";
     const name = colorName.toLowerCase();
@@ -36,12 +41,35 @@ const getColorHex = (colorName) => {
     if (name.includes('red')) return "#991b1b";
     if (name.includes('black')) return "#111";
     if (name.includes('white')) return "#fff";
+    if (name.includes('grey')) return "#777";
     return "#555";
 };
 
 const getPrimaryImage = (prod = {}) => {
     const img = prod.image_principal || prod.imagen || (prod.image_src ? prod.image_src.split(',')[0] : '/placeholder.jpg');
     return img.trim();
+};
+
+// [CORRECCIÓN DE MONEDA] Calcula y formatea a MXN
+const getFormattedPriceMXN = (prod) => {
+    let valor = Number(prod.precioMXN);
+    if (!valor || isNaN(valor)) {
+        valor = Number(prod.price) * TIPO_CAMBIO_USD_MXN;
+    }
+    return valor.toLocaleString('es-MX', {
+        style: 'currency',
+        currency: 'MXN',
+        minimumFractionDigits: 2
+    }) + " MXN";
+};
+
+// Valor numérico para filtrado de precio
+const getNumericPriceMXN = (prod) => {
+    let valor = Number(prod.precioMXN);
+    if (!valor || isNaN(valor)) {
+        valor = Number(prod.price) * TIPO_CAMBIO_USD_MXN;
+    }
+    return valor || 0;
 };
 
 const Catalogo = () => {
@@ -54,10 +82,10 @@ const Catalogo = () => {
     const [pagina, setPagina] = useState(1);
     const [totalPaginas, setTotalPaginas] = useState(1);
 
-    // Filtros simplificados: Sin tallas en sidebar para evitar redundancia
+    // Estados de Filtros
     const [catFiltro, setCatFiltro] = useState(null);
     const [subCatFiltro, setSubCatFiltro] = useState(null);
-    const [precioMax, setPrecioMax] = useState(3000);
+    const [precioMax, setPrecioMax] = useState(3500); 
     const [tallasSeleccionadas, setTallasSeleccionadas] = useState({});
     const [colorVisual, setColorVisual] = useState({});
 
@@ -66,41 +94,35 @@ const Catalogo = () => {
             setCargando(true);
             try {
                 const baseURL = import.meta.env.VITE_API_URL || 'https://dbgymshark-ddk1.onrender.com/api';
-                const respuesta = await axios.get(`${baseURL}/productos?page=${pagina}&search=${busqueda}`);
+                const respuesta = await axios.get(`${baseURL}/productos?page=${pagina}`);
                 if (respuesta.data.productos) {
                     setProductos(respuesta.data.productos);
                     setTotalPaginas(respuesta.data.pagination?.pages || 1);
                 }
-            } catch (error) { 
-                console.error('Error MAKIA:', error); 
-            } finally { 
-                setCargando(false); 
-            }
+            } catch (error) { console.error('Error MAKIA:', error); }
+            finally { setCargando(false); }
         };
         cargarCatalogo();
-    }, [pagina, busqueda]);
+    }, [pagina]);
 
-    // Lógica de filtrado mejorada para leer categorías correctamente
+    // [CORRECCIÓN DE FILTROS] Lógica robusta de búsqueda y categorías
     const productosAMostrar = productos.filter(p => {
-        const typeInDB = (p.product_type || '').trim().toLowerCase();
-        const priceInDB = Number(p.price || p.precioMXN || 0);
+        const titulo = (p.title || '').toLowerCase();
+        const tipoDB = (p.product_type || '').trim().toLowerCase();
+        const precioEnPesos = getNumericPriceMXN(p);
 
-        const matchCat = catFiltro 
-            ? categoryGroups[catFiltro].some(type => type.toLowerCase() === typeInDB) 
-            : true;
-        
-        const matchSub = subCatFiltro 
-            ? typeInDB === subCatFiltro.toLowerCase() 
-            : true;
-        
-        const matchPrecio = priceInDB <= precioMax;
+        const matchBusqueda = busqueda === '' || titulo.includes(busqueda.toLowerCase());
+        const matchCat = catFiltro ? categoryGroups[catFiltro].some(t => t.toLowerCase() === tipoDB) : true;
+        const matchSub = subCatFiltro ? tipoDB === subCatFiltro.toLowerCase().trim() : true;
+        const matchPrecio = precioEnPesos <= precioMax;
 
-        return matchCat && matchSub && matchPrecio;
+        return matchBusqueda && matchCat && matchSub && matchPrecio;
     });
 
     const agregarAlCarrito = (prod, colorElegido) => {
         const item = { 
             ...prod, 
+            precioMostrado: getFormattedPriceMXN(prod),
             tallaElegida: tallasSeleccionadas[prod._id] || 'Única', 
             colorElegido: colorElegido || (prod.colors_available?.[0] || 'N/A') 
         };
@@ -129,8 +151,10 @@ const Catalogo = () => {
                 <aside className="sidebar-filter-box">
                     <div className="sidebar-top-row">
                         <h2 className="sidebar-h2">Filtros</h2>
-                        {(catFiltro || subCatFiltro) && (
-                            <button className="clear-filters-btn" onClick={() => {setCatFiltro(null); setSubCatFiltro(null); setPrecioMax(3000);}}>Limpiar</button>
+                        {(catFiltro || subCatFiltro || precioMax < 3500 || busqueda) && (
+                            <button className="clear-filters-btn" onClick={() => {
+                                setCatFiltro(null); setSubCatFiltro(null); setPrecioMax(3500); setBusqueda('');
+                            }}>Limpiar</button>
                         )}
                     </div>
                     
@@ -149,8 +173,8 @@ const Catalogo = () => {
                                         {categoryGroups[cat].map(sub => (
                                             <div 
                                                 key={sub} 
-                                                className={`sub-item ${subCatFiltro === sub ? 'active' : ''}`} 
-                                                onClick={() => setSubCatFiltro(sub)}
+                                                className={`sub-item ${subCatFiltro === sub.toLowerCase() ? 'active' : ''}`} 
+                                                onClick={() => setSubCatFiltro(sub.toLowerCase())}
                                             >
                                                 {sub.replace('Womens ', '').replace('Mens ', '')}
                                             </div>
@@ -162,9 +186,9 @@ const Catalogo = () => {
                     </div>
 
                     <div className="filter-group">
-                        <h3 className="sidebar-h3">Presupuesto: ${precioMax}</h3>
+                        <h3 className="sidebar-h3">Presupuesto Máx: ${precioMax} MXN</h3>
                         <input 
-                            type="range" min="0" max="3000" step="50" 
+                            type="range" min="0" max="3500" step="100" 
                             value={precioMax} 
                             onChange={(e) => setPrecioMax(Number(e.target.value))} 
                             className="price-slider" 
@@ -178,7 +202,6 @@ const Catalogo = () => {
                         <input type="text" placeholder="¿Qué estás buscando hoy?" value={busqueda} onChange={(e) => setBusqueda(e.target.value)} />
                     </div>
 
-                    {/* Fila ajustada a 2 productos */}
                     <div className="fixed-grid-2">
                         {!cargando && productosAMostrar.map((prod) => {
                             const colorActivo = colorVisual[prod._id] || (prod.colors_available?.[0]);
@@ -186,62 +209,45 @@ const Catalogo = () => {
 
                             return (
                                 <div key={prod._id} className="makia-product-card">
-                                    <div className="img-frame">
-                                        <img src={imgAMostrar} alt={prod.title} className="p-img" />
-                                    </div>
+                                    <div className="img-frame"><img src={imgAMostrar} alt={prod.title} className="p-img" /></div>
                                     <div className="info-frame">
                                         <h3>{prod.title}</h3>
-                                        <p className="p-price">${prod.price || prod.precioMXN}</p>
-                                        
+                                        <p className="p-price">{getFormattedPriceMXN(prod)}</p>
                                         <div className="swatch-row-carrusel">
                                             {prod.colors_available?.map(col => (
-                                                <button 
-                                                    key={col} 
-                                                    className={`swatch-circle ${colorActivo === col ? 'active' : ''}`} 
-                                                    style={{ backgroundColor: getColorHex(col) }} 
-                                                    onClick={() => setColorVisual(prev => ({ ...prev, [prod._id]: col }))} 
-                                                />
+                                                <button key={col} className={`swatch-circle ${colorActivo === col ? 'active' : ''}`} style={{ backgroundColor: getColorHex(col) }} onClick={() => setColorVisual(prev => ({ ...prev, [prod._id]: col }))} />
                                             ))}
                                         </div>
-
                                         <div className="card-footer">
-                                            <select 
-                                                className="makia-size-dropdown" 
-                                                value={tallasSeleccionadas[prod._id] || ""} 
-                                                onChange={(e) => setTallasSeleccionadas(prev => ({ ...prev, [prod._id]: e.target.value }))}
-                                            >
+                                            <select className="makia-size-dropdown" value={tallasSeleccionadas[prod._id] || ""} onChange={(e) => setTallasSeleccionadas(prev => ({ ...prev, [prod._id]: e.target.value }))}>
                                                 <option value="">Seleccionar Talla</option>
                                                 {(prod.sizes_available || []).map(t => <option key={t} value={t}>{t}</option>)}
                                             </select>
-                                            <button className="btn-add-to-bag-makia" onClick={() => agregarAlCarrito(prod, colorActivo)}>
-                                                AÑADIR A LA BOLSA
-                                            </button>
+                                            <button className="btn-add-to-bag-makia" onClick={() => agregarAlCarrito(prod, colorActivo)}>AÑADIR A LA BOLSA</button>
                                         </div>
                                     </div>
                                 </div>
                             );
                         })}
+                        {!cargando && productosAMostrar.length === 0 && <p className="no-results">No se encontraron productos.</p>}
                     </div>
-                    <PaginationControls page={pagina} totalPages={totalPaginas} onPageChange={setPagina} />
+                    {busqueda === '' && <PaginationControls page={pagina} totalPages={totalPaginas} onPageChange={setPagina} />}
                 </main>
             </div>
 
-            {/* Modal de la Bolsa */}
             {isCartOpen && (
                 <div className="cart-modal-overlay" onClick={() => setIsCartOpen(false)}>
                     <div className="cart-modal-panel" onClick={e => e.stopPropagation()}>
-                        <div className="cart-modal-top">
-                            <h2>TU BOLSA</h2>
-                            <span className="close-cart-btn" onClick={() => setIsCartOpen(false)}>&times;</span>
-                        </div>
+                        <div className="cart-modal-top"><h2>TU BOLSA</h2><span className="close-cart-btn" onClick={() => setIsCartOpen(false)}>&times;</span></div>
                         <div className="cart-modal-list">
                             {carrito.map((item, i) => (
                                 <div key={i} className="cart-modal-row">
                                     <div><p>{item.title}</p><small>{item.tallaElegida} | {item.colorElegido}</small></div>
-                                    <p>${item.price || item.precioMXN}</p>
+                                    <p>{item.precioMostrado}</p>
                                 </div>
                             ))}
                         </div>
+                        <div className="cart-modal-footer"><button className="btn-checkout">PAGAR AHORA</button></div>
                     </div>
                 </div>
             )}
