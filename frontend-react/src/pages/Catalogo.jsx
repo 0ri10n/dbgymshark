@@ -4,28 +4,24 @@ import { useAuth } from '../context/AuthContext';
 import PaginationControls from '../components/PaginationControls';
 import './Catalogo.css';
 
-// MAPA DE COLORES EXTENDIDO: Traduce los nombres del CSV a colores reales
-const COLOR_MAP = {
-    "Midnight Blue": "#1e3a8a",
-    "Lats Blue": "#3b82f6",
-    "Base Green Marl": "#2d4d43",
-    "White": "#ffffff",
-    "Black": "#000000",
-    "Evening Teal": "#134e4a",
-    "Burgundy": "#7f1d1d",
-    "Core Olive": "#3f6212",
-    "Charcoal": "#374151",
-    "Mars Red": "#b91c1c",
-    "Deep Teal": "#014d4e",
-    "Dragon Pink": "#c026d3", // Fucsia brillante
-    "Berry": "#86198f",
-    "Woodland Green": "#14532d"
-};
-
+// RESOLUTOR INTELIGENTE DE COLORES
 const getColorHex = (colorName) => {
     if (!colorName) return "#555";
-    const baseColor = colorName.split('/')[0].trim();
-    return COLOR_MAP[baseColor] || "#555"; 
+    const name = colorName.toLowerCase();
+
+    if (name.includes('blue') || name.includes('teal') || name.includes('aqua')) return "#1e3a8a";
+    if (name.includes('pink') || name.includes('fuchsia') || name.includes('berry')) return "#db2777";
+    if (name.includes('green') || name.includes('olive') || name.includes('aloe')) return "#2d4d43";
+    if (name.includes('red') || name.includes('burgundy') || name.includes('maroon')) return "#991b1b";
+    if (name.includes('orange') || name.includes('apricot')) return "#ea580c";
+    if (name.includes('purple') || name.includes('violet') || name.includes('lilac')) return "#7e22ce";
+    if (name.includes('black') || name.includes('charcoal') || name.includes('asphalt')) return "#111";
+    if (name.includes('white') || name.includes('ecru')) return "#fff";
+    if (name.includes('grey') || name.includes('ash')) return "#777";
+    if (name.includes('brown') || name.includes('truffle')) return "#451a03";
+    if (name.includes('yellow')) return "#eab308";
+
+    return "#555"; // Color por defecto si no encuentra palabra clave
 };
 
 const getPrimaryImage = (prod = {}) => {
@@ -39,8 +35,6 @@ const Catalogo = () => {
     const [carrito, setCarrito] = useState([]);
     const [busqueda, setBusqueda] = useState('');
     const [cargando, setCargando] = useState(true);
-    
-    // ESTADOS PARA INTERACTIVIDAD
     const [tallasSeleccionadas, setTallasSeleccionadas] = useState({});
     const [colorVisual, setColorVisual] = useState({}); 
     const [isCartOpen, setIsCartOpen] = useState(false);
@@ -74,44 +68,46 @@ const Catalogo = () => {
             colorElegido: colorElegido || (prod.colors_available?.[0] || 'Único')
         };
         setCarrito([...carrito, item]);
-        setIsCartOpen(true); // Abre la bolsa automáticamente
+        setIsCartOpen(true);
     };
 
     return (
         <div className="client-view">
-            <header className="client-header">
-                <div className="logo">MAKIA</div>
-                <div className="header-icons">
-                    <div className="cart-wrapper" onClick={() => setIsCartOpen(true)}>
+            {/* HEADER CORREGIDO */}
+            <header className="header-original-makia">
+                <div className="logo-makia-font">MAKIA</div>
+                <div className="header-right-tools">
+                    <div className="cart-tool" onClick={() => setIsCartOpen(true)}>
                         <i className="fas fa-shopping-bag"></i>
-                        <span id="cartCount">{carrito.length}</span>
+                        <span className="cart-count-badge">{carrito.length}</span>
                     </div>
-                    <div className="user-menu-container" onClick={logout}>
+                    <div className="user-tool" onClick={logout}>
                         <i className="far fa-user"></i>
                     </div>
                 </div>
             </header>
 
-            <div className="hero-banner">
+            <div className="hero-banner-original">
                 <img src="/hero-banner-client.jpg" alt="MAKIA Hero" />
             </div>
 
-            <div className="store-layout">
-                <aside className="filters-sidebar">
-                    <h2 className="sidebar-title">Filtros</h2>
-                    <div className="filter-section">
+            <div className="store-main-layout">
+                {/* FILTROS ORIGINALES */}
+                <aside className="sidebar-filters-box">
+                    <h2 className="f-title">Filtros</h2>
+                    <div className="f-section">
                         <h3>Talla</h3>
-                        <div className="size-grid">
+                        <div className="f-size-grid">
                             {['XS', 'S', 'M', 'L', 'XL', '2X'].map(t => (
-                                <button key={t} className="filter-btn">{t}</button>
+                                <button key={t} className="f-btn">{t}</button>
                             ))}
                         </div>
                     </div>
                 </aside>
 
-                <main className="shop-content">
-                    <div className="shop-controls">
-                        <div className="search-bar">
+                <main className="shop-content-area">
+                    <div className="search-controls-row">
+                        <div className="white-search-bar">
                             <i className="fas fa-search"></i>
                             <input 
                                 type="text" 
@@ -122,7 +118,8 @@ const Catalogo = () => {
                         </div>
                     </div>
 
-                    <div className="products-grid-three">
+                    {/* GRID FORZADO DE 3 PRODUCTOS */}
+                    <div className="products-grid-3">
                         {cargando ? (
                             <div className="loading-container"><p>Cargando MAKIA...</p></div>
                         ) : (
@@ -133,21 +130,21 @@ const Catalogo = () => {
                                 const imagenAMostrar = varianteColor?.image || getPrimaryImage(prod);
 
                                 return (
-                                    <div key={prod._id} className="product-card">
-                                        <div className="product-image-container">
-                                            <img src={imagenAMostrar} alt={prod.title} className="product-img" />
+                                    <div key={prod._id} className="card-product-makia">
+                                        <div className="img-container">
+                                            <img src={imagenAMostrar} alt={prod.title} className="p-img" />
                                         </div>
-                                        <div className="product-info">
-                                            <h3>{prod.title}</h3>
-                                            <p className="price">
+                                        <div className="info-container">
+                                            <h3 className="p-title">{prod.title}</h3>
+                                            <p className="p-price">
                                                 {prod.precioMXN?.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' })}
                                             </p>
 
-                                            <div className="color-dots-row">
+                                            <div className="swatch-row">
                                                 {prod.colors_available?.map(col => (
                                                     <button 
                                                         key={col}
-                                                        className={`color-dot ${colorActivo === col ? 'active' : ''}`}
+                                                        className={`swatch ${colorActivo === col ? 'active' : ''}`}
                                                         style={{ backgroundColor: getColorHex(col) }}
                                                         onClick={() => setColorVisual(prev => ({ ...prev, [prod._id]: col }))}
                                                         title={col}
@@ -155,20 +152,20 @@ const Catalogo = () => {
                                                 ))}
                                             </div>
 
-                                            <div className="action-row">
+                                            <div className="actions-footer">
                                                 {tallasReales.length > 0 ? (
                                                     <select 
-                                                        className="size-dropdown-makia"
+                                                        className="dropdown-size-makia"
                                                         value={tallasSeleccionadas[prod._id] || ""}
                                                         onChange={(e) => setTallasSeleccionadas(prev => ({ ...prev, [prod._id]: e.target.value }))}
                                                     >
-                                                        <option value="">Selecciona Talla</option>
+                                                        <option value="">Seleccionar Talla</option>
                                                         {tallasReales.map(t => <option key={t} value={t}>{t}</option>)}
                                                     </select>
-                                                ) : <div className="unique-size-label">Talla Única</div>}
+                                                ) : <div className="label-unique">Talla Única</div>}
 
                                                 <button 
-                                                    className="btn-add-bag"
+                                                    className="buy-btn-makia"
                                                     onClick={() => agregarAlCarrito(prod, colorActivo)}
                                                     disabled={tallasReales.length > 0 && !tallasSeleccionadas[prod._id]}
                                                 >
@@ -184,29 +181,6 @@ const Catalogo = () => {
                     <PaginationControls page={pagina} totalPages={totalPaginas} onPageChange={setPagina} />
                 </main>
             </div>
-
-            {/* MODAL DE LA BOLSA (Overlay completo) */}
-            {isCartOpen && (
-                <div className="cart-modal-overlay" onClick={() => setIsCartOpen(false)}>
-                    <div className="cart-modal-container" onClick={e => e.stopPropagation()}>
-                        <div className="cart-modal-header">
-                            <h2>TU BOLSA</h2>
-                            <span className="close-x" onClick={() => setIsCartOpen(false)}>&times;</span>
-                        </div>
-                        <div className="cart-modal-items">
-                            {carrito.map((item, i) => (
-                                <div key={i} className="cart-item-row">
-                                    <div className="item-txt">
-                                        <p>{item.title}</p>
-                                        <small>{item.tallaElegida} | {item.colorElegido}</small>
-                                    </div>
-                                    <p className="item-p">{item.precioMXN?.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' })}</p>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 };
