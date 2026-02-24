@@ -4,18 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import PaginationControls from '../components/PaginationControls';
 import './Catalogo.css';
 
-// Mapeo de iniciales a nombres reales de la base de datos
-const sizeMapping = {
-    'XXS': 'Extra Extra Small',
-    'XS': 'Extra Small',
-    'S': 'Small',
-    'M': 'Medium',
-    'L': 'Large',
-    'XL': 'Extra Large',
-    '2X': 'Extra Extra Large'
-};
-
-// Agrupación de product_type en categorías
+// Agrupación de product_type en categorías para el menú desplegable
 const categoryGroups = {
     'Womens': [
         'Womens Bodysuit', 'Womens Bottoms', 'Womens Crop Top', 'Womens Crop Tops', 'Womens Dress', 
@@ -65,8 +54,7 @@ const Catalogo = () => {
     const [pagina, setPagina] = useState(1);
     const [totalPaginas, setTotalPaginas] = useState(1);
 
-    // Estados de Filtros
-    const [tallaFiltro, setTallaFiltro] = useState(null);
+    // Estados de Filtros (Sin Talla en sidebar por redundancia)
     const [catFiltro, setCatFiltro] = useState(null);
     const [subCatFiltro, setSubCatFiltro] = useState(null);
     const [precioMax, setPrecioMax] = useState(2500);
@@ -83,26 +71,28 @@ const Catalogo = () => {
                     setProductos(respuesta.data.productos);
                     setTotalPaginas(respuesta.data.pagination?.pages || 1);
                 }
-            } catch (error) { console.error('Error MAKIA:', error); }
-            finally { setCargando(false); }
+            } catch (error) { 
+                console.error('Error MAKIA:', error); 
+            } finally { 
+                setCargando(false); 
+            }
         };
         cargarCatalogo();
     }, [pagina, busqueda]);
 
-    // Lógica de filtrado combinada
+    // Lógica de filtrado: Categoría, Subcategoría y Precio
     const productosAMostrar = productos.filter(p => {
-        const matchTalla = tallaFiltro ? (p.sizes_available || []).includes(sizeMapping[tallaFiltro]) : true;
         const matchCat = catFiltro ? categoryGroups[catFiltro].includes(p.product_type) : true;
         const matchSub = subCatFiltro ? p.product_type === subCatFiltro : true;
         const matchPrecio = (p.price || p.precioMXN || 0) <= precioMax;
-        return matchTalla && matchCat && matchSub && matchPrecio;
+        return matchCat && matchSub && matchPrecio;
     });
 
     const agregarAlCarrito = (prod, colorElegido) => {
-        const item = {
-            ...prod,
-            tallaElegida: tallasSeleccionadas[prod._id] || 'Única',
-            colorElegido: colorElegido || (prod.colors_available?.[0] || 'N/A')
+        const item = { 
+            ...prod, 
+            tallaElegida: tallasSeleccionadas[prod._id] || 'Única', 
+            colorElegido: colorElegido || (prod.colors_available?.[0] || 'N/A') 
         };
         setCarrito([...carrito, item]);
         setIsCartOpen(true);
@@ -117,11 +107,12 @@ const Catalogo = () => {
                         <i className="fas fa-shopping-bag"></i>
                         <span id="cartCount">{carrito.length}</span>
                     </div>
-                    <div className="user-icon" onClick={logout}><i className="far fa-user"></i></div>
+                    <div className="user-icon" onClick={logout}>
+                        <i className="far fa-user"></i>
+                    </div>
                 </div>
             </header>
 
-            {/* Banner de ancho completo */}
             <div className="hero-banner-full">
                 <img src="/hero-banner-client.jpg" alt="Banner MAKIA" />
             </div>
@@ -130,20 +121,6 @@ const Catalogo = () => {
                 <aside className="sidebar-filter-box">
                     <h2 className="sidebar-h2">Filtros</h2>
                     
-                    {/* Filtro Talla */}
-                    <div className="filter-group">
-                        <h3 className="sidebar-h3">Talla</h3>
-                        <div className="sidebar-btn-grid">
-                            {Object.keys(sizeMapping).map(t => (
-                                <button 
-                                    key={t} 
-                                    className={`filter-size-btn ${tallaFiltro === t ? 'active' : ''}`} 
-                                    onClick={() => setTallaFiltro(tallaFiltro === t ? null : t)}
-                                >{t}</button>
-                            ))}
-                        </div>
-                    </div>
-
                     {/* Filtro Categoría Desplegable */}
                     <div className="filter-group">
                         <h3 className="sidebar-h3">Categoría</h3>
@@ -151,7 +128,10 @@ const Catalogo = () => {
                             <div key={cat} className="category-dropdown-item">
                                 <div 
                                     className={`cat-main-label ${catFiltro === cat ? 'selected' : ''}`} 
-                                    onClick={() => {setCatFiltro(catFiltro === cat ? null : cat); setSubCatFiltro(null);}}
+                                    onClick={() => {
+                                        setCatFiltro(catFiltro === cat ? null : cat); 
+                                        setSubCatFiltro(null);
+                                    }}
                                 >
                                     {cat} <i className={`fas fa-chevron-${catFiltro === cat ? 'up' : 'down'}`}></i>
                                 </div>
@@ -176,9 +156,12 @@ const Catalogo = () => {
                     <div className="filter-group">
                         <h3 className="sidebar-h3">Presupuesto: ${precioMax}</h3>
                         <input 
-                            type="range" min="0" max="3000" step="50" 
+                            type="range" 
+                            min="0" 
+                            max="3000" 
+                            step="50" 
                             value={precioMax} 
-                            onChange={(e) => setPrecioMax(e.target.value)} 
+                            onChange={(e) => setPrecioMax(parseInt(e.target.value))} 
                             className="price-slider" 
                         />
                     </div>
@@ -253,7 +236,10 @@ const Catalogo = () => {
                         <div className="cart-modal-list">
                             {carrito.map((item, i) => (
                                 <div key={i} className="cart-modal-row">
-                                    <div><p>{item.title}</p><small>{item.tallaElegida}</small></div>
+                                    <div>
+                                        <p>{item.title}</p>
+                                        <small>{item.tallaElegida} | {item.colorElegido}</small>
+                                    </div>
                                     <p>${item.price || item.precioMXN}</p>
                                 </div>
                             ))}
