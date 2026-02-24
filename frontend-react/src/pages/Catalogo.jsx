@@ -13,7 +13,6 @@ const getColorHex = (colorName) => {
     if (name.includes('red') || name.includes('burgundy')) return "#991b1b";
     if (name.includes('black')) return "#111";
     if (name.includes('white')) return "#fff";
-    if (name.includes('grey')) return "#777";
     return "#555";
 };
 
@@ -51,11 +50,7 @@ const Catalogo = () => {
     }, [pagina, busqueda]);
 
     const agregarAlCarrito = (prod, colorElegido) => {
-        const item = {
-            ...prod,
-            tallaElegida: tallasSeleccionadas[prod._id] || 'Única',
-            colorElegido: colorElegido || (prod.colors_available?.[0] || 'N/A')
-        };
+        const item = { ...prod, tallaElegida: tallasSeleccionadas[prod._id] || 'Única', colorElegido: colorElegido || 'N/A' };
         setCarrito([...carrito, item]);
         setIsCartOpen(true);
     };
@@ -67,13 +62,13 @@ const Catalogo = () => {
                 <div className="header-right-icons">
                     <div className="cart-wrapper" onClick={() => setIsCartOpen(true)}>
                         <i className="fas fa-shopping-bag"></i>
-                        <span id="cartCount">{carrito.length}</span>
+                        <span id="cartCountBadge">{carrito.length}</span>
                     </div>
                     <div className="user-icon" onClick={logout}><i className="far fa-user"></i></div>
                 </div>
             </header>
 
-            <div className="hero-banner-fixed"><img src="/hero-banner-client.jpg" alt="MAKIA Hero" /></div>
+            <div className="hero-banner-fixed"><img src="/hero-banner-client.jpg" alt="MAKIA" /></div>
 
             <div className="store-layout-container">
                 <aside className="sidebar-filter-box">
@@ -97,17 +92,15 @@ const Catalogo = () => {
                     <div className="fixed-grid-3">
                         {!cargando && productos.map((prod) => {
                             const colorActivo = colorVisual[prod._id] || (prod.colors_available?.[0]);
-                            const imgAMostrar = getPrimaryImage(prod);
-
                             return (
                                 <div key={prod._id} className="makia-product-card">
                                     <div className="img-frame">
-                                        <img src={imgAMostrar} alt={prod.title} className="p-img" />
+                                        <img src={getPrimaryImage(prod)} alt={prod.title} className="p-img" />
                                     </div>
                                     <div className="info-frame">
                                         <h3>{prod.title}</h3>
                                         <p className="p-price">{prod.precioMXN?.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' })}</p>
-                                        <div className="swatch-row">
+                                        <div className="swatch-row-carrusel">
                                             {prod.colors_available?.map(col => (
                                                 <button key={col} className={`swatch-circle ${colorActivo === col ? 'active' : ''}`} style={{ backgroundColor: getColorHex(col) }} onClick={() => setColorVisual(prev => ({ ...prev, [prod._id]: col }))} />
                                             ))}
