@@ -101,16 +101,16 @@ exports.obtenerProductos = async (req, res) => {
 
 exports.crearProducto = async (req, res) => {
   try {
-    const { handle } = req.body;
+    let { handle, title } = req.body;
 
- 
-    if (!handle) {
-      return res.status(400).json({ msg: 'El handle (URL amigable) es obligatorio.' });
+    // Si por alguna razón no llega el handle, el backend lo rescata creándolo
+    if (!handle && title) {
+        handle = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+        req.body.handle = handle;
     }
 
-    const productoExistente = await Producto.findOne({ handle: handle });
-    if (productoExistente) {
-      return res.status(400).json({ msg: 'Ya existe un producto con este handle. Elige uno distinto.' });
+    if (!handle) {
+      return res.status(400).json({ msg: 'El título es obligatorio para generar el producto.' });
     }
 
 

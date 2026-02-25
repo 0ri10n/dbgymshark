@@ -109,13 +109,17 @@ const AdminPanel = () => {
             const token = localStorage.getItem('token');
             const config = { headers: { Authorization: `Bearer ${token}` } };
 
+            // Magia invisible: Crea el handle automáticamente a partir del título
+            const handleAutomatico = formData.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+            const datosAEnviar = { ...formData, handle: handleAutomatico };
+
             if (editandoId) {
                 // Modo Edición
-                await axios.put(`${baseURL}/productos/${editandoId}`, formData, config);
+                await axios.put(`${baseURL}/productos/${editandoId}`, datosAEnviar, config);
                 alert("Producto actualizado.");
             } else {
                 // Modo Creación
-                await axios.post(`${baseURL}/productos`, formData, config);
+                await axios.post(`${baseURL}/productos`, datosAEnviar, config);
                 alert("Producto creado exitosamente.");
             }
             
@@ -125,7 +129,7 @@ const AdminPanel = () => {
             console.error(error);
             alert(`Error al guardar: ${error.response?.data?.mensaje || error.message}`);
         }
-    };        
+    };      
 
     return (
         <div className="admin-container">
