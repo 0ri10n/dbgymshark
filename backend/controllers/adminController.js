@@ -16,7 +16,7 @@ exports.obtenerBasesDeDatos = async (req, res) => {
     }
 };
 
-// FUNCIÓN 2: Listar Tablas (Asegúrate que el nombre sea "obtenerTablas")
+// FUNCIÓN 2: Listar Tablas 
 exports.obtenerTablas = async (req, res) => {
     try {
         const { dbName } = req.params;
@@ -105,5 +105,29 @@ exports.editarDatoUniversal = async (req, res) => {
         res.json({ msg: "Actualizado correctamente", resultado });
     } catch (error) {
         res.status(500).json({ msg: "Error al actualizar" });
+    }
+};
+
+
+const Usuario = require('../models/Usuario');
+const Venta = require('../models/Venta');
+
+
+exports.obtenerUsuariosPanel = async (req, res) => {
+    try {
+        const usuarios = await Usuario.find().select('-password').sort({ registro: -1 });
+        res.json(usuarios);
+    } catch (error) {
+        res.status(500).json({ msg: 'Error al cargar usuarios' });
+    }
+};
+
+
+exports.obtenerVentasPanel = async (req, res) => {
+    try {
+        const ventas = await Venta.find().sort({ fechaPedido: -1 });
+        res.json(ventas);
+    } catch (error) {
+        res.status(500).json({ msg: 'Error al cargar ventas' });
     }
 };

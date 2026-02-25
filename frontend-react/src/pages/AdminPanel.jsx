@@ -22,6 +22,9 @@ const AdminPanel = () => {
         image_principal: '',
         variants: [] 
     });
+    const [vistaActiva, setVistaActiva] = useState('productos');
+    const [listaUsuarios, setListaUsuarios] = useState([]);
+    const [listaVentas, setListaVentas] = useState([]);
     const baseURL = import.meta.env.VITE_API_URL || 'https://dbgymshark.onrender.com/api';
     const cargarProductos = async () => {
         setCargando(true);
@@ -40,6 +43,22 @@ const AdminPanel = () => {
             console.error('Error al cargar productos:', error);
         } finally {
             setCargando(false);
+        }
+    };
+    const cargarDatosExtra = async (vista) => {
+        try {
+            const token = localStorage.getItem('token');
+            const config = { headers: { Authorization: `Bearer ${token}` } };
+            
+            if (vista === 'usuarios') {
+                const res = await axios.get(`${baseURL}/admin/panel/usuarios`, config);
+                setListaUsuarios(res.data);
+            } else if (vista === 'ventas') {
+                const res = await axios.get(`${baseURL}/admin/panel/ventas`, config);
+                setListaVentas(res.data);
+            }
+        } catch (error) {
+            console.error(`Error al cargar ${vista}:`, error);
         }
     };
     useEffect(() => {
@@ -150,20 +169,32 @@ const AdminPanel = () => {
             </header>
 
             <main className="admin-main">
-                <section className="admin-stats">
-                    <div className="admin-stat-card">
+                 <section className="admin-stats">
+                    <div 
+                        className="admin-stat-card" 
+                        style={{ cursor: 'pointer', border: vistaActiva === 'productos' ? '2px solid #3b82f6' : 'none' }}
+                        onClick={() => setVistaActiva('productos')}
+                    >
                         <h3>Productos</h3>
                         <p>Listo para gestionar el inventario</p>
                     </div>
-                    <div className="admin-stat-card">
+                    <div 
+                        className="admin-stat-card" 
+                        style={{ cursor: 'pointer', border: vistaActiva === 'ventas' ? '2px solid #10b981' : 'none' }}
+                        onClick={() => { setVistaActiva('ventas'); cargarDatosExtra('ventas'); }}
+                    >
                         <h3>Ventas</h3>
-                        <p>$0.00 MXN hoy</p>
+                        <p>Historial de pedidos</p>
                     </div>
-                    <div className="admin-stat-card">
+                    <div 
+                        className="admin-stat-card" 
+                        style={{ cursor: 'pointer', border: vistaActiva === 'usuarios' ? '2px solid #8b5cf6' : 'none' }}
+                        onClick={() => { setVistaActiva('usuarios'); cargarDatosExtra('usuarios'); }}
+                    >
                         <h3>Usuarios</h3>
                         <p>Base de datos activa</p>
                     </div>
-                </section>
+                    </section>
 
                 <section className="admin-actions">
                     <div className="admin-section-header">

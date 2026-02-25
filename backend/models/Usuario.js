@@ -32,6 +32,11 @@ const UsuarioSchema = mongoose.Schema({
     registro: {
         type: Date,
         default: Date.now 
+    },
+    
+    direccion: {
+        type: String,
+        default: "Sin dirección"
     }
 });
 
