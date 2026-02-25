@@ -78,7 +78,14 @@ const AdminPanel = () => {
 
     const abrirModalCrear = () => {
         setEditandoId(null);
-        setFormData({ title: '', handle: '', precioMXN: '', product_type: '' });
+        setFormData({ 
+            title: '', 
+            vendor: '', 
+            product_type: '', 
+            image_src: '', 
+            image_principal: '', 
+            variants: [] // Súper importante para que no marque error al añadir tallas
+        });
         setModalAbierto(true);
     };
 
