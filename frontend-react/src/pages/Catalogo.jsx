@@ -141,7 +141,11 @@ const Catalogo = () => {
 
         try {
             const baseURL = import.meta.env.VITE_API_URL || 'https://dbgymshark-ddk1.onrender.com/api';
-            await axios.post(`${baseURL}/productos/ventas`, ventaData);
+            await axios.post(`${baseURL}/productos/ventas`, ventaData{
+                headers: {
+                Authorization: `Bearer ${localStorage.getItem('token')}` // O donde sea que guardes tu JWT
+                }
+            });
             alert("¡Compra registrada con éxito en MAKIA!");
             clearCart();
             setIsCartOpen(false);
