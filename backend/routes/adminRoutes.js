@@ -26,3 +26,6 @@ router.put('/editar/:dbName/:tableName/:id', auth, admin, adminController.editar
 // Recuerda que ahora usas tus scripts de VS Code para esto.
 
 module.exports = router;
+
+router.get('/panel/usuarios', auth, admin, adminController.obtenerUsuariosPanel);
+router.get('/panel/ventas', auth, admin, adminController.obtenerVentasPanel);
