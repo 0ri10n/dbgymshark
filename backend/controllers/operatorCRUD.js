@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const Producto = require('../models/Productos');
+const Venta = require('../models/Venta');
 const mapProducto = (p) => ({
   ...p,
   nombre: p.nombre || p.title || p.product_name,
@@ -208,47 +209,36 @@ exports.eliminarProducto = async (req, res) => {
 };
 
 
+// --- NUEVO REGISTRO DE VENTAS ---
 exports.registrarVenta = async (req, res) => {
-  const { id_venta, productos, total } = req.body;
+    try {
+        // 1. Recibimos los datos exactos que manda tu Catalogo.jsx
+        const { usuario, productos, total } = req.body;
 
-  try {
-    const db = mongoose.connection.client.db('DB'); 
-    const ventasCollection = db.collection('ventas');
-    const productosCollection = getCollection();
+        // 2. Traducimos el carrito al formato de nuestro Modelo Venta.js
+        const productosFormateados = productos.map(item => ({
+            nombre: item.titulo,
+            talla: item.talla || 'N/A',
+            color: item.color || 'N/A',
+            precio: item.precioUnitario,
+            cantidad: item.cantidad
+        }));
 
-    const nuevaVenta = {
-      id_compra: id_venta,
-      total: total,
-      detalle: productos.map(p => p.nombre).join(', '),
-      fecha: new Date()
-    };
-    
-    await ventasCollection.insertOne(nuevaVenta);
+        // 3. Armamos el paquete final
+        const nuevaVenta = new Venta({
+            nombreCliente: usuario,
+            productos: productosFormateados,
+            total: total
+        });
 
-    const promesasActualizacion = productos.map(p => {
-      return productosCollection.updateOne(
-        { 
-          $or: [{ title: p.nombre }, { nombre: p.nombre }], 
-          inventory_quantity: { $gt: 0 } 
-        },
-        { $inc: { inventory_quantity: -1 } }
-      );
-    });
+        // 4. Guardamos en la base de datos
+        await nuevaVenta.save();
+        
+        // 5. Respondemos al frontend que todo salió perfecto
+        res.status(201).json({ msg: 'Venta registrada con éxito', orden: nuevaVenta.numeroOrden });
 
-    const resultados = await Promise.all(promesasActualizacion);
-    
-    const ventasFallidas = resultados.filter(r => r.modifiedCount === 0);
-    
-    if (ventasFallidas.length > 0) {
-        console.warn(`Atención: ${ventasFallidas.length} productos no pudieron descontar stock.`);
+    } catch (error) {
+        console.error("Error al procesar la venta:", error);
+        res.status(500).json({ mensaje: 'Error interno al registrar la venta', detalle: error.message });
     }
-
-    res.status(200).json({ 
-      msg: 'Venta procesada', 
-      id_compra: id_venta 
-    });
-
-  } catch (error) {
-    res.status(500).json({ msg: 'Error fatal en el servidor', error: error.message });
-  }
 };
