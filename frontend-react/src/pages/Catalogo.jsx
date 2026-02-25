@@ -147,6 +147,9 @@ const Catalogo = () => {
             setIsCartOpen(false);
         } catch (error) {
             alert("Error al registrar la venta en la base de datos.");
+            // Esto nos dirá exactamente qué le dolió al backend
+            console.error("Error completo del backend:", error.response?.data || error.message);
+            alert(`Error: ${error.response?.data?.mensaje || "No se pudo registrar la venta"}`);
         }
     };
 
