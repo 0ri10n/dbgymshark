@@ -110,7 +110,7 @@ exports.editarDatoUniversal = async (req, res) => {
 
 
 const Usuario = require('../models/Usuario');
-const Venta = require('../models/Ventas');
+const Venta = require('../models/Venta');
 
 
 exports.obtenerUsuariosPanel = async (req, res) => {
