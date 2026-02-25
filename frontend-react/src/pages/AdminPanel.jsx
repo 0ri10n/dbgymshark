@@ -45,7 +45,7 @@ const AdminPanel = () => {
     useEffect(() => {
         cargarProductos();
     }, [pagina]);
-    // 1. ELIMINAR
+
     const handleEliminar = async (id) => {
         if (!window.confirm("¿Estás seguro de que deseas eliminar este producto?")) return;
         try {
@@ -60,7 +60,7 @@ const AdminPanel = () => {
         }
     };
 
-    // 2. PREPARAR MODAL PARA EDITAR
+
     const abrirModalEditar = (prod) => {
         setEditandoId(prod._id);
         setFormData({
@@ -75,14 +75,13 @@ const AdminPanel = () => {
         setModalAbierto(true);
     };
 
-    // 3. PREPARAR MODAL PARA CREAR
+
     const abrirModalCrear = () => {
         setEditandoId(null);
         setFormData({ title: '', handle: '', precioMXN: '', product_type: '' });
         setModalAbierto(true);
     };
 
-    // 4. GUARDAR (CREAR O EDITAR)
     const agregarVariante = () => {
         setFormData({
             ...formData,
@@ -90,14 +89,14 @@ const AdminPanel = () => {
         });
     };
 
-    // Actualizar un campo específico de una variante
+
     const actualizarVariante = (index, campo, valor) => {
         const nuevasVariantes = [...formData.variants];
         nuevasVariantes[index][campo] = valor;
         setFormData({ ...formData, variants: nuevasVariantes });
     };
 
-    // Quitar una variante
+
     const eliminarVariante = (index) => {
         const nuevasVariantes = formData.variants.filter((_, i) => i !== index);
         setFormData({ ...formData, variants: nuevasVariantes });
@@ -221,7 +220,6 @@ const AdminPanel = () => {
                             {/* CAMPOS PRINCIPALES */}
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                                 <input type="text" placeholder="Título" required value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} />
-                                <input type="text" placeholder="Handle (URL amigable)" required value={formData.handle} onChange={e => setFormData({...formData, handle: e.target.value})} />
                                 <input type="text" placeholder="Tipo (ej. Womens Ss Tops)" value={formData.product_type} onChange={e => setFormData({...formData, product_type: e.target.value})} />
                                 <input type="text" placeholder="Marca / Vendor" value={formData.vendor} onChange={e => setFormData({...formData, vendor: e.target.value})} />
                             </div>
