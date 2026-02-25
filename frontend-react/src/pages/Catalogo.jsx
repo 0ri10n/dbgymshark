@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { CartContext } from '../context/CartContext';
 import PaginationControls from '../components/PaginationControls';
+import Login from './Login';
 import './Catalogo.css';
 
 const TIPO_CAMBIO_USD_MXN = 17.00;
@@ -57,6 +58,7 @@ const Catalogo = () => {
     const [busqueda, setBusqueda] = useState('');
     const [cargando, setCargando] = useState(true);
     const [isCartOpen, setIsCartOpen] = useState(false);
+    const [showLoginModal, setShowLoginModal] = useState(false);
     const [pagina, setPagina] = useState(1);
     const [totalPaginas, setTotalPaginas] = useState(1);
 
@@ -99,7 +101,7 @@ const Catalogo = () => {
     const handleAgregar = (p) => {
         const talla = tallasSeleccionadas[p._id];
         if (!talla) {
-            alert("Vania, por favor selecciona una talla antes de añadir a la bolsa.");
+            alert("Por favor seleccione una talla antes de añadir un artículo a la bolsa.");
             return;
         }
         addToCart({ 
@@ -114,7 +116,14 @@ const Catalogo = () => {
     // [ARREGLO VENTAS] Registro de pedido en la base de datos
     const handleFinalizarCompra = async () => {
         if (cart.length === 0) return;
-        
+
+        if (!user) {
+            
+            setIsCartOpen(false);
+            setShowLoginModal(true);
+            return; 
+        }
+
         const total = cart.reduce((acc, item) => acc + (item.precioMXN || item.price * TIPO_CAMBIO_USD_MXN) * item.quantity, 0);
         
         const ventaData = {
@@ -270,6 +279,24 @@ const Catalogo = () => {
                         </div>
                         <button className="btn-checkout-makia" onClick={handleFinalizarCompra}>FINALIZAR COMPRA</button>
                     </div>
+                </div>
+            )}
+            {/* MODAL DE LOGIN INTERCEPTADO */}
+            {showLoginModal && (
+                <div className="login-modal-overlay" style={{ position: 'fixed', inset: 0, zIndex: 9999 }}>
+                    {/* Aquí llamamos a tu componente Login. 
+                        Asegúrate de que tu Login.jsx tenga un botón o forma de cerrarse, 
+                        o pásale esta función como prop si la necesitas: onClose={() => setShowLoginModal(false)} 
+                    */}
+                    <Login />
+                    
+                    {/* Botón de emergencia para cerrar el modal por si el usuario se arrepiente */}
+                    <button 
+                        onClick={() => setShowLoginModal(false)}
+                        style={{ position: 'absolute', top: '20px', right: '30px', background: 'none', border: 'none', color: '#fff', fontSize: '30px', cursor: 'pointer', zIndex: 10000 }}
+                    >
+                        &times;
+                    </button>
                 </div>
             )}
         </div>
