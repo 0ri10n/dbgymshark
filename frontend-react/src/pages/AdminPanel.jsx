@@ -157,9 +157,9 @@ const AdminPanel = () => {
                 <section className="admin-actions">
                     <div className="admin-section-header">
                         <h2>Gestion de Catalogo (DBGymshark)</h2>
-                        <button className="admin-add-btn">
-                            + Agregar Nuevo Producto
-                        </button>
+                            <button className="admin-add-btn" onClick={abrirModalCrear}>
+                                + Agregar Nuevo Producto
+                            </button>
                     </div>
 
                     {cargando ? (
@@ -182,8 +182,12 @@ const AdminPanel = () => {
                                             <td data-label="Precio (MXN)">${prod.precioMXN}</td>
                                             <td data-label="Tipo">{prod.product_type || 'N/A'}</td>
                                             <td data-label="Acciones" className="admin-row-actions">
-                                                <button className="admin-edit-btn">Editar</button>
-                                                <button className="admin-delete-btn">Eliminar</button>
+                                                <button className="admin-edit-btn" onClick={() => abrirModalEditar(prod)}>
+                                                    Editar
+                                                </button>
+                                                <button className="admin-delete-btn" onClick={() => handleEliminar(prod._id)}>
+                                                    Eliminar
+                                                </button>
                                             </td>
                                         </tr>
                                     ))}
