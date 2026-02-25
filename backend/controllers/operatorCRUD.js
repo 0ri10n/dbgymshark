@@ -1,11 +1,5 @@
 const mongoose = require('mongoose');
 const Producto = require('../models/Productos');
-
-const DEFAULT_DB = process.env.PRODUCT_DB || 'DB';
-const DEFAULT_COLLECTION = process.env.PRODUCT_COLLECTION || 'productos'; 
-
-// Helpers
-const getCollection = () => mongoose.connection.client.db(DEFAULT_DB).collection(DEFAULT_COLLECTION);
 const mapProducto = (p) => ({
   ...p,
   nombre: p.nombre || p.title || p.product_name,
@@ -13,10 +7,9 @@ const mapProducto = (p) => ({
   imagenUrl: p.imagenUrl || p.image_src || p.image_principal || p['Image URL'],
 });
 
-// 1. OBTENER productos con agregación (agrupa variantes y pagina)
+
 exports.obtenerProductos = async (req, res) => {
   try {
-    const collection = getCollection();
     const { talla, search, stock, page = 1, limit = 20 } = req.query;
 
     const pageNum = Math.max(parseInt(page, 10) || 1, 1);
@@ -25,7 +18,7 @@ exports.obtenerProductos = async (req, res) => {
 
     const pipeline = [];
 
-    // MATCH temprano para aprovechar índices
+    
     if (search && search.trim()) {
       const regex = new RegExp(search.trim(), 'i');
       pipeline.push({
@@ -42,7 +35,7 @@ exports.obtenerProductos = async (req, res) => {
       });
     }
 
-    // GROUP por handle (fallback a title)
+
     pipeline.push({
       $group: {
         _id: { $ifNull: ['$handle', '$title'] },
@@ -69,14 +62,14 @@ exports.obtenerProductos = async (req, res) => {
       },
     });
 
-    // MATCH posterior (talla y stock)
+
     const postMatch = {};
     if (talla && talla.trim()) postMatch.tallas_disponibles = talla.trim();
     if (stock === 'true') postMatch.totalInventory = { $gt: 0 };
     if (stock === 'false') postMatch.totalInventory = { $lte: 0 };
     if (Object.keys(postMatch).length) pipeline.push({ $match: postMatch });
 
-    // FACET para paginación
+  
     pipeline.push({
       $facet: {
         metadata: [{ $count: 'total' }],
@@ -84,7 +77,9 @@ exports.obtenerProductos = async (req, res) => {
       },
     });
 
-    const agg = await collection.aggregate(pipeline).toArray();
+
+    const agg = await Producto.aggregate(pipeline);
+    
     const facet = agg[0] || { metadata: [], data: [] };
     const total = facet.metadata[0]?.total || 0;
     const pages = Math.max(Math.ceil(total / limitNum), 1);
