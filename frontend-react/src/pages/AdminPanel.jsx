@@ -11,33 +11,120 @@ const AdminPanel = () => {
     const [totalPaginas, setTotalPaginas] = useState(1);
     const [cargando, setCargando] = useState(false);
     const totalPaginasSeguras = Math.max(Number(totalPaginas) || 1, 1);
-
-    useEffect(() => {
-        const obtenerProductos = async () => {
-            setCargando(true);
-            try {
-                const baseURL = import.meta.env.VITE_API_URL || 'https://dbgymshark.onrender.com/api';
-                const url = `${baseURL}/productos?page=${pagina}&limit=20`;
-                const respuesta = await axios.get(url);
-
-                if (respuesta.data.productos) {
-                    const paginasRaw = respuesta.data.paginasTotales || respuesta.data.pagination?.pages || 1;
-                    const paginas = Math.max(Number(paginasRaw) || 1, 1);
-                    setProductos(respuesta.data.productos);
-                    setTotalPaginas(paginas);
-                } else {
-                    setProductos(Array.isArray(respuesta.data) ? respuesta.data : []);
-                    setTotalPaginas(1);
-                }
-            } catch (error) {
-                console.error('Error al cargar productos en panel admin:', error);
-            } finally {
-                setCargando(false);
+    const [modalAbierto, setModalAbierto] = useState(false);
+    const [editandoId, setEditandoId] = useState(null);
+    const [formData, setFormData] = useState({
+        title: '',
+        handle: '',
+        vendor: '',
+        product_type: '',
+        image_src: '',
+        image_principal: '',
+        variants: [] 
+    });
+    const baseURL = import.meta.env.VITE_API_URL || 'https://dbgymshark.onrender.com/api';
+    const cargarProductos = async () => {
+        setCargando(true);
+        try {
+            const url = `${baseURL}/productos?page=${pagina}&limit=20`;
+            const respuesta = await axios.get(url);
+            if (respuesta.data.productos) {
+                const paginasRaw = respuesta.data.paginasTotales || respuesta.data.pagination?.pages || 1;
+                setProductos(respuesta.data.productos);
+                setTotalPaginas(Math.max(Number(paginasRaw) || 1, 1));
+            } else {
+                setProductos(Array.isArray(respuesta.data) ? respuesta.data : []);
+                setTotalPaginas(1);
             }
-        };
-
-        obtenerProductos();
+        } catch (error) {
+            console.error('Error al cargar productos:', error);
+        } finally {
+            setCargando(false);
+        }
+    };
+    useEffect(() => {
     }, [pagina]);
+    // 1. ELIMINAR
+    const handleEliminar = async (id) => {
+        if (!window.confirm("¿Estás seguro de que deseas eliminar este producto?")) return;
+        try {
+            await axios.delete(`${baseURL}/productos/${id}`, {
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+            });
+            alert("Producto eliminado exitosamente.");
+            cargarProductos(); // Recargamos la tabla
+        } catch (error) {
+            console.error(error);
+            alert(`Error al eliminar: ${error.response?.data?.mensaje || 'Desconocido'}`);
+        }
+    };
+
+    // 2. PREPARAR MODAL PARA EDITAR
+    const abrirModalEditar = (prod) => {
+        setEditandoId(prod._id);
+        setFormData({
+            title: prod.title || '',
+            handle: prod.handle || '',
+            vendor: prod.vendor || '',
+            product_type: prod.product_type || '',
+            image_principal: prod.image_principal || '',
+            image_src: prod.image_src || '',
+            variants: prod.variants || [] 
+        });
+        setModalAbierto(true);
+    };
+
+    // 3. PREPARAR MODAL PARA CREAR
+    const abrirModalCrear = () => {
+        setEditandoId(null);
+        setFormData({ title: '', handle: '', precioMXN: '', product_type: '' });
+        setModalAbierto(true);
+    };
+
+    // 4. GUARDAR (CREAR O EDITAR)
+    const agregarVariante = () => {
+        setFormData({
+            ...formData,
+            variants: [...formData.variants, { size: '', color: '', sku: '', price: 0, inventory_quantity: 0 }]
+        });
+    };
+
+    // Actualizar un campo específico de una variante
+    const actualizarVariante = (index, campo, valor) => {
+        const nuevasVariantes = [...formData.variants];
+        nuevasVariantes[index][campo] = valor;
+        setFormData({ ...formData, variants: nuevasVariantes });
+    };
+
+    // Quitar una variante
+    const eliminarVariante = (index) => {
+        const nuevasVariantes = formData.variants.filter((_, i) => i !== index);
+        setFormData({ ...formData, variants: nuevasVariantes });
+    };
+
+    const handleGuardar = async (e) => {
+        e.preventDefault();
+        try {
+            const token = localStorage.getItem('token');
+            const config = { headers: { Authorization: `Bearer ${token}` } };
+
+            if (editandoId) {
+                // Modo Edición
+                await axios.put(`${baseURL}/productos/${editandoId}`, formData, config);
+                alert("Producto actualizado.");
+            } else {
+                // Modo Creación
+                await axios.post(`${baseURL}/productos`, formData, config);
+                alert("Producto creado exitosamente.");
+            }
+            
+            setModalAbierto(false);
+            cargarProductos();
+        } catch (error) {
+            console.error(error);
+            alert(`Error al guardar: ${error.response?.data?.mensaje || error.message}`);
+        }
+    };        
 
     return (
         <div className="admin-container">
@@ -115,8 +202,60 @@ const AdminPanel = () => {
                     />
                 </section>
             </main>
+            {/* --- EL MODAL ACTUALIZADO --- */}
+            {modalAbierto && (
+                <div style={overlayStyle}>
+                    <div style={{...modalStyle, maxHeight: '90vh', overflowY: 'auto', width: '95%', maxWidth: '600px'}}>
+                        <h2>{editandoId ? 'Editar Producto' : 'Nuevo Producto'}</h2>
+                        <form onSubmit={handleGuardar} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                            
+                            {/* CAMPOS PRINCIPALES */}
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                                <input type="text" placeholder="Título" required value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} />
+                                <input type="text" placeholder="Handle (URL amigable)" required value={formData.handle} onChange={e => setFormData({...formData, handle: e.target.value})} />
+                                <input type="text" placeholder="Tipo (ej. Womens Ss Tops)" value={formData.product_type} onChange={e => setFormData({...formData, product_type: e.target.value})} />
+                                <input type="text" placeholder="Marca / Vendor" value={formData.vendor} onChange={e => setFormData({...formData, vendor: e.target.value})} />
+                            </div>
+
+                            <input type="text" placeholder="URL Imagen Principal" value={formData.image_principal} onChange={e => setFormData({...formData, image_principal: e.target.value})} />
+                            <input type="text" placeholder="URL Imagen Secundaria" value={formData.image_src} onChange={e => setFormData({...formData, image_src: e.target.value})} />
+
+                            {/* SECCIÓN DE VARIANTES (Tallas, Colores, Precios) */}
+                            <div style={{ marginTop: '15px', borderTop: '1px solid #475569', paddingTop: '10px' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                                    <h3>Variantes (Tallas/Colores)</h3>
+                                    <button type="button" onClick={agregarVariante} style={{ background: '#3b82f6', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer' }}>
+                                        + Añadir Variante
+                                    </button>
+                                </div>
+                                
+                                {formData.variants.map((v, index) => (
+                                    <div key={index} style={{ display: 'flex', gap: '5px', marginBottom: '10px', alignItems: 'center', background: '#334155', padding: '10px', borderRadius: '6px' }}>
+                                        <input type="text" placeholder="Talla (S, M, L)" value={v.size} onChange={e => actualizarVariante(index, 'size', e.target.value)} style={{ width: '60px' }} />
+                                        <input type="text" placeholder="Color" value={v.color} onChange={e => actualizarVariante(index, 'color', e.target.value)} style={{ width: '80px' }} />
+                                        <input type="text" placeholder="SKU" required value={v.sku} onChange={e => actualizarVariante(index, 'sku', e.target.value)} style={{ flex: 1 }} />
+                                        <input type="number" placeholder="Precio ($)" required value={v.price} onChange={e => actualizarVariante(index, 'price', Number(e.target.value))} style={{ width: '80px' }} />
+                                        <input type="number" placeholder="Stock" value={v.inventory_quantity} onChange={e => actualizarVariante(index, 'inventory_quantity', Number(e.target.value))} style={{ width: '60px' }} />
+                                        <button type="button" onClick={() => eliminarVariante(index)} style={{ background: '#ef4444', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', padding: '5px' }}>X</button>
+                                    </div>
+                                ))}
+                                {formData.variants.length === 0 && <p style={{ fontSize: '0.85rem', color: '#94a3b8' }}>No hay variantes. Agrega al menos una para definir el precio.</p>}
+                            </div>
+
+                            {/* BOTONES FINALES */}
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' }}>
+                                <button type="button" onClick={() => setModalAbierto(false)} style={{ padding: '8px 16px', cursor: 'pointer' }}>Cancelar</button>
+                                <button type="submit" style={{ padding: '8px 16px', background: '#10b981', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>
+                                    Guardar Producto
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
-
+const overlayStyle = { position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 };
+const modalStyle = { backgroundColor: '#1e293b', padding: '20px', borderRadius: '8px', width: '90%', maxWidth: '400px', color: 'white' };
 export default AdminPanel;

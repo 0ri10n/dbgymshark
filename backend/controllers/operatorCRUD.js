@@ -1,7 +1,8 @@
 const mongoose = require('mongoose');
+const Producto = require('../models/Producto');
 
 const DEFAULT_DB = process.env.PRODUCT_DB || 'DB';
-const DEFAULT_COLLECTION = process.env.PRODUCT_COLLECTION || 'productos'; // usa el nombre real de tu colección
+const DEFAULT_COLLECTION = process.env.PRODUCT_COLLECTION || 'productos'; 
 
 // Helpers
 const getCollection = () => mongoose.connection.client.db(DEFAULT_DB).collection(DEFAULT_COLLECTION);
@@ -103,18 +104,32 @@ exports.obtenerProductos = async (req, res) => {
   }
 };
 
-// 2. CREAR un documento (útil para importaciones)
 exports.crearProducto = async (req, res) => {
   try {
-    const collection = getCollection();
-    const resultado = await collection.insertOne(req.body);
-    res.status(201).json({ msg: 'Producto creado', id: resultado.insertedId });
+    const { handle } = req.body;
+
+ 
+    if (!handle) {
+      return res.status(400).json({ msg: 'El handle (URL amigable) es obligatorio.' });
+    }
+
+    const productoExistente = await Producto.findOne({ handle: handle });
+    if (productoExistente) {
+      return res.status(400).json({ msg: 'Ya existe un producto con este handle. Elige uno distinto.' });
+    }
+
+
+    const nuevoProducto = new Producto(req.body);
+    await nuevoProducto.save();
+
+    res.status(201).json({ msg: 'Producto creado exitosamente', id: nuevoProducto._id });
   } catch (error) {
-    res.status(400).json({ msg: 'No se pudo crear el producto', error });
+    console.error('Error al crear producto:', error);
+    res.status(400).json({ msg: 'No se pudo crear el producto', error: error.message });
   }
 };
 
-// 3. BUSCAR producto por handle (agrupado)
+
 exports.obtenerProductoPorHandle = async (req, res) => {
   try {
     const collection = getCollection();
@@ -159,38 +174,45 @@ exports.obtenerProductoPorHandle = async (req, res) => {
   }
 };
 
-// 4. ACTUALIZAR (sobre documento plano)
+
 exports.actualizarProducto = async (req, res) => {
   try {
-    const { ObjectId } = require('mongoose').Types;
-    const collection = getCollection();
     const datosActualizados = { ...req.body };
     delete datosActualizados._id;
 
-    const producto = await collection.findOneAndUpdate(
-      { _id: new ObjectId(req.params.id) },
-      { $set: datosActualizados },
-      { returnDocument: 'after' }
-    );
-    res.json(producto);
+    const producto = await Producto.findById(req.params.id);
+    if (!producto) {
+      return res.status(404).json({ msg: 'Producto no encontrado' });
+    }
+
+    Object.assign(producto, datosActualizados);
+    
+    await producto.save(); 
+
+    res.json({ msg: 'Producto actualizado correctamente', producto });
   } catch (error) {
-    res.status(500).json({ msg: 'Error al actualizar' });
+    console.error('Error al actualizar producto:', error);
+    res.status(500).json({ msg: 'Error al actualizar', error: error.message });
   }
 };
 
-// 5. ELIMINAR
 exports.eliminarProducto = async (req, res) => {
   try {
-    const { ObjectId } = require('mongoose').Types;
-    const collection = getCollection();
-    await collection.deleteOne({ _id: new ObjectId(req.params.id) });
+    // Usamos directamente el modelo de Mongoose
+    const productoEliminado = await Producto.findByIdAndDelete(req.params.id);
+
+    if (!productoEliminado) {
+      return res.status(404).json({ msg: 'Producto no encontrado o ya fue eliminado' });
+    }
+
     res.json({ msg: 'Producto eliminado correctamente' });
   } catch (error) {
-    res.status(500).json({ msg: 'Error al eliminar' });
+    console.error('Error al eliminar producto:', error);
+    res.status(500).json({ msg: 'Error al eliminar', error: error.message });
   }
 };
 
-// 6. REGISTRAR VENTA Y DESCONTAR STOCK
+
 exports.registrarVenta = async (req, res) => {
   const { id_venta, productos, total } = req.body;
 
@@ -208,7 +230,6 @@ exports.registrarVenta = async (req, res) => {
     
     await ventasCollection.insertOne(nuevaVenta);
 
-    // 3. Descontar stock
     const promesasActualizacion = productos.map(p => {
       return productosCollection.updateOne(
         { 
