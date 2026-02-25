@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const Producto = require('../models/Producto');
+const Producto = require('../models/Productos');
 
 const DEFAULT_DB = process.env.PRODUCT_DB || 'DB';
 const DEFAULT_COLLECTION = process.env.PRODUCT_COLLECTION || 'productos'; 
