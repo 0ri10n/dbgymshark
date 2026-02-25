@@ -43,6 +43,7 @@ const AdminPanel = () => {
         }
     };
     useEffect(() => {
+        cargarProductos();
     }, [pagina]);
     // 1. ELIMINAR
     const handleEliminar = async (id) => {
