@@ -199,44 +199,118 @@ const AdminPanel = () => {
                 <section className="admin-actions">
                     <div className="admin-section-header">
                         <h2>Gestion de Catalogo (DBGymshark)</h2>
-                            <button className="admin-add-btn" onClick={abrirModalCrear}>
-                                + Agregar Nuevo Producto
-                            </button>
+                            {vistaActiva === 'productos' && (
+                                <button className="admin-add-btn" onClick={abrirModalCrear}>
+                                    + Agregar Nuevo Producto
+                                </button>
+                            )}
                     </div>
 
                     {cargando ? (
-                        <p>Cargando inventario del servidor...</p>
-                    ) : (
-                        <div className="admin-table-wrapper">
-                            <table className="admin-table">
-                                <thead>
-                                    <tr>
-                                        <th>Titulo</th>
-                                        <th>Precio (MXN)</th>
-                                        <th>Tipo</th>
-                                        <th>Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {productos.map((prod) => (
-                                        <tr key={prod._id}>
-                                            <td data-label="Titulo">{prod.title || prod.nombre || 'Producto'}</td>
-                                            <td data-label="Precio (MXN)">${prod.precioMXN}</td>
-                                            <td data-label="Tipo">{prod.product_type || 'N/A'}</td>
-                                            <td data-label="Acciones" className="admin-row-actions">
-                                                <button className="admin-edit-btn" onClick={() => abrirModalEditar(prod)}>
-                                                    Editar
-                                                </button>
-                                                <button className="admin-delete-btn" onClick={() => handleEliminar(prod._id)}>
-                                                    Eliminar
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    )}
+    <p>Cargando inventario del servidor...</p>
+) : (
+    <>
+        {/* --- TABLA DE PRODUCTOS --- */}
+        {vistaActiva === 'productos' && (
+            <div className="admin-table-wrapper">
+                <table className="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Titulo</th>
+                            <th>Precio (MXN)</th>
+                            <th>Tipo</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {productos.map((prod) => (
+                            <tr key={prod._id}>
+                                <td data-label="Titulo">{prod.title || prod.nombre || 'Producto'}</td>
+                                <td data-label="Precio (MXN)">${prod.precioMXN || prod.price || '0.00'}</td>
+                                <td data-label="Tipo">{prod.product_type || 'N/A'}</td>
+                                <td data-label="Acciones" className="admin-row-actions">
+                                    <button className="admin-edit-btn" onClick={() => abrirModalEditar(prod)}>
+                                        Editar
+                                    </button>
+                                    <button className="admin-delete-btn" onClick={() => handleEliminar(prod._id)}>
+                                        Eliminar
+                                    </button>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        )}
+
+        {/* --- TABLA DE VENTAS --- */}
+        {vistaActiva === 'ventas' && (
+            <div className="admin-table-wrapper">
+                <table className="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Orden</th>
+                            <th>Cliente</th>
+                            <th>Total (MXN)</th>
+                            <th>Fecha</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {listaVentas.length > 0 ? (
+                            listaVentas.map((venta) => (
+                                <tr key={venta._id}>
+                                    <td data-label="Orden"><strong>{venta.numeroOrden}</strong></td>
+                                    <td data-label="Cliente">{venta.nombreCliente}</td>
+                                    <td data-label="Total (MXN)">${venta.total}</td>
+                                    <td data-label="Fecha">{new Date(venta.fechaPedido).toLocaleDateString()}</td>
+                                </tr>
+                            ))
+                        ) : (
+                            <tr><td colSpan="4" style={{textAlign: 'center', padding: '20px'}}>No hay ventas registradas aún.</td></tr>
+                        )}
+                    </tbody>
+                </table>
+            </div>
+        )}
+
+        {/* --- TABLA DE USUARIOS --- */}
+        {vistaActiva === 'usuarios' && (
+            <div className="admin-table-wrapper">
+                <table className="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Email</th>
+                            <th>Rol</th>
+                            <th>Registro</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {listaUsuarios.length > 0 ? (
+                            listaUsuarios.map((user) => (
+                                <tr key={user._id}>
+                                    <td data-label="Nombre">{user.nombre} {user.apellido}</td>
+                                    <td data-label="Email">{user.email}</td>
+                                    <td data-label="Rol">
+                                        <span style={{ 
+                                            background: user.rol === 'admin' ? '#8b5cf6' : '#334155', 
+                                            padding: '4px 8px', borderRadius: '4px', fontSize: '0.85rem' 
+                                        }}>
+                                            {user.rol}
+                                        </span>
+                                    </td>
+                                    <td data-label="Registro">{new Date(user.registro).toLocaleDateString()}</td>
+                                </tr>
+                            ))
+                        ) : (
+                            <tr><td colSpan="4" style={{textAlign: 'center', padding: '20px'}}>No hay usuarios registrados.</td></tr>
+                        )}
+                    </tbody>
+                </table>
+            </div>
+        )}
+    </>
+)}
 
                     <PaginationControls
                         page={pagina}
