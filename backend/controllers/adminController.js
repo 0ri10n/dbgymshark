@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const Product = require('../models/Productos');
+const bcrypt = require('bcryptjs');
 const { ObjectId } = require('mongoose').Types; // Usa el de Mongoose
 
 // FUNCIÓN 1: Listar DBs
