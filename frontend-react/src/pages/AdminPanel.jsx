@@ -346,7 +346,7 @@ const AdminPanel = () => {
             </div>
         )}
 
-        {/* --- TABLA DE USUARIOS --- */}
+{/* --- TABLA DE USUARIOS --- */}
         {vistaActiva === 'usuarios' && (
             <div className="admin-table-wrapper">
                 <table className="admin-table">
@@ -355,7 +355,7 @@ const AdminPanel = () => {
                             <th>Nombre</th>
                             <th>Email</th>
                             <th>Rol</th>
-                            <th>Dirección</th> {/* <--- NUEVA COLUMNA */}
+                            <th>Dirección</th> 
                             <th>Registro</th>
                             <th>Acciones</th>
                         </tr>
@@ -374,7 +374,7 @@ const AdminPanel = () => {
                                             {user.rol}
                                         </span>
                                     </td>
-                                    <td data-label="Dirección">{user.direccion || 'Sin dirección'}</td> {/* <--- NUEVO DATO */}
+                                    <td data-label="Dirección">{user.direccion || 'Sin dirección'}</td> {/* <--- AQUÍ SE MUESTRA EL DATO */}
                                     <td data-label="Registro">{new Date(user.registro).toLocaleDateString()}</td>
                                     <td data-label="Acciones" className="admin-row-actions">
                                         <button className="admin-edit-btn" onClick={() => abrirModalEditarUsuario(user)}>
