@@ -28,4 +28,6 @@ router.put('/editar/:dbName/:tableName/:id', auth, admin, adminController.editar
 module.exports = router;
 
 router.get('/panel/usuarios', auth, admin, adminController.obtenerUsuariosPanel);
+router.put('/panel/usuarios/:id', auth, admin, adminController.actualizarUsuarioPanel);
+router.delete('/panel/usuarios/:id', auth, admin, adminController.eliminarUsuarioPanel);
 router.get('/panel/ventas', auth, admin, adminController.obtenerVentasPanel);

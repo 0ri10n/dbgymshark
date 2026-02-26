@@ -122,6 +122,43 @@ exports.obtenerUsuariosPanel = async (req, res) => {
     }
 };
 
+// Editar Usuario
+exports.actualizarUsuarioPanel = async (req, res) => {
+    try {
+        const { nombre, apellido, email, rol } = req.body;
+        
+        // Buscamos al usuario por ID y actualizamos solo los datos permitidos
+        const usuarioActualizado = await Usuario.findByIdAndUpdate(
+            req.params.id,
+            { nombre, apellido, email, rol },
+            { new: true } // Devuelve el documento ya modificado
+        ).select('-password'); // Ocultamos la contraseña en la respuesta
+
+        if (!usuarioActualizado) {
+            return res.status(404).json({ msg: 'Usuario no encontrado' });
+        }
+
+        res.json({ msg: 'Usuario actualizado', usuario: usuarioActualizado });
+    } catch (error) {
+        console.error("Error al actualizar usuario:", error);
+        res.status(500).json({ msg: 'Error al actualizar usuario' });
+    }
+};
+
+// Eliminar Usuario
+exports.eliminarUsuarioPanel = async (req, res) => {
+    try {
+        const usuarioEliminado = await Usuario.findByIdAndDelete(req.params.id);
+        if (!usuarioEliminado) {
+            return res.status(404).json({ msg: 'Usuario no encontrado' });
+        }
+        res.json({ msg: 'Usuario eliminado correctamente' });
+    } catch (error) {
+        console.error("Error al eliminar usuario:", error);
+        res.status(500).json({ msg: 'Error al eliminar usuario' });
+    }
+};
+
 
 exports.obtenerVentasPanel = async (req, res) => {
     try {

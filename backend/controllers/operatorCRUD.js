@@ -208,8 +208,6 @@ exports.eliminarProducto = async (req, res) => {
   }
 };
 
-
-// --- NUEVO REGISTRO DE VENTAS ---
 exports.registrarVenta = async (req, res) => {
     try {
         // 1. Recibimos los datos exactos que manda tu Catalogo.jsx

@@ -25,6 +25,11 @@ const AdminPanel = () => {
     const [vistaActiva, setVistaActiva] = useState('productos');
     const [listaUsuarios, setListaUsuarios] = useState([]);
     const [listaVentas, setListaVentas] = useState([]);
+    const [modalUsuarioAbierto, setModalUsuarioAbierto] = useState(false);
+    const [editandoUsuarioId, setEditandoUsuarioId] = useState(null);
+    const [formDataUsuario, setFormDataUsuario] = useState({
+        nombre: '', apellido: '', email: '', rol: 'cliente'
+    });
     const baseURL = import.meta.env.VITE_API_URL || 'https://dbgymshark.onrender.com/api';
     const cargarProductos = async () => {
         setCargando(true);
@@ -59,6 +64,49 @@ const AdminPanel = () => {
             }
         } catch (error) {
             console.error(`Error al cargar ${vista}:`, error);
+        }
+    };
+
+    const abrirModalEditarUsuario = (user) => {
+        setEditandoUsuarioId(user._id);
+        setFormDataUsuario({
+            nombre: user.nombre || '',
+            apellido: user.apellido || '',
+            email: user.email || '',
+            rol: user.rol || 'cliente'
+        });
+        setModalUsuarioAbierto(true);
+    };
+
+    const handleGuardarUsuario = async (e) => {
+        e.preventDefault();
+        try {
+            const token = localStorage.getItem('token');
+            const config = { headers: { Authorization: `Bearer ${token}` } };
+            
+            await axios.put(`${baseURL}/admin/panel/usuarios/${editandoUsuarioId}`, formDataUsuario, config);
+            alert("Usuario actualizado correctamente.");
+            
+            setModalUsuarioAbierto(false);
+            cargarDatosExtra('usuarios'); // Recargamos la tabla de usuarios
+        } catch (error) {
+            console.error(error);
+            alert("Error al guardar el usuario.");
+        }
+    };
+
+    const handleEliminarUsuario = async (id) => {
+        if (!window.confirm("¿Estás seguro de que deseas eliminar a este usuario? Esta acción no se puede deshacer.")) return;
+        try {
+            const token = localStorage.getItem('token');
+            await axios.delete(`${baseURL}/admin/panel/usuarios/${id}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            alert("Usuario eliminado.");
+            cargarDatosExtra('usuarios'); // Recargamos la tabla
+        } catch (error) {
+            console.error(error);
+            alert("Error al eliminar usuario.");
         }
     };
     useEffect(() => {
@@ -283,6 +331,7 @@ const AdminPanel = () => {
                             <th>Email</th>
                             <th>Rol</th>
                             <th>Registro</th>
+                            <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -300,6 +349,14 @@ const AdminPanel = () => {
                                         </span>
                                     </td>
                                     <td data-label="Registro">{new Date(user.registro).toLocaleDateString()}</td>
+                                    <td data-label="Acciones" className="admin-row-actions"> {/* <--- BOTONES */}
+                                        <button className="admin-edit-btn" onClick={() => abrirModalEditarUsuario(user)}>
+                                            Editar
+                                        </button>
+                                        <button className="admin-delete-btn" onClick={() => handleEliminarUsuario(user._id)}>
+                                            Eliminar
+                                        </button>
+                                    </td>
                                 </tr>
                             ))
                         ) : (
@@ -322,7 +379,7 @@ const AdminPanel = () => {
                     />
                 </section>
             </main>
-            {/* --- EL MODAL ACTUALIZADO --- */}
+            {/* --- EL MODAL PRODUCTOS --- */}
             {modalAbierto && (
                 <div style={overlayStyle}>
                     <div style={{...modalStyle, maxHeight: '90vh', overflowY: 'auto', width: '95%', maxWidth: '600px'}}>
@@ -367,6 +424,29 @@ const AdminPanel = () => {
                                 <button type="submit" style={{ padding: '8px 16px', background: '#10b981', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>
                                     Guardar Producto
                                 </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+            {/* --- MODAL DE USUARIOS --- */}
+            {modalUsuarioAbierto && (
+                <div style={overlayStyle}>
+                    <div style={{...modalStyle, maxWidth: '400px'}}>
+                        <h2>Editar Usuario</h2>
+                        <form onSubmit={handleGuardarUsuario} style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '15px' }}>
+                            <input type="text" placeholder="Nombre" required value={formDataUsuario.nombre} onChange={e => setFormDataUsuario({...formDataUsuario, nombre: e.target.value})} style={{ padding: '8px', borderRadius: '4px', border: 'none' }} />
+                            <input type="text" placeholder="Apellido" required value={formDataUsuario.apellido} onChange={e => setFormDataUsuario({...formDataUsuario, apellido: e.target.value})} style={{ padding: '8px', borderRadius: '4px', border: 'none' }} />
+                            <input type="email" placeholder="Correo electrónico" required value={formDataUsuario.email} onChange={e => setFormDataUsuario({...formDataUsuario, email: e.target.value})} style={{ padding: '8px', borderRadius: '4px', border: 'none' }} />
+                            
+                            <select value={formDataUsuario.rol} onChange={e => setFormDataUsuario({...formDataUsuario, rol: e.target.value})} style={{ padding: '8px', borderRadius: '4px', border: 'none' }}>
+                                <option value="cliente">Cliente</option>
+                                <option value="admin">Administrador</option>
+                            </select>
+
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
+                                <button type="button" onClick={() => setModalUsuarioAbierto(false)} style={{ padding: '8px 16px', cursor: 'pointer', background: 'transparent', color: 'white', border: '1px solid white', borderRadius: '4px' }}>Cancelar</button>
+                                <button type="submit" style={{ padding: '8px 16px', background: '#8b5cf6', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>Guardar Cambios</button>
                             </div>
                         </form>
                     </div>
