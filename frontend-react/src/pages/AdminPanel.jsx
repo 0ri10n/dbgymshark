@@ -3,6 +3,8 @@ import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import PaginationControls from '../components/PaginationControls';
 import './AdminPanel.css';
+const TABLE_NAME = 'productos'; 
+const baseURL = import.meta.env.VITE_API_URL || 'https://dbgymshark.onrender.com/api';
 
 const AdminPanel = () => {
     const { user, logout } = useAuth();
@@ -11,6 +13,7 @@ const AdminPanel = () => {
     const [totalPaginas, setTotalPaginas] = useState(1);
     const [cargando, setCargando] = useState(false);
     const totalPaginasSeguras = Math.max(Number(totalPaginas) || 1, 1);
+<<<<<<< HEAD
     const [modalAbierto, setModalAbierto] = useState(false);
     const [editandoId, setEditandoId] = useState(null);
     const [formData, setFormData] = useState({
@@ -43,6 +46,31 @@ const AdminPanel = () => {
             } else {
                 setProductos(Array.isArray(respuesta.data) ? respuesta.data : []);
                 setTotalPaginas(1);
+=======
+    const [editando, setEditando] = useState(null);
+    const [tempData, setTempData] = useState({});
+
+    useEffect(() => {
+        const obtenerProductos = async () => {
+            setCargando(true);
+            try {
+                const url = `${baseURL}/productos?page=${pagina}&limit=20`;
+                const respuesta = await axios.get(url);
+
+                if (respuesta.data.productos) {
+                    const paginasRaw = respuesta.data.paginasTotales || respuesta.data.pagination?.pages || 1;
+                    const paginas = Math.max(Number(paginasRaw) || 1, 1);
+                    setProductos(respuesta.data.productos);
+                    setTotalPaginas(paginas);
+                } else {
+                    setProductos(Array.isArray(respuesta.data) ? respuesta.data : []);
+                    setTotalPaginas(1);
+                }
+            } catch (error) {
+                console.error('Error al cargar productos en panel admin:', error);
+            } finally {
+                setCargando(false);
+>>>>>>> d1ac3fe9b76768f3ebc3edc3db048e817314db55
             }
         } catch (error) {
             console.error('Error al cargar productos:', error);
@@ -133,6 +161,7 @@ const AdminPanel = () => {
         cargarProductos();
     }, [pagina]);
 
+<<<<<<< HEAD
     const handleEliminar = async (id) => {
         if (!window.confirm("¿Estás seguro de que deseas eliminar este producto?")) return;
         try {
@@ -224,6 +253,64 @@ const AdminPanel = () => {
         }
     };      
 
+=======
+    const eliminarProducto = async (id) => {
+        if (!window.confirm('¿Eliminar este registro?')) return;
+        try {
+            await axios.delete(`${baseURL}/admin/tablas/${TABLE_NAME}/${id}`);
+            setProductos(productos.filter(p => p._id !== id));
+        } catch (error) {
+            alert('Error al eliminar');
+        }
+    };
+
+    const editarProducto = async (producto) => {
+        const nuevoTitulo = prompt("Nuevo título:", producto.title);
+        if (!nuevoTitulo) return;
+
+        try {
+            await axios.put(`${baseURL}/admin/tablas/${TABLE_NAME}/${producto._id}`, 
+                { title: nuevoTitulo },
+                { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }}
+            );
+            obtenerProductos();
+        } catch (error) {
+            alert('Error al editar');
+        }
+    };
+
+    const crearProducto = async () => {
+        const title = prompt("Nombre del nuevo producto:");
+        const precioMXN = prompt("Precio:");
+        
+        if (!title || !precioMXN) return;
+
+        try {
+            await axios.post(`${baseURL}/admin/tablas/${TABLE_NAME}`, 
+                { title, precioMXN: Number(precioMXN), product_type: 'Nuevo' },
+                { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }}
+            );
+            obtenerProductos();
+        } catch (error) {
+            alert('Error al crear');
+        }
+    };
+
+    const guardarCambios = async (id) => {
+        try {
+            await axios.put(`${baseURL}/admin/tablas/${TABLE_NAME}/${id}`, tempData, {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+            });
+            setEditando(null);
+            setProductos(productos.map(p => p._id === id ? { ...p, ...tempData } : p));
+            alert('Cambios guardados');
+        } catch (error) {
+            console.error("Error al editar:", error);
+            alert('Error al guardar cambios');
+        }
+    };
+
+>>>>>>> d1ac3fe9b76768f3ebc3edc3db048e817314db55
     return (
         <div className="admin-container">
             <header className="admin-header">
@@ -267,6 +354,7 @@ const AdminPanel = () => {
                 <section className="admin-actions">
                     <div className="admin-section-header">
                         <h2>Gestion de Catalogo (DBGymshark)</h2>
+<<<<<<< HEAD
                             {vistaActiva === 'productos' && (
                                 <button className="admin-add-btn" onClick={abrirModalCrear}>
                                     + Agregar Nuevo Producto
@@ -395,6 +483,78 @@ const AdminPanel = () => {
         )}
     </>
 )}
+=======
+                        <button className="admin-add-btn" onClick={crearProducto}>
+                            + Agregar Nuevo Producto
+                        </button>
+                    </div>
+
+                    {cargando ? (
+                        <p>Cargando inventario del servidor...</p>
+                    ) : (
+                        <div className="admin-table-wrapper">
+                            <table className="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>Titulo</th>
+                                        <th>Precio (MXN)</th>
+                                        <th>Tipo</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {productos.map((prod) => (
+                                        <tr key={prod._id}>
+                                            {/* Celda de Título */}
+                                            <td data-label="Titulo">
+                                                {editando === prod._id ? (
+                                                    <input 
+                                                    className="admin-input-edit"
+                                                    defaultValue={prod.title || prod.nombre} 
+                                                    onChange={e => setTempData({...tempData, title: e.target.value})} 
+                                                    />
+                                                ) : (
+                                                    prod.title || prod.nombre || 'Producto'
+                                                    )}
+                                                    </td>
+                                                    
+                                            {/* Celda de Precio */}
+                                                <td data-label="Precio (MXN)">
+                                                    {editando === prod._id ? (
+                                                        <input 
+                                                        type="number" 
+                                                        className="admin-input-edit"
+                                                        defaultValue={prod.precioMXN} 
+                                                        onChange={e => setTempData({...tempData, precioMXN: Number(e.target.value)})} 
+                                                        />
+                                                    ) : (
+                                                        `$${prod.precioMXN}`
+                                                        )}
+                                                        </td>
+                                            {/* Celda de Tipo */}
+                                            <td data-label="Tipo">{prod.product_type || 'N/A'}</td>
+                                                                        
+                                            {/* Celda de Acciones */}
+                                            <td className="admin-row-actions">
+                                                {editando === prod._id ? (
+                                                    <>
+                                                        <button onClick={() => guardarCambios(prod._id)} className="admin-save-btn">Guardar</button>
+                                                        <button onClick={() => setEditando(null)} className="admin-cancel-btn">Cancelar</button>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <button onClick={() => { setEditando(prod._id); setTempData(prod); }} className="admin-edit-btn">Editar</button>
+                                                        <button onClick={() => eliminarProducto(prod._id)} className="admin-delete-btn">Eliminar</button>
+                                                    </>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+>>>>>>> d1ac3fe9b76768f3ebc3edc3db048e817314db55
 
                     <PaginationControls
                         page={pagina}
