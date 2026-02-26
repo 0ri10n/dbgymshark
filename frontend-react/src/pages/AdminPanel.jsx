@@ -393,6 +393,8 @@ const AdminPanel = () => {
                 </table>
             </div>
         )}
+    </>
+)}
 
                     <PaginationControls
                         page={pagina}
