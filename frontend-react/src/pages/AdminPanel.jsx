@@ -28,7 +28,7 @@ const AdminPanel = () => {
     const [modalUsuarioAbierto, setModalUsuarioAbierto] = useState(false);
     const [editandoUsuarioId, setEditandoUsuarioId] = useState(null);
     const [formDataUsuario, setFormDataUsuario] = useState({
-        nombre: '', apellido: '', email: '', rol: 'cliente'
+        nombre: '', apellido: '', email: '', rol: 'cliente', password: '', direccion: ''
     });
     const baseURL = import.meta.env.VITE_API_URL || 'https://dbgymshark.onrender.com/api';
     const cargarProductos = async () => {
@@ -67,13 +67,23 @@ const AdminPanel = () => {
         }
     };
 
+    const abrirModalCrearUsuario = () => {
+        setEditandoUsuarioId(null);
+        setFormDataUsuario({
+            nombre: '', apellido: '', email: '', rol: 'cliente', password: '', direccion: ''
+        });
+        setModalUsuarioAbierto(true);
+    };
+
     const abrirModalEditarUsuario = (user) => {
         setEditandoUsuarioId(user._id);
         setFormDataUsuario({
             nombre: user.nombre || '',
             apellido: user.apellido || '',
             email: user.email || '',
-            rol: user.rol || 'cliente'
+            rol: user.rol || 'cliente',
+            password: '', // Lo dejamos vacío por seguridad
+            direccion: user.direccion || ''
         });
         setModalUsuarioAbierto(true);
     };
@@ -84,14 +94,72 @@ const AdminPanel = () => {
             const token = localStorage.getItem('token');
             const config = { headers: { Authorization: `Bearer ${token}` } };
             
-            await axios.put(`${baseURL}/admin/panel/usuarios/${editandoUsuarioId}`, formDataUsuario, config);
-            alert("Usuario actualizado correctamente.");
+            const datosAEnviar = { ...formDataUsuario };
+            // Si estamos editando y no escribió contraseña, la borramos para no sobreescribirla con vacío
+            if (editandoUsuarioId && !datosAEnviar.password) {
+                delete datosAEnviar.password;
+            }
+
+            if (editandoUsuarioId) {
+                await axios.put(`${baseURL}/admin/panel/usuarios/${editandoUsuarioId}`, datosAEnviar, config);
+                alert("Usuario actualizado correctamente.");
+            } else {
+                await axios.post(`${baseURL}/admin/panel/usuarios`, datosAEnviar, config);
+                alert("Usuario creado exitosamente.");
+            }
             
             setModalUsuarioAbierto(false);
-            cargarDatosExtra('usuarios'); // Recargamos la tabla de usuarios
+            cargarDatosExtra('usuarios'); 
         } catch (error) {
             console.error(error);
-            alert("Error al guardar el usuario.");
+            alert(`Error al guardar: ${error.response?.data?.msg || 'Revisa los datos ingresados'}`);
+        }
+    };const abrirModalCrearUsuario = () => {
+        setEditandoUsuarioId(null);
+        setFormDataUsuario({
+            nombre: '', apellido: '', email: '', rol: 'cliente', password: '', direccion: ''
+        });
+        setModalUsuarioAbierto(true);
+    };
+
+    const abrirModalEditarUsuario = (user) => {
+        setEditandoUsuarioId(user._id);
+        setFormDataUsuario({
+            nombre: user.nombre || '',
+            apellido: user.apellido || '',
+            email: user.email || '',
+            rol: user.rol || 'cliente',
+            password: '', // Lo dejamos vacío por seguridad
+            direccion: user.direccion || ''
+        });
+        setModalUsuarioAbierto(true);
+    };
+
+    const handleGuardarUsuario = async (e) => {
+        e.preventDefault();
+        try {
+            const token = localStorage.getItem('token');
+            const config = { headers: { Authorization: `Bearer ${token}` } };
+            
+            const datosAEnviar = { ...formDataUsuario };
+      
+            if (editandoUsuarioId && !datosAEnviar.password) {
+                delete datosAEnviar.password;
+            }
+
+            if (editandoUsuarioId) {
+                await axios.put(`${baseURL}/admin/panel/usuarios/${editandoUsuarioId}`, datosAEnviar, config);
+                alert("Usuario actualizado correctamente.");
+            } else {
+                await axios.post(`${baseURL}/admin/panel/usuarios`, datosAEnviar, config);
+                alert("Usuario creado exitosamente.");
+            }
+            
+            setModalUsuarioAbierto(false);
+            cargarDatosExtra('usuarios'); 
+        } catch (error) {
+            console.error(error);
+            alert(`Error al guardar: ${error.response?.data?.msg || 'Revisa los datos ingresados'}`);
         }
     };
 
@@ -252,7 +320,12 @@ const AdminPanel = () => {
                                     + Agregar Nuevo Producto
                                 </button>
                             )}
-                    </div>
+                            {vistaActiva === 'usuarios' && (
+                                <button className="admin-add-btn" onClick={abrirModalCrearUsuario} style={{ background: '#8b5cf6' }}>
+                                + Agregar Nuevo Usuario
+                                </button>
+                            )}
+                            </div>
 
                     {cargando ? (
     <p>Cargando inventario del servidor...</p>
@@ -435,10 +508,30 @@ const AdminPanel = () => {
                     <div style={{...modalStyle, maxWidth: '400px'}}>
                         <h2>Editar Usuario</h2>
                         <form onSubmit={handleGuardarUsuario} style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '15px' }}>
-                            <input type="text" placeholder="Nombre" required value={formDataUsuario.nombre} onChange={e => setFormDataUsuario({...formDataUsuario, nombre: e.target.value})} style={{ padding: '8px', borderRadius: '4px', border: 'none' }} />
-                            <input type="text" placeholder="Apellido" required value={formDataUsuario.apellido} onChange={e => setFormDataUsuario({...formDataUsuario, apellido: e.target.value})} style={{ padding: '8px', borderRadius: '4px', border: 'none' }} />
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                                <input type="text" placeholder="Nombre" required value={formDataUsuario.nombre} onChange={e => setFormDataUsuario({...formDataUsuario, nombre: e.target.value})} style={{ padding: '8px', borderRadius: '4px', border: 'none' }} />
+                                <input type="text" placeholder="Apellido" required value={formDataUsuario.apellido} onChange={e => setFormDataUsuario({...formDataUsuario, apellido: e.target.value})} style={{ padding: '8px', borderRadius: '4px', border: 'none' }} />
+                            </div>
+    
                             <input type="email" placeholder="Correo electrónico" required value={formDataUsuario.email} onChange={e => setFormDataUsuario({...formDataUsuario, email: e.target.value})} style={{ padding: '8px', borderRadius: '4px', border: 'none' }} />
-                            
+    
+                            <input 
+                                type="text" 
+                                placeholder="Contraseña (Déjala vacía si no la vas a cambiar)" 
+                                required={!editandoUsuarioId} // Solo es obligatoria si estamos creando uno nuevo
+                                value={formDataUsuario.password} 
+                                onChange={e => setFormDataUsuario({...formDataUsuario, password: e.target.value})} 
+                                style={{ padding: '8px', borderRadius: '4px', border: 'none' }} 
+                            />
+
+                            <input 
+                                type="text" 
+                                placeholder="Dirección completa de envío (Opcional)" 
+                                value={formDataUsuario.direccion} 
+                                onChange={e => setFormDataUsuario({...formDataUsuario, direccion: e.target.value})} 
+                                style={{ padding: '8px', borderRadius: '4px', border: 'none' }} 
+                            />
+    
                             <select value={formDataUsuario.rol} onChange={e => setFormDataUsuario({...formDataUsuario, rol: e.target.value})} style={{ padding: '8px', borderRadius: '4px', border: 'none' }}>
                                 <option value="cliente">Cliente</option>
                                 <option value="admin">Administrador</option>
@@ -446,7 +539,7 @@ const AdminPanel = () => {
 
                             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
                                 <button type="button" onClick={() => setModalUsuarioAbierto(false)} style={{ padding: '8px 16px', cursor: 'pointer', background: 'transparent', color: 'white', border: '1px solid white', borderRadius: '4px' }}>Cancelar</button>
-                                <button type="submit" style={{ padding: '8px 16px', background: '#8b5cf6', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>Guardar Cambios</button>
+                                <button type="submit" style={{ padding: '8px 16px', background: '#8b5cf6', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>Guardar Usuario</button>
                             </div>
                         </form>
                     </div>

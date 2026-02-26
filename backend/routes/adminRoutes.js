@@ -22,12 +22,13 @@ router.post('/crear/:dbName/:tableName', auth, admin, adminController.crearDatoU
 router.delete('/eliminar/:dbName/:tableName/:id', auth, admin, adminController.eliminarDatoUniversal);
 router.put('/editar/:dbName/:tableName/:id', auth, admin, adminController.editarDatoUniversal);
 
-// La ruta de limpieza se ha eliminado de aquí por seguridad.
-// Recuerda que ahora usas tus scripts de VS Code para esto.
 
 module.exports = router;
 
 router.get('/panel/usuarios', auth, admin, adminController.obtenerUsuariosPanel);
+router.post('/panel/usuarios', auth, admin, adminController.crearUsuarioPanel);
 router.put('/panel/usuarios/:id', auth, admin, adminController.actualizarUsuarioPanel);
 router.delete('/panel/usuarios/:id', auth, admin, adminController.eliminarUsuarioPanel);
+
+
 router.get('/panel/ventas', auth, admin, adminController.obtenerVentasPanel);

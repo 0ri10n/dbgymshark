@@ -122,17 +122,44 @@ exports.obtenerUsuariosPanel = async (req, res) => {
     }
 };
 
+exports.crearUsuarioPanel = async (req, res) => {
+    try {
+        const { nombre, apellido, email, password, rol, direccion } = req.body;
+        
+        if (!nombre || !email || !password) {
+            return res.status(400).json({ msg: 'Nombre, email y contraseña son obligatorios' });
+        }
+
+        const nuevoUsuario = new Usuario({ nombre, apellido, email, password, rol, direccion });
+        
+        // Nota: Si tu modelo de Usuario ya encripta la contraseña con un "pre('save')", esto la guardará segura automáticamente.
+        await nuevoUsuario.save();
+
+        res.status(201).json({ msg: 'Usuario creado exitosamente', usuario: nuevoUsuario });
+    } catch (error) {
+        console.error("Error al crear usuario:", error);
+        res.status(500).json({ msg: 'Error al crear usuario. Verifica que el correo no esté duplicado.' });
+    }
+};
+
 // Editar Usuario
 exports.actualizarUsuarioPanel = async (req, res) => {
     try {
-        const { nombre, apellido, email, rol } = req.body;
+        // Agregamos 'direccion' a los datos permitidos y 'password' (opcional)
+        const { nombre, apellido, email, rol, direccion, password } = req.body;
         
-        // Buscamos al usuario por ID y actualizamos solo los datos permitidos
+        const datosAActualizar = { nombre, apellido, email, rol, direccion };
+        
+        // Solo actualizamos la contraseña si el admin escribió una nueva
+        if (password && password.trim() !== '') {
+            datosAActualizar.password = password;
+        }
+
         const usuarioActualizado = await Usuario.findByIdAndUpdate(
             req.params.id,
-            { nombre, apellido, email, rol },
-            { new: true } // Devuelve el documento ya modificado
-        ).select('-password'); // Ocultamos la contraseña en la respuesta
+            datosAActualizar,
+            { new: true } 
+        ).select('-password'); 
 
         if (!usuarioActualizado) {
             return res.status(404).json({ msg: 'Usuario no encontrado' });
