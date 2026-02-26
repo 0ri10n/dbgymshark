@@ -30,7 +30,7 @@ const AdminPanel = () => {
     const [formDataUsuario, setFormDataUsuario] = useState({
         nombre: '', apellido: '', email: '', rol: 'cliente', password: '', direccion: ''
     });
-    const baseURL = import.meta.env.VITE_API_URL || 'https://dbgymshark.onrender.com/api';
+    const baseURL = import.meta.env.VITE_API_URL || 'https://dbgymshark-mb5q.onrender.com/api';
     const cargarProductos = async () => {
         setCargando(true);
         try {
@@ -82,7 +82,7 @@ const AdminPanel = () => {
             apellido: user.apellido || '',
             email: user.email || '',
             rol: user.rol || 'cliente',
-            password: '', // Lo dejamos vacío por seguridad
+            password: '',
             direccion: user.direccion || ''
         });
         setModalUsuarioAbierto(true);
