@@ -38,7 +38,7 @@ const Registro = () => {
             const { confirmPassword: _, ...datosAEnviar } = formData;
 
             // 4. CONEXIÓN: Usamos la URL de Render de Kevin
-            const baseURL = import.meta.env.VITE_API_URL || 'https://dbgymshark-mb5q.onrender.com/api';
+            const baseURL = import.meta.env.VITE_API_URL || 'https://dbgymshark.onrender.com/api';
             const url = `${baseURL}/auth/registro`;
             const res = await axios.post(url, datosAEnviar);
             
