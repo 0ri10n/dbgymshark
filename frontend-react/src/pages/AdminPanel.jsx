@@ -355,6 +355,7 @@ const AdminPanel = () => {
                             <th>Nombre</th>
                             <th>Email</th>
                             <th>Rol</th>
+                            <th>Dirección</th> {/* <--- NUEVA COLUMNA */}
                             <th>Registro</th>
                             <th>Acciones</th>
                         </tr>
@@ -373,8 +374,9 @@ const AdminPanel = () => {
                                             {user.rol}
                                         </span>
                                     </td>
+                                    <td data-label="Dirección">{user.direccion || 'Sin dirección'}</td> {/* <--- NUEVO DATO */}
                                     <td data-label="Registro">{new Date(user.registro).toLocaleDateString()}</td>
-                                    <td data-label="Acciones" className="admin-row-actions"> {/* <--- BOTONES */}
+                                    <td data-label="Acciones" className="admin-row-actions">
                                         <button className="admin-edit-btn" onClick={() => abrirModalEditarUsuario(user)}>
                                             Editar
                                         </button>
@@ -385,14 +387,12 @@ const AdminPanel = () => {
                                 </tr>
                             ))
                         ) : (
-                            <tr><td colSpan="4" style={{textAlign: 'center', padding: '20px'}}>No hay usuarios registrados.</td></tr>
+                            <tr><td colSpan="6" style={{textAlign: 'center', padding: '20px'}}>No hay usuarios registrados.</td></tr>
                         )}
                     </tbody>
                 </table>
             </div>
         )}
-    </>
-)}
 
                     <PaginationControls
                         page={pagina}
