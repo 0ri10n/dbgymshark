@@ -129,10 +129,18 @@ exports.crearUsuarioPanel = async (req, res) => {
         if (!nombre || !email || !password) {
             return res.status(400).json({ msg: 'Nombre, email y contraseña son obligatorios' });
         }
-
-        const nuevoUsuario = new Usuario({ nombre, apellido, email, password, rol, direccion });
         
-        // Nota: Si tu modelo de Usuario ya encripta la contraseña con un "pre('save')", esto la guardará segura automáticamente.
+        const salt = await bcrypt.genSalt(10);
+        const passwordEncriptada = await bcrypt.hash(password, salt);
+        const nuevoUsuario = new Usuario({ 
+            nombre, 
+            apellido, 
+            email, 
+            password: passwordEncriptada, // Guardamos la versión segura
+            rol, 
+            direccion 
+        });
+        
         await nuevoUsuario.save();
 
         res.status(201).json({ msg: 'Usuario creado exitosamente', usuario: nuevoUsuario });
@@ -145,14 +153,15 @@ exports.crearUsuarioPanel = async (req, res) => {
 // Editar Usuario
 exports.actualizarUsuarioPanel = async (req, res) => {
     try {
-        // Agregamos 'direccion' a los datos permitidos y 'password' (opcional)
+        
         const { nombre, apellido, email, rol, direccion, password } = req.body;
         
         const datosAActualizar = { nombre, apellido, email, rol, direccion };
         
-        // Solo actualizamos la contraseña si el admin escribió una nueva
+        // Si el admin escribió una nueva contraseña, también la encriptamos
         if (password && password.trim() !== '') {
-            datosAActualizar.password = password;
+            const salt = await bcrypt.genSalt(10);
+            datosAActualizar.password = await bcrypt.hash(password, salt);
         }
 
         const usuarioActualizado = await Usuario.findByIdAndUpdate(
