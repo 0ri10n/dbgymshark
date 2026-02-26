@@ -114,55 +114,7 @@ const AdminPanel = () => {
             console.error(error);
             alert(`Error al guardar: ${error.response?.data?.msg || 'Revisa los datos ingresados'}`);
         }
-    };const abrirModalCrearUsuario = () => {
-        setEditandoUsuarioId(null);
-        setFormDataUsuario({
-            nombre: '', apellido: '', email: '', rol: 'cliente', password: '', direccion: ''
-        });
-        setModalUsuarioAbierto(true);
     };
-
-    const abrirModalEditarUsuario = (user) => {
-        setEditandoUsuarioId(user._id);
-        setFormDataUsuario({
-            nombre: user.nombre || '',
-            apellido: user.apellido || '',
-            email: user.email || '',
-            rol: user.rol || 'cliente',
-            password: '', // Lo dejamos vacío por seguridad
-            direccion: user.direccion || ''
-        });
-        setModalUsuarioAbierto(true);
-    };
-
-    const handleGuardarUsuario = async (e) => {
-        e.preventDefault();
-        try {
-            const token = localStorage.getItem('token');
-            const config = { headers: { Authorization: `Bearer ${token}` } };
-            
-            const datosAEnviar = { ...formDataUsuario };
-      
-            if (editandoUsuarioId && !datosAEnviar.password) {
-                delete datosAEnviar.password;
-            }
-
-            if (editandoUsuarioId) {
-                await axios.put(`${baseURL}/admin/panel/usuarios/${editandoUsuarioId}`, datosAEnviar, config);
-                alert("Usuario actualizado correctamente.");
-            } else {
-                await axios.post(`${baseURL}/admin/panel/usuarios`, datosAEnviar, config);
-                alert("Usuario creado exitosamente.");
-            }
-            
-            setModalUsuarioAbierto(false);
-            cargarDatosExtra('usuarios'); 
-        } catch (error) {
-            console.error(error);
-            alert(`Error al guardar: ${error.response?.data?.msg || 'Revisa los datos ingresados'}`);
-        }
-    };
-
     const handleEliminarUsuario = async (id) => {
         if (!window.confirm("¿Estás seguro de que deseas eliminar a este usuario? Esta acción no se puede deshacer.")) return;
         try {
