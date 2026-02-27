@@ -7,14 +7,18 @@ import './AdminPanel.css';
 const AdminPanel = () => {
     const { user, logout } = useAuth();
     
-    // --- ESTADOS DE VISTA Y BÚSQUEDA ---
+    // --- ESTADOS DE VISTA Y CARGA ---
     const [vistaActiva, setVistaActiva] = useState('productos');
-    const [busqueda, setBusqueda] = useState("");
     const [cargando, setCargando] = useState(false);
 
     const itemsPorPagina = 10;
 
-    // --- ESTADOS DE DATOS Y PAGINACIÓN INDEPENDIENTE ---
+    // --- ESTADOS DE BÚSQUEDA INDEPENDIENTES ---
+    const [busquedaProd, setBusquedaProd] = useState("");
+    const [busquedaUsr, setBusquedaUsr] = useState("");
+    const [busquedaVen, setBusquedaVen] = useState("");
+
+    // --- ESTADOS DE DATOS Y PAGINACIÓN ---
     // Productos
     const [productos, setProductos] = useState([]);
     const [pagProductos, setPagProductos] = useState(1);
@@ -42,17 +46,28 @@ const AdminPanel = () => {
     const [editandoUsuarioId, setEditandoUsuarioId] = useState(null);
     const [formDataUsuario, setFormDataUsuario] = useState({ nombre: '', apellido: '', email: '', rol: 'cliente', password: '', direccion: '' });
 
-    // URL ACTUALIZADA CON TU SERVIDOR CORRECTO (ddk1)
+    // URL BASE DEL SERVIDOR CORRECTO
     const baseURL = import.meta.env.VITE_API_URL || 'https://dbgymshark-ddk1.onrender.com/api';
+
+    // Función "Llave Maestra" para evitar el error 401 enviando ambos formatos de Token
+    const getAuthHeaders = () => {
+        const token = localStorage.getItem('token') || '';
+        return {
+            'x-auth-token': token,
+            'Authorization': `Bearer ${token}`
+        };
+    };
 
     // --- CARGA DE PRODUCTOS ---
     const cargarProductos = async () => {
         setCargando(true);
         try {
-            const res = await axios.get(`${baseURL}/productos?page=${pagProductos}&limit=${itemsPorPagina}&search=${busqueda}`);
+            const config = { headers: getAuthHeaders() };
+            const res = await axios.get(`${baseURL}/productos?page=${pagProductos}&limit=${itemsPorPagina}&search=${busquedaProd}`, config);
             if (res.data) {
                 const dataArr = res.data.productos || res.data || [];
                 setProductos(Array.isArray(dataArr) ? dataArr : []);
+                
                 setTotalPagProductos(res.data.pagination?.pages || res.data.paginasTotales || 1);
                 setTotalProductosCount(res.data.pagination?.total || res.data.totalCount || res.data.total || (Array.isArray(dataArr) ? dataArr.length : 0)); 
             }
@@ -60,14 +75,14 @@ const AdminPanel = () => {
         finally { setCargando(false); }
     };
 
-    // --- CARGA DE USUARIOS Y VENTAS (CON AUTENTICACIÓN BEARER CORREGIDA) ---
+    // --- CARGA DE USUARIOS Y VENTAS ---
     const cargarDatosExtra = async (vista) => {
         const paginaActual = vista === 'usuarios' ? pagUsuarios : pagVentas;
+        const busquedaActual = vista === 'usuarios' ? busquedaUsr : busquedaVen;
+        
         try {
-            const token = localStorage.getItem('token');
-            // AQUÍ ESTÁ LA MAGIA: Regresamos al Bearer que usa tu Catálogo
-            const config = { headers: { Authorization: `Bearer ${token}` } }; 
-            const res = await axios.get(`${baseURL}/admin/panel/${vista}?page=${paginaActual}&limit=${itemsPorPagina}`, config);
+            const config = { headers: getAuthHeaders() }; 
+            const res = await axios.get(`${baseURL}/admin/panel/${vista}?page=${paginaActual}&limit=${itemsPorPagina}&search=${busquedaActual}`, config);
             
             if (vista === 'usuarios') {
                 const arr = res.data.usuarios || res.data || [];
@@ -84,9 +99,10 @@ const AdminPanel = () => {
         } catch (error) { console.error(`Error en ${vista}:`, error); }
     };
 
-    useEffect(() => { cargarProductos(); }, [pagProductos, busqueda]);
-    useEffect(() => { cargarDatosExtra('usuarios'); }, [pagUsuarios]);
-    useEffect(() => { cargarDatosExtra('ventas'); }, [pagVentas]);
+    // Efectos sincronizados con la búsqueda independiente de cada tabla
+    useEffect(() => { cargarProductos(); }, [pagProductos, busquedaProd]);
+    useEffect(() => { cargarDatosExtra('usuarios'); }, [pagUsuarios, busquedaUsr]);
+    useEffect(() => { cargarDatosExtra('ventas'); }, [pagVentas, busquedaVen]);
 
     // --- LÓGICA DE DATOS EXISTENTES PARA SUGERENCIAS ---
     const categoriasExistentes = useMemo(() => [...new Set(productos.map(p => p.product_type).filter(Boolean))], [productos]);
@@ -125,7 +141,7 @@ const AdminPanel = () => {
         setFormData({ ...formData, variants: [...formData.variants, { color: '', size: '', price: 0, inventory_quantity: 0, image: "" }] });
     };
 
-    // --- ACCIONES DE PRODUCTOS (CON AUTENTICACIÓN BEARER CORREGIDA) ---
+    // --- ACCIONES DE PRODUCTOS ---
     const abrirModalEditar = (prod) => {
         setEditandoId(prod._id);
         setFormData({ ...prod });
@@ -135,8 +151,7 @@ const AdminPanel = () => {
     const handleGuardar = async (e) => {
         e.preventDefault();
         try {
-            const token = localStorage.getItem('token');
-            const config = { headers: { Authorization: `Bearer ${token}` } }; 
+            const config = { headers: getAuthHeaders() }; 
             if (editandoId) await axios.put(`${baseURL}/productos/${editandoId}`, formData, config);
             else await axios.post(`${baseURL}/productos`, formData, config);
             setModalAbierto(false);
@@ -148,8 +163,8 @@ const AdminPanel = () => {
     const handleEliminar = async (id) => {
         if (!window.confirm("¿Eliminar este producto permanentemente?")) return;
         try {
-            const token = localStorage.getItem('token');
-            await axios.delete(`${baseURL}/productos/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+            const config = { headers: getAuthHeaders() };
+            await axios.delete(`${baseURL}/productos/${id}`, config);
             cargarProductos();
         } catch (error) { alert("Error al eliminar"); }
     };
@@ -200,9 +215,14 @@ const AdminPanel = () => {
                         <i className="fas fa-search" style={{ color: '#000', fontSize: '18px' }}></i>
                         <input 
                             type="text" 
-                            placeholder="Buscar..." 
-                            value={busqueda} 
-                            onChange={(e) => { setBusqueda(e.target.value); setPagProductos(1); }} 
+                            placeholder={`Buscar en ${vistaActiva}...`} 
+                            value={vistaActiva === 'productos' ? busquedaProd : vistaActiva === 'usuarios' ? busquedaUsr : busquedaVen} 
+                            onChange={(e) => { 
+                                const valor = e.target.value;
+                                if (vistaActiva === 'productos') { setBusquedaProd(valor); setPagProductos(1); }
+                                else if (vistaActiva === 'usuarios') { setBusquedaUsr(valor); setPagUsuarios(1); }
+                                else if (vistaActiva === 'ventas') { setBusquedaVen(valor); setPagVentas(1); }
+                            }} 
                         />
                     </div>
                     {vistaActiva === 'productos' && (
