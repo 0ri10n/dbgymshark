@@ -154,8 +154,6 @@
     font-weight: 500;
 }
 
-.search-bar-makia input::placeholder { color: #888; }
-
 .admin-add-btn {
     background: var(--makia-blue);
     color: white;
@@ -174,7 +172,7 @@
     transform: translateY(-2px);
 }
 
-/* TABLA MAKIA PROPORCIONADA */
+/* TABLA MAKIA PROPORCIONADA Y CENTRADA */
 .admin-table-wrapper {
     background: var(--makia-surface);
     border: 1px solid var(--makia-border);
@@ -192,7 +190,7 @@
 .admin-table-fixed th {
     background: #080808;
     padding: 1.5rem;
-    text-align: left;
+    text-align: center;          /* CENTRAR TÍTULOS */
     font-size: 0.8rem;
     color: var(--makia-muted);
     text-transform: uppercase;
@@ -203,12 +201,17 @@
     padding: 1.5rem;
     border-bottom: 1px solid #1a1a1a;
     vertical-align: middle;
+    text-align: center;          /* CENTRAR CONTENIDO */
 }
 
-/* Proporciones de Columnas para evitar espacios vacíos */
+/* Columna de Título alineada a la izquierda */
+.col-title { 
+    width: 38%; 
+    text-align: left !important; 
+}
+
 .col-img { width: 85px; }
-.col-title { width: 38%; }
-.col-actions { width: 260px; text-align: center; }
+.col-actions { width: 260px; }
 
 .table-thumb {
     width: 55px;
@@ -232,7 +235,7 @@
     font-weight: 800;
     text-transform: uppercase;
     font-size: 0.7rem;
-    min-width: 105px;             /* TAMAÑO IDÉNTICO PARA AMBOS */
+    min-width: 105px;             /* TAMAÑO IDÉNTICO */
     cursor: pointer;
     transition: all 0.3s ease;
 }
@@ -273,12 +276,7 @@
     overflow-y: auto;
 }
 
-.admin-form-vertical { display: flex; flex-direction: column; gap: 1.8rem; }
-.field-group { display: flex; flex-direction: column; gap: 10px; }
-.field-group label { font-size: 0.85rem; font-weight: 700; color: var(--makia-muted); text-transform: uppercase; }
-.field-group input, .field-group select { background: #111; border: 1px solid var(--makia-border); color: white; padding: 12px; border-radius: 10px; }
-
-/* BOTONES DE FORMULARIO UNIFICADOS (GLOW) */
+/* BOTONES DEL FORMULARIO UNIFICADOS (GLOW) */
 .btn-makia-save, .btn-makia-blue {
     background: var(--makia-blue);
     color: white;
@@ -293,7 +291,6 @@
 
 .btn-makia-save:hover, .btn-makia-blue:hover {
     box-shadow: 0 0 20px rgba(77, 163, 255, 0.5);
-    filter: brightness(1.1);
 }
 
 .btn-makia-cancel {
@@ -312,7 +309,14 @@
     box-shadow: 0 0 15px rgba(255, 255, 255, 0.4);
 }
 
-/* VARIANTES AGRUPADAS POR COLOR */
+/* VARIANTES POR COLOR Y BOTÓN A LA DERECHA */
+.section-header-right {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;         /* ESPACIO EXTRA */
+}
+
 .color-group-card {
     background: #0a0a0a;
     border: 1px solid var(--makia-border);
@@ -322,59 +326,15 @@
     margin-bottom: 2rem;
 }
 
-.color-header-row { display: flex; gap: 20px; align-items: flex-end; margin-bottom: 20px; }
-.flex-1 { flex: 1; }
-.flex-2 { flex: 2; }
-
-/* PREVISUALIZACIÓN DE IMAGEN CENTRADA */
+/* PREVISUALIZACIÓN DE IMAGEN */
 .preview-centered { display: flex; justify-content: center; margin: 15px 0; }
-.image-preview-box {
+.mini-preview-form {
     max-height: 120px;            /* TAMAÑO COMPACTO */
     border-radius: 12px;
     border: 2px solid #222;
     box-shadow: 0 10px 30px rgba(0,0,0,0.5);
 }
 
-.sizes-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 12px;
-    padding-top: 15px;
-    border-top: 1px solid #1a1a1a;
-}
-
-.size-row {
-    display: flex;
-    gap: 15px;
-    align-items: flex-end;
-    position: relative;
-    background: #0f0f0f;
-    padding: 12px 50px 12px 12px;
-    border-radius: 10px;
-    border: 1px solid #1a1a1a;
-}
-
-/* BOTÓN ELIMINAR VARIANTE (X) */
-.btn-x {
-    position: absolute;
-    right: 10px;
-    bottom: 12px;
-    background: transparent;
-    color: var(--makia-danger);
-    border: 1px solid rgba(255, 77, 77, 0.3);
-    width: 35px;
-    height: 35px;
-    border-radius: 50%;
-    cursor: pointer;
-    transition: var(--transition);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.btn-x:hover { background: var(--makia-danger); color: white; }
-
-/* BOTÓN AÑADIR TALLA DENTRO DE COLOR */
 .btn-add-size {
     background: transparent;
     border: 1px solid #333;
@@ -385,21 +345,11 @@
     border-radius: 8px;
     font-weight: 700;
     cursor: pointer;
-    transition: all 0.2s ease;
 }
 
 .btn-add-size:hover { background: #151515; border-color: var(--makia-blue); }
 
-/* FOOTER Y PAGINACIÓN */
-.modal-footer {
-    display: flex;
-    justify-content: flex-end;
-    gap: 1.5rem;
-    margin-top: 2.5rem;
-    padding-top: 2rem;
-    border-top: 1px solid var(--makia-border);
-}
-
+/* PAGINACIÓN */
 .admin-pagination-theme {
     --pg-bg: #0a0a0a;
     --pg-bg-hover: #151515;
