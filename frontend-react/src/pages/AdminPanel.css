@@ -9,20 +9,18 @@
     --makia-text: #ffffff;
     --makia-muted: #888888;
     --makia-danger: #ff4d4d;      /* ROJO ELIMINAR */
-    --makia-success: #10b981;
     --makia-purple: #8b5cf6;
     --radius: 12px;
     --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* CONTENEDOR PRINCIPAL */
 .admin-container {
     box-sizing: border-box;
     min-height: 100vh;
     padding: 2.5rem;
-    font-family: 'Poppins', sans-serif;
     background-color: var(--makia-black);
     color: var(--makia-text);
+    font-family: 'Poppins', sans-serif;
 }
 
 /* HEADER: AJUSTE SEGÚN IMAGEN image_d7f9dc.png */
@@ -38,7 +36,6 @@
     font-weight: 900;
     letter-spacing: 3px;
     margin: 0;
-    line-height: 1;
 }
 
 .admin-user-panel {
@@ -54,21 +51,22 @@
 .user-welcome-info {
     display: flex;
     flex-direction: column;
-    text-align: left; /* Alineado a la izquierda dentro del panel */
+    align-items: center; /* CENTRADO SEGÚN PETICIÓN */
+    text-align: center;
+    gap: 2px;
 }
 
 .welcome-text { 
     font-size: 0.75rem; 
     color: var(--makia-muted); 
-    margin-bottom: -2px;
 }
 
-/* Administrador más pequeño según petición */
-.user-name-small { 
+/* Administrador más pequeño y centrado debajo */
+.user-name-header { 
     font-weight: 800; 
     color: var(--makia-blue); 
-    font-size: 1.1rem; 
-    line-height: 1;
+    font-size: 1rem; /* TAMAÑO PEQUEÑO image_d7f9dc.png */
+    line-height: 1.1;
 }
 
 .admin-logout-btn {
@@ -85,10 +83,8 @@
 .admin-logout-btn:hover {
     background: var(--makia-danger);
     border-color: var(--makia-danger);
-    box-shadow: 0 0 15px rgba(255, 77, 77, 0.5);
 }
 
-/* LÍNEA DIVISORIA Y SUBTÍTULO */
 .header-divider {
     border: 0;
     border-top: 1px solid var(--makia-border);
@@ -99,10 +95,9 @@
     font-size: 1.6rem;
     font-weight: 700;
     margin-bottom: 2.5rem;
-    letter-spacing: 0.5px;
 }
 
-/* TARJETAS DE ESTADÍSTICAS E ILUMINACIÓN */
+/* TARJETAS DE ESTADÍSTICAS (CONTADORES REALES) */
 .admin-stats {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -122,13 +117,14 @@
     transition: var(--transition);
 }
 
-.stat-info h3 { margin: 0; font-size: 1.2rem; }
-.stat-info p { margin: 5px 0 0; color: var(--makia-muted); font-size: 0.9rem; }
-.stat-count { font-size: 2.5rem; font-weight: 800; opacity: 0.9; }
+.stat-count {
+    font-size: 2.5rem;
+    font-weight: 800;
+}
 
-.active-prod { border-color: var(--makia-blue) !important; box-shadow: 0 0 25px rgba(77, 163, 255, 0.2); }
-.active-ventas { border-color: var(--makia-success) !important; box-shadow: 0 0 25px rgba(16, 185, 129, 0.2); }
-.active-user { border-color: var(--makia-purple) !important; box-shadow: 0 0 25px rgba(139, 92, 246, 0.2); }
+.active-prod { border-color: var(--makia-blue) !important; box-shadow: 0 0 20px rgba(77, 163, 255, 0.2); }
+.active-ventas { border-color: #10b981 !important; box-shadow: 0 0 20px rgba(16, 185, 129, 0.2); }
+.active-user { border-color: var(--makia-purple) !important; box-shadow: 0 0 20px rgba(139, 92, 246, 0.2); }
 
 /* CONTROLES */
 .admin-controls-row {
@@ -139,13 +135,12 @@
 }
 
 .search-bar-makia {
-    background: #ffffff;
+    background: #fff;
     border-radius: 50px;
-    display: flex;
-    align-items: center;
     padding: 8px 22px;
     width: 380px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.25);
+    display: flex;
+    align-items: center;
 }
 
 .search-bar-makia input {
@@ -154,22 +149,20 @@
     color: #000;
     width: 100%;
     outline: none;
-    font-size: 0.95rem;
-    font-weight: 500;
 }
 
 .admin-add-btn {
     background: var(--makia-blue);
-    color: white;
-    border: none;
+    color: #fff;
     padding: 14px 28px;
     border-radius: 12px;
     font-weight: 800;
+    border: none;
     cursor: pointer;
     text-transform: uppercase;
 }
 
-/* TABLA MAKIA TOTALMENTE CENTRADA [ADECUACIÓN] */
+/* TABLA TOTALMENTE CENTRADA */
 .admin-table-wrapper {
     background: var(--makia-surface);
     border: 1px solid var(--makia-border);
@@ -187,10 +180,10 @@
 .admin-table-fixed th {
     background: #080808;
     padding: 1.5rem;
-    text-align: center; /* CENTRADO TOTAL */
-    font-size: 0.8rem;
     color: var(--makia-muted);
     text-transform: uppercase;
+    text-align: center; /* CENTRADO */
+    font-size: 0.8rem;
     letter-spacing: 1.5px;
 }
 
@@ -198,11 +191,8 @@
     padding: 1.5rem;
     border-bottom: 1px solid #1a1a1a;
     vertical-align: middle;
-    text-align: center; /* CENTRADO TOTAL */
-    color: var(--makia-text);
+    text-align: center; /* CENTRADO */
 }
-
-.col-title { width: 30%; }
 
 .table-thumb {
     width: 55px;
@@ -212,19 +202,10 @@
 }
 
 .btn-table {
-    border: none;
-    padding: 9px 18px;
-    border-radius: 8px;
-    font-weight: 800;
-    text-transform: uppercase;
-    font-size: 0.7rem;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    margin: 0 5px;
+    border: none; padding: 9px 18px; border-radius: 8px; font-weight: 800; cursor: pointer; margin: 0 5px; text-transform: uppercase; font-size: 0.7rem;
 }
-
-.btn-edit { background: #ffffff; color: #000; }
-.btn-delete { background: var(--makia-danger); color: white; }
+.btn-edit { background: #fff; color: #000; }
+.btn-delete { background: var(--makia-danger); color: #fff; }
 
 /* MODALES */
 .modal-overlay {
@@ -252,18 +233,18 @@
 .admin-form-vertical { display: flex; flex-direction: column; gap: 1.5rem; }
 .field-group { display: flex; flex-direction: column; gap: 8px; }
 .field-group label { font-size: 0.85rem; font-weight: 700; color: var(--makia-muted); text-transform: uppercase; }
-.field-group input, .field-group select { background: #111; border: 1px solid var(--makia-border); color: white; padding: 12px; border-radius: 10px; outline: none; }
+.field-group input, .field-group select { background: #111; border: 1px solid var(--makia-border); color: #fff; padding: 12px; border-radius: 10px; outline: none; }
 
-/* FILA DE COLOR Y URL EXPANDIDA CON PREVIEW AL FINAL [ADECUACIÓN] */
+/* FILA DE COLOR Y URL EXPANDIDA CON IMAGEN AL FINAL */
 .color-header-row { 
     display: flex; 
     gap: 20px; 
     align-items: flex-end; 
-    margin-bottom: 35px; /* ESPACIO PARA QUE NO SE PEGUE A LAS TALLAS */
+    margin-bottom: 35px; /* ESPACIO PARA QUE NO SE PEGUE ABAJO */
 }
 
-.color-input-fixed { width: 220px; }
-.url-input-expanded { flex: 1; } /* EXPANSIÓN DEL CAMPO URL */
+.color-box-small { width: 220px; }
+.url-box-expanded { flex: 1; } /* EXPANSIÓN DEL CAMPO URL */
 
 .mini-preview-container { 
     display: flex; 
@@ -319,24 +300,23 @@
     border-top: 1px solid #222;
 }
 
-/* FILA DE TALLA Y CENTRADO DE TACHE ROJO [ADECUACIÓN] */
+/* CENTRADO VERTICAL DE TACHES ROJOS (✕) */
 .size-row {
     display: flex;
     gap: 15px;
     background: #0f0f0f;
-    padding: 15px 70px 15px 15px; /* Espacio extra derecha para el tache */
+    padding: 15px 70px 15px 15px;
     border-radius: 10px;
     align-items: flex-end;
     position: relative;
     margin-bottom: 12px;
 }
 
-/* Tache rojo centrado al alto de su tarjeta image_d7fe3b.png */
 .btn-x {
     position: absolute;
     right: 25px;
-    top: 50%; 
-    transform: translateY(-20%); /* Ajuste por altura de labels */
+    top: 50%; /* CENTRADO AL ALTO DE LA TARJETA */
+    transform: translateY(-20%); /* AJUSTE POR ETIQUETAS */
     background: none;
     color: var(--makia-danger);
     border: none;
@@ -348,7 +328,7 @@
 
 .btn-x:hover { color: #ff0000; transform: translateY(-20%) scale(1.2); }
 
-/* BOTÓN AÑADIR OTRA TALLA (DISEÑO ORIGINAL RESTAURADO) [ADECUACIÓN] */
+/* BOTÓN AÑADIR OTRA TALLA (DISEÑO ORIGINAL) */
 .btn-add-size {
     background: transparent;
     border: 1px solid #333;
@@ -367,7 +347,7 @@
     border-color: var(--makia-blue);
 }
 
-/* FOOTER Y BOTONES MODAL */
+/* BOTONES FINALES */
 .btn-makia-save {
     background: var(--makia-blue);
     color: #fff;
@@ -401,7 +381,7 @@
 
 /* OTROS */
 .role-badge {
-    padding: 4px 12px;
+    padding: 4px 10px;
     border-radius: 6px;
     background: #222;
     color: var(--makia-purple);
