@@ -12,20 +12,20 @@ const AdminPanel = () => {
     const [busqueda, setBusqueda] = useState("");
     const [cargando, setCargando] = useState(false);
 
-    // --- ESTADOS DE DATOS Y PAGINACIÓN INDEPENDIENTE (10 elementos por página) ---
-    // Productos: Lógica para leer todos los registros y paginar correctamente
+    // --- ESTADOS DE DATOS Y PAGINACIÓN INDEPENDIENTE (Siguiendo lógica de Catalogo.jsx) ---
+    // Productos
     const [productos, setProductos] = useState([]);
     const [pagProductos, setPagProductos] = useState(1);
     const [totalPagProductos, setTotalPagProductos] = useState(1);
     const [totalProductosCount, setTotalProductosCount] = useState(0); 
 
-    // Usuarios: Corregido para mostrar usuarios existentes
+    // Usuarios
     const [listaUsuarios, setListaUsuarios] = useState([]);
     const [pagUsuarios, setPagUsuarios] = useState(1);
     const [totalPagUsuarios, setTotalPagUsuarios] = useState(1);
     const [totalUsuariosCount, setTotalUsuariosCount] = useState(0);
 
-    // Ventas: Lógica de paginación y contadores reales
+    // Ventas
     const [listaVentas, setListaVentas] = useState([]);
     const [pagVentas, setPagVentas] = useState(1);
     const [totalPagVentas, setTotalPagVentas] = useState(1);
@@ -40,28 +40,30 @@ const AdminPanel = () => {
     const [editandoUsuarioId, setEditandoUsuarioId] = useState(null);
     const [formDataUsuario, setFormDataUsuario] = useState({ nombre: '', apellido: '', email: '', rol: 'cliente', password: '', direccion: '' });
 
-    const baseURL = import.meta.env.VITE_API_URL || 'https://dbgymshark-mb5q.onrender.com/api';
+    const baseURL = import.meta.env.VITE_API_URL || 'https://dbgymshark-ddk1.onrender.com/api';
 
-    // --- CARGA DE PRODUCTOS (Independiente) ---
+    // --- CARGA DE PRODUCTOS (Lógica Catalogo.jsx corregida) ---
     const cargarProductos = async () => {
         setCargando(true);
         try {
+            // Se añade la página a la URL
             const res = await axios.get(`${baseURL}/productos?page=${pagProductos}&limit=10&search=${busqueda}`);
             if (res.data) {
                 setProductos(res.data.productos || []);
-                setTotalPagProductos(res.data.paginasTotales || 1);
-                // Contador total real de la base de datos
-                setTotalProductosCount(res.data.totalCount || 0); 
+                // Sincronización con el objeto pagination del backend
+                setTotalPagProductos(res.data.pagination?.pages || res.data.paginasTotales || 1);
+                // Contador total real de documentos en la DB
+                setTotalProductosCount(res.data.totalCount || res.data.totalProductos || 0); 
             }
         } catch (error) { console.error("Error al cargar productos:", error); }
         finally { setCargando(false); }
     };
 
-    // --- CARGA DE USUARIOS Y VENTAS (Solución contundente a la paginación y visibilidad) ---
+    // --- CARGA DE USUARIOS Y VENTAS (Solución Error 401 y Contadores) ---
     const cargarDatosExtra = async (vista) => {
         const paginaActual = vista === 'usuarios' ? pagUsuarios : pagVentas;
         const token = localStorage.getItem('token');
-        if (!token) return;
+        if (!token) return; // Evita peticiones sin sesión
 
         try {
             const config = { headers: { Authorization: `Bearer ${token}` } };
@@ -70,24 +72,24 @@ const AdminPanel = () => {
             if (vista === 'usuarios') {
                 const data = res.data.usuarios || res.data;
                 setListaUsuarios(Array.isArray(data) ? data : []);
-                setTotalPagUsuarios(res.data.paginasTotales || 1);
+                setTotalPagUsuarios(res.data.pagination?.pages || res.data.paginasTotales || 1);
                 setTotalUsuariosCount(res.data.totalCount || (Array.isArray(data) ? data.length : 0));
             }
             if (vista === 'ventas') {
                 const data = res.data.ventas || res.data;
                 setListaVentas(Array.isArray(data) ? data : []);
-                setTotalPagVentas(res.data.paginasTotales || 1);
+                setTotalPagVentas(res.data.pagination?.pages || res.data.paginasTotales || 1);
                 setTotalVentasCount(res.data.totalCount || (Array.isArray(data) ? data.length : 0));
             }
-        } catch (error) { console.error(`Error al cargar ${vista}:`, error); }
+        } catch (error) { console.error(`Error en ${vista}:`, error); }
     };
 
-    // Sincronización de carga por sección independiente
+    // Sincronización de efectos por cambio de página independiente
     useEffect(() => { cargarProductos(); }, [pagProductos, busqueda]);
     useEffect(() => { cargarDatosExtra('usuarios'); }, [pagUsuarios]);
     useEffect(() => { cargarDatosExtra('ventas'); }, [pagVentas]);
 
-    // --- LÓGICA DE SUGERENCIAS (Datalists) ---
+    // --- SUGERENCIAS DINÁMICAS (Datalists) ---
     const categoriasExistentes = useMemo(() => [...new Set(productos.map(p => p.product_type).filter(Boolean))], [productos]);
     const coloresExistentes = useMemo(() => {
         const colores = [];
@@ -100,7 +102,7 @@ const AdminPanel = () => {
         return [...new Set(tallas)];
     }, [productos]);
 
-    // --- LÓGICA DE VARIANTES AGRUPADAS ---
+    // --- VARIANTES ---
     const variantsByColor = useMemo(() => {
         const grouped = {};
         formData.variants.forEach((v, index) => {
@@ -137,12 +139,12 @@ const AdminPanel = () => {
             else await axios.post(`${baseURL}/productos`, formData, config);
             setModalAbierto(false);
             cargarProductos();
-            alert("Operación exitosa");
-        } catch (error) { alert("Error al guardar"); }
+            alert("Guardado correctamente");
+        } catch (error) { alert("Error al guardar cambios"); }
     };
 
     const handleEliminar = async (id) => {
-        if (!window.confirm("¿Deseas eliminar este registro?")) return;
+        if (!window.confirm("¿Eliminar este registro permanentemente?")) return;
         try {
             const token = localStorage.getItem('token');
             await axios.delete(`${baseURL}/productos/${id}`, { headers: { Authorization: `Bearer ${token}` } });
@@ -163,8 +165,8 @@ const AdminPanel = () => {
                 <div className="admin-user-panel">
                     <div className="user-welcome-info">
                         <span className="welcome-text">¡Nos alegra verte de nuevo!</span>
-                        {/* Administrador en azul, bold y centrado debajo */}
-                        <span className="user-name-header-blue">{user?.nombre || 'Administrador'}</span>
+                        {/* Administrador centrado abajo, color azul marcado y más pequeño */}
+                        <span className="user-name-small-blue">{user?.nombre || 'Administrador'}</span>
                     </div>
                     <button onClick={logout} className="admin-logout-btn">Cerrar Sesión</button>
                 </div>
@@ -221,7 +223,7 @@ const AdminPanel = () => {
                                     <td className="center"><img src={p.variants?.[0]?.image || p.image_principal} className="table-thumb" alt="p" /></td>
                                     <td className="col-title center">{p.title}</td>
                                     <td className="center">{p.product_type}</td>
-                                    <td className="col-actions">
+                                    <td className="col-actions center">
                                         <button className="btn-table btn-edit" onClick={() => abrirModalEditar(p)}>Editar</button>
                                         <button className="btn-table btn-delete" onClick={() => handleEliminar(p._id)}>Eliminar</button>
                                     </td>
@@ -233,13 +235,15 @@ const AdminPanel = () => {
                                     <td className="center">{u.email}</td>
                                     <td className="center">{u.direccion || 'No registrada'}</td>
                                     <td className="center"><span className="role-badge">{u.rol}</span></td>
-                                    <td className="col-actions center"><button className="btn-table btn-edit" onClick={() => abrirModalEditarUsuario(u)}>Editar</button></td>
+                                    <td className="col-actions center">
+                                        <button className="btn-table btn-edit" onClick={() => abrirModalEditarUsuario(u)}>Editar</button>
+                                    </td>
                                 </tr>
                             ))}
                             {vistaActiva === 'ventas' && listaVentas.map(v => (
                                 <tr key={v._id}>
                                     <td className="center">{v._id.substring(0,8)}...</td>
-                                    <td className="center">{v.usuario?.nombre || 'Anon'}</td>
+                                    <td className="center">{v.usuario?.nombre || 'Visitante'}</td>
                                     <td className="center">{v.direccion || 'N/A'}</td>
                                     <td className="center">{new Date(v.fecha).toLocaleDateString()}</td>
                                     <td className="center">${v.total?.toFixed(2)}</td>
@@ -278,6 +282,7 @@ const AdminPanel = () => {
                                     <h3>Variantes por Color</h3>
                                     <button type="button" className="btn-makia-save" onClick={addEmptyColorGroup}>+ Añadir Color</button>
                                 </div>
+                                
                                 {variantsByColor.map((group, idx) => (
                                     <div key={idx} className="color-group-card">
                                         <div className="color-header-row">
@@ -301,9 +306,14 @@ const AdminPanel = () => {
 
                                             {/* PREVISUALIZACIÓN AL FINAL DE LA FILA */}
                                             <div className="mini-preview-container">
-                                                {group.image ? <img src={group.image} alt="p" className="form-mini-preview" /> : <div className="form-mini-preview-placeholder">URL</div>}
+                                                {group.image ? (
+                                                    <img src={group.image} alt="preview" className="form-mini-preview" />
+                                                ) : (
+                                                    <div className="form-mini-preview-placeholder">URL</div>
+                                                )}
                                             </div>
                                         </div>
+
                                         <div className="sizes-grid">
                                             {group.items.map((item) => (
                                                 <div key={item.originalIndex} className="size-row">
@@ -318,11 +328,11 @@ const AdminPanel = () => {
                                                     <div className="field-group"><label>Precio</label><input type="number" value={item.price} onChange={e => { const nv = [...formData.variants]; nv[item.originalIndex].price = Number(e.target.value); setFormData({...formData, variants: nv}); }} /></div>
                                                     <div className="field-group"><label>Stock</label><input type="number" value={item.inventory_quantity} onChange={e => { const nv = [...formData.variants]; nv[item.originalIndex].inventory_quantity = Number(e.target.value); setFormData({...formData, variants: nv}); }} /></div>
                                                     
-                                                    {/* ELIMINAR VARIANTE (Tache centrado en CSS) */}
+                                                    {/* ELIMINAR VARIANTE (Tache centrado verticalmente en CSS) */}
                                                     <button type="button" className="btn-x" onClick={() => setFormData({...formData, variants: formData.variants.filter((_, i) => i !== item.originalIndex)})}>✕</button>
                                                 </div>
                                             ))}
-                                            {/* BOTÓN DISEÑO ORIGINAL RESTAURADO */}
+                                            {/* BOTÓN DISEÑO ORIGINAL image_d7fdfe.png */}
                                             <button type="button" className="btn-add-size" onClick={() => addSizeToColor(group.color)}>+ Añadir otra talla en este color</button>
                                         </div>
                                     </div>
