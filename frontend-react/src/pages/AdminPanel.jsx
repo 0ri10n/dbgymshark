@@ -44,7 +44,7 @@ const AdminPanel = () => {
 
     const baseURL = import.meta.env.VITE_API_URL || 'https://dbgymshark-mb5q.onrender.com/api';
 
-    // --- CARGA DE PRODUCTOS CON CONTADOR TOTAL ---
+    // --- CARGA DE PRODUCTOS ---
     const cargarProductos = async () => {
         setCargando(true);
         try {
@@ -54,17 +54,16 @@ const AdminPanel = () => {
                 const arregloProductos = Array.isArray(dataArr) ? dataArr : [];
                 setProductos(arregloProductos);
                 
-                // La suma de registros de todas las páginas (contador total)
+                // Calculamos el total real de registros en toda la BD
                 const conteoTotal = res.data.totalCount || arregloProductos.length;
                 setTotalProductosCount(conteoTotal); 
-                
                 setTotalPagProductos(res.data.paginasTotales || Math.ceil(conteoTotal / itemsPorPagina) || 1);
             }
         } catch (error) { console.error("Error al cargar productos:", error); }
         finally { setCargando(false); }
     };
 
-    // --- CARGA DE USUARIOS Y VENTAS CON CONTADOR TOTAL ---
+    // --- CARGA DE USUARIOS Y VENTAS ---
     const cargarDatosExtra = async (vista) => {
         const paginaActual = vista === 'usuarios' ? pagUsuarios : pagVentas;
         try {
@@ -77,7 +76,7 @@ const AdminPanel = () => {
                 const arr = Array.isArray(data) ? data : [];
                 setListaUsuarios(arr);
                 
-                // La suma de registros de todas las páginas (contador total)
+                // Calculamos el total real
                 const conteo = res.data.totalCount || arr.length;
                 setTotalUsuariosCount(conteo);
                 setTotalPagUsuarios(res.data.paginasTotales || Math.ceil(conteo / itemsPorPagina) || 1);
@@ -87,7 +86,7 @@ const AdminPanel = () => {
                 const arr = Array.isArray(data) ? data : [];
                 setListaVentas(arr);
                 
-                // La suma de registros de todas las páginas (contador total)
+                // Calculamos el total real
                 const conteo = res.data.totalCount || arr.length;
                 setTotalVentasCount(conteo);
                 setTotalPagVentas(res.data.paginasTotales || Math.ceil(conteo / itemsPorPagina) || 1);
@@ -183,9 +182,8 @@ const AdminPanel = () => {
     return (
         <div className="admin-container">
             <header className="admin-header">
-                {/* CAMBIO AQUÍ: Imagen del logo de MAKIA */}
+                {/* LOGO DE MAKIA */}
                 <img src="/logo-makia-pages.png" alt="Makia Logo" className="brand-logo-img" />
-                
                 <div className="admin-user-panel">
                     <div className="user-welcome-info">
                         <span className="welcome-text">¡Nos alegra verte de nuevo!</span>
@@ -278,7 +276,7 @@ const AdminPanel = () => {
                     </table>
                 </div>
 
-                {/* PAGINACIÓN DINÁMICA POR SECCIÓN */}
+                {/* PAGINACIÓN DINÁMICA */}
                 {vistaActiva === 'productos' && <PaginationControls page={pagProductos} totalPages={totalPagProductos} onPageChange={setPagProductos} className="admin-pagination-theme" />}
                 {vistaActiva === 'usuarios' && <PaginationControls page={pagUsuarios} totalPages={totalPagUsuarios} onPageChange={setPagUsuarios} className="admin-pagination-theme" />}
                 {vistaActiva === 'ventas' && <PaginationControls page={pagVentas} totalPages={totalPagVentas} onPageChange={setPagVentas} className="admin-pagination-theme" />}
