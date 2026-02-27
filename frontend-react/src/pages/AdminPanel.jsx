@@ -46,10 +46,10 @@ const AdminPanel = () => {
     const [editandoUsuarioId, setEditandoUsuarioId] = useState(null);
     const [formDataUsuario, setFormDataUsuario] = useState({ nombre: '', apellido: '', email: '', rol: 'cliente', password: '', direccion: '' });
 
-    // URL BASE DEL SERVIDOR CORRECTO
+    // URL BASE DEL SERVIDOR
     const baseURL = import.meta.env.VITE_API_URL || 'https://dbgymshark-ddk1.onrender.com/api';
 
-    // Función "Llave Maestra" para evitar el error 401 enviando ambos formatos de Token
+    // Función "Llave Maestra" para enviar ambos formatos de Token y evitar el 401
     const getAuthHeaders = () => {
         const token = localStorage.getItem('token') || '';
         return {
@@ -169,13 +169,40 @@ const AdminPanel = () => {
         } catch (error) { alert("Error al eliminar"); }
     };
 
+    // --- ACCIONES DE USUARIOS ---
     const abrirModalEditarUsuario = (u) => {
         setEditandoUsuarioId(u._id);
         setFormDataUsuario({
-            nombre: u.nombre || '', apellido: u.apellido || '', email: u.email || '',
-            rol: u.rol || 'cliente', password: '', direccion: u.direccion || ''
+            nombre: u.nombre || '', 
+            apellido: u.apellido || '', 
+            email: u.email || '',
+            rol: u.rol || 'cliente', 
+            password: '', 
+            direccion: u.direccion || ''
         });
         setModalUsuarioAbierto(true);
+    };
+
+    const handleGuardarUsuario = async (e) => {
+        e.preventDefault();
+        try {
+            const config = { headers: getAuthHeaders() };
+            const datosAEnviar = { ...formDataUsuario };
+            
+            if (!datosAEnviar.password) {
+                delete datosAEnviar.password;
+            }
+
+            // Petición PUT para actualizar el usuario
+            await axios.put(`${baseURL}/usuarios/${editandoUsuarioId}`, datosAEnviar, config);
+            
+            setModalUsuarioAbierto(false);
+            cargarDatosExtra('usuarios'); 
+            alert("Usuario actualizado con éxito");
+        } catch (error) { 
+            console.error("Error al actualizar usuario:", error);
+            alert("Error al actualizar usuario. Revisa la consola."); 
+        }
     };
 
     return (
@@ -357,6 +384,49 @@ const AdminPanel = () => {
                             <datalist id="db-tallas">{tallasExistentes.map(t => <option key={t} value={t} />)}</datalist>
                             <div className="modal-footer">
                                 <button type="button" className="btn-makia-cancel" onClick={() => setModalAbierto(false)}>Cancelar</button>
+                                <button type="submit" className="btn-makia-save">Guardar Cambios</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* MODAL USUARIOS */}
+            {modalUsuarioAbierto && (
+                <div className="modal-overlay">
+                    <div className="modal-content" style={{ maxWidth: '600px' }}>
+                        <h2>Editar Usuario</h2>
+                        <form onSubmit={handleGuardarUsuario} className="admin-form-vertical">
+                            <div className="field-group">
+                                <label>Nombre</label>
+                                <input type="text" required value={formDataUsuario.nombre} onChange={e => setFormDataUsuario({...formDataUsuario, nombre: e.target.value})} />
+                            </div>
+                            <div className="field-group">
+                                <label>Apellido</label>
+                                <input type="text" value={formDataUsuario.apellido} onChange={e => setFormDataUsuario({...formDataUsuario, apellido: e.target.value})} />
+                            </div>
+                            <div className="field-group">
+                                <label>Email</label>
+                                <input type="email" required value={formDataUsuario.email} onChange={e => setFormDataUsuario({...formDataUsuario, email: e.target.value})} />
+                            </div>
+                            <div className="field-group">
+                                <label>Dirección</label>
+                                <input type="text" value={formDataUsuario.direccion} onChange={e => setFormDataUsuario({...formDataUsuario, direccion: e.target.value})} />
+                            </div>
+                            <div className="field-group">
+                                <label>Rol</label>
+                                <select value={formDataUsuario.rol} onChange={e => setFormDataUsuario({...formDataUsuario, rol: e.target.value})}>
+                                    <option value="cliente">Cliente</option>
+                                    <option value="admin">Administrador</option>
+                                </select>
+                            </div>
+                            <div className="field-group">
+                                <label>Nueva Contraseña</label>
+                                <input type="password" placeholder="Dejar en blanco para no cambiarla" value={formDataUsuario.password} onChange={e => setFormDataUsuario({...formDataUsuario, password: e.target.value})} />
+                            </div>
+                            
+                            <div className="modal-footer">
+                                <button type="button" className="btn-makia-cancel" onClick={() => setModalUsuarioAbierto(false)}>Cancelar</button>
                                 <button type="submit" className="btn-makia-save">Guardar Cambios</button>
                             </div>
                         </form>
