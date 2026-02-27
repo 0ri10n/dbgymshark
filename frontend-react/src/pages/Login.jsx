@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext'; // Tu sistema de sesiones
-import LightRays from '../components/LightRays';
+import Beams from '../components/Beams';
 import './login.css';
 
 const Login = () => {
@@ -50,7 +50,18 @@ const Login = () => {
 
     return (
         <div className="login-page-wrapper">
-            <LightRays />
+            <div className="beams-background-wrapper">
+                <Beams
+                    beamWidth={3}
+                    beamHeight={30}
+                    beamNumber={20}
+                    lightColor="#ffffff"
+                    speed={2}
+                    noiseIntensity={1.75}
+                    scale={0.2}
+                    rotation={30}
+                />
+            </div>
 
             {!isLoginVisible && (
                 <div className="brand-background">

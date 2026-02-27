@@ -1,3 +1,10 @@
+.beams-background-wrapper {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+}
+
 .login-page-wrapper {
     min-height: 100vh;
     min-height: 100svh;
