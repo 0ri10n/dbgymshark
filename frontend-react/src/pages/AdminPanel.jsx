@@ -12,7 +12,6 @@ const AdminPanel = () => {
     const [busqueda, setBusqueda] = useState("");
     const [cargando, setCargando] = useState(false);
 
-    // --- ESTADOS DE DATOS Y PAGINACIÓN INDEPENDIENTE ---
     const itemsPorPagina = 10;
 
     // Productos
@@ -44,33 +43,28 @@ const AdminPanel = () => {
 
     const baseURL = import.meta.env.VITE_API_URL || 'https://dbgymshark-mb5q.onrender.com/api';
 
-    // --- CARGA DE PRODUCTOS ---
+    // --- CARGA DE PRODUCTOS (CONTEO INTELIGENTE) ---
     const cargarProductos = async () => {
         setCargando(true);
         try {
             const res = await axios.get(`${baseURL}/productos?page=${pagProductos}&limit=${itemsPorPagina}&search=${busqueda}`);
             if (res.data) {
                 const dataArr = res.data.productos || res.data || [];
-                const arregloProductos = Array.isArray(dataArr) ? dataArr : [];
-                setProductos(arregloProductos);
+                const arreglo = Array.isArray(dataArr) ? dataArr : [];
+                setProductos(arreglo);
                 
-                // Forzamos a que cuente y pagine todo lo que detecte el arreglo si viene de golpe
-                const conteoBackend = res.data.totalCount || res.data.total || 0;
-                const conteoTotal = arregloProductos.length > itemsPorPagina ? arregloProductos.length : (conteoBackend || arregloProductos.length);
+                // Si el backend no manda "totalCount", sacamos el total contando el tamaño del arreglo crudo
+                const conteoReal = res.data.totalCount || res.data.total || arreglo.length;
+                setTotalProductosCount(conteoReal); 
                 
-                setTotalProductosCount(conteoTotal); 
-                
-                const paginasReales = (res.data.paginasTotales && res.data.paginasTotales > 1) 
-                    ? res.data.paginasTotales 
-                    : Math.ceil(conteoTotal / itemsPorPagina) || 1;
-                    
-                setTotalPagProductos(paginasReales);
+                // Calculamos las páginas basándonos en ese total real
+                setTotalPagProductos(res.data.paginasTotales || Math.ceil(conteoReal / itemsPorPagina) || 1);
             }
         } catch (error) { console.error("Error al cargar productos:", error); }
         finally { setCargando(false); }
     };
 
-    // --- CARGA DE USUARIOS Y VENTAS ---
+    // --- CARGA DE USUARIOS Y VENTAS (CONTEO INTELIGENTE) ---
     const cargarDatosExtra = async (vista) => {
         const paginaActual = vista === 'usuarios' ? pagUsuarios : pagVentas;
         try {
@@ -83,32 +77,18 @@ const AdminPanel = () => {
                 const arr = Array.isArray(data) ? data : [];
                 setListaUsuarios(arr);
                 
-                const conteoBackend = res.data.totalCount || res.data.total || 0;
-                const conteoTotal = arr.length > itemsPorPagina ? arr.length : (conteoBackend || arr.length);
-                
-                setTotalUsuariosCount(conteoTotal);
-                
-                const paginasReales = (res.data.paginasTotales && res.data.paginasTotales > 1) 
-                    ? res.data.paginasTotales 
-                    : Math.ceil(conteoTotal / itemsPorPagina) || 1;
-                    
-                setTotalPagUsuarios(paginasReales);
+                const conteoReal = res.data.totalCount || res.data.total || arr.length;
+                setTotalUsuariosCount(conteoReal);
+                setTotalPagUsuarios(res.data.paginasTotales || Math.ceil(conteoReal / itemsPorPagina) || 1);
             }
             if (vista === 'ventas') {
                 const data = res.data.ventas || res.data;
                 const arr = Array.isArray(data) ? data : [];
                 setListaVentas(arr);
                 
-                const conteoBackend = res.data.totalCount || res.data.total || 0;
-                const conteoTotal = arr.length > itemsPorPagina ? arr.length : (conteoBackend || arr.length);
-                
-                setTotalVentasCount(conteoTotal);
-                
-                const paginasReales = (res.data.paginasTotales && res.data.paginasTotales > 1) 
-                    ? res.data.paginasTotales 
-                    : Math.ceil(conteoTotal / itemsPorPagina) || 1;
-                    
-                setTotalPagVentas(paginasReales);
+                const conteoReal = res.data.totalCount || res.data.total || arr.length;
+                setTotalVentasCount(conteoReal);
+                setTotalPagVentas(res.data.paginasTotales || Math.ceil(conteoReal / itemsPorPagina) || 1);
             }
         } catch (error) { console.error(`Error en ${vista}:`, error); }
     };
@@ -192,10 +172,15 @@ const AdminPanel = () => {
         setModalUsuarioAbierto(true);
     };
 
-    // --- FUNCIONES DE CORTADO (SLICE) RESTAURADA A LA VERSIÓN FUNCIONAL ---
-    const getPaginatedData = (array, page) => {
-        const startIndex = (page - 1) * itemsPorPagina;
-        return array.slice(startIndex, startIndex + itemsPorPagina);
+    // --- PAGINADOR A PRUEBA DE FALLOS ---
+    const procesarPaginado = (arreglo, paginaAct) => {
+        // Si el backend avienta toda la base de datos de un jalón (ej. más de 10 elementos), el frontend los corta.
+        if (arreglo.length > itemsPorPagina) {
+            const indexInicio = (paginaAct - 1) * itemsPorPagina;
+            return arreglo.slice(indexInicio, indexInicio + itemsPorPagina);
+        }
+        // Si el backend ya mandó exactamente los 10 de esa página, los pasamos directo sin cortar nada.
+        return arreglo;
     };
 
     return (
@@ -231,9 +216,15 @@ const AdminPanel = () => {
                 </section>
 
                 <div className="admin-controls-row">
+                    {/* BUSCADOR ACTUALIZADO CON FONT AWESOME */}
                     <div className="search-bar-makia">
-                        <span className="search-icon">🔍</span>
-                        <input type="text" placeholder="Buscar..." value={busqueda} onChange={(e) => { setBusqueda(e.target.value); setPagProductos(1); }} />
+                        <i className="fas fa-search" style={{ color: '#000', fontSize: '18px', marginRight: '8px' }}></i>
+                        <input 
+                            type="text" 
+                            placeholder="Buscar..." 
+                            value={busqueda} 
+                            onChange={(e) => { setBusqueda(e.target.value); setPagProductos(1); }} 
+                        />
                     </div>
                     {vistaActiva === 'productos' && (
                         <button className="admin-add-btn" onClick={() => { setEditandoId(null); setFormData({title:'', product_type:'', variants:[]}); setModalAbierto(true); }}>
@@ -256,7 +247,8 @@ const AdminPanel = () => {
                             )}
                         </thead>
                         <tbody>
-                            {vistaActiva === 'productos' && getPaginatedData(productos, pagProductos).map(p => (
+                            {/* AQUÍ APLICAMOS LA FUNCIÓN PROCESAR PAGINADO A LAS 3 TABLAS */}
+                            {vistaActiva === 'productos' && procesarPaginado(productos, pagProductos).map(p => (
                                 <tr key={p._id}>
                                     <td className="center"><img src={p.variants?.[0]?.image || p.image_principal} className="table-thumb" alt="p" /></td>
                                     <td className="col-title center">{p.title}</td>
@@ -268,7 +260,7 @@ const AdminPanel = () => {
                                 </tr>
                             ))}
                             
-                            {vistaActiva === 'usuarios' && getPaginatedData(listaUsuarios, pagUsuarios).map(u => (
+                            {vistaActiva === 'usuarios' && procesarPaginado(listaUsuarios, pagUsuarios).map(u => (
                                 <tr key={u._id}>
                                     <td className="center">{u.nombre} {u.apellido}</td>
                                     <td className="center">{u.email}</td>
@@ -280,7 +272,7 @@ const AdminPanel = () => {
                                 </tr>
                             ))}
                             
-                            {vistaActiva === 'ventas' && getPaginatedData(listaVentas, pagVentas).map(v => (
+                            {vistaActiva === 'ventas' && procesarPaginado(listaVentas, pagVentas).map(v => (
                                 <tr key={v._id}>
                                     <td className="center">{v._id.substring(0,8)}...</td>
                                     <td className="center">{v.usuario?.nombre || 'Anon'}</td>
@@ -294,10 +286,11 @@ const AdminPanel = () => {
                     </table>
                 </div>
 
-                {/* PAGINACIÓN DINÁMICA UTILIZANDO TU COMPONENTE IMPORTADO */}
-                {vistaActiva === 'productos' && <PaginationControls page={pagProductos} totalPages={totalPagProductos} onPageChange={setPagProductos} className="admin-pagination-theme" />}
-                {vistaActiva === 'usuarios' && <PaginationControls page={pagUsuarios} totalPages={totalPagUsuarios} onPageChange={setPagUsuarios} className="admin-pagination-theme" />}
-                {vistaActiva === 'ventas' && <PaginationControls page={pagVentas} totalPages={totalPagVentas} onPageChange={setPagVentas} className="admin-pagination-theme" />}
+                <div style={{ marginTop: '2rem' }}>
+                    {vistaActiva === 'productos' && <PaginationControls page={pagProductos} totalPages={totalPagProductos} onPageChange={setPagProductos} className="admin-pagination-theme" />}
+                    {vistaActiva === 'usuarios' && <PaginationControls page={pagUsuarios} totalPages={totalPagUsuarios} onPageChange={setPagUsuarios} className="admin-pagination-theme" />}
+                    {vistaActiva === 'ventas' && <PaginationControls page={pagVentas} totalPages={totalPagVentas} onPageChange={setPagVentas} className="admin-pagination-theme" />}
+                </div>
             </main>
 
             {/* MODAL PRODUCTO */}

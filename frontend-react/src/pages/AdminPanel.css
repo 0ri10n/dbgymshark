@@ -23,7 +23,7 @@
     font-family: 'Poppins', sans-serif;
 }
 
-/* HEADER: AJUSTE EXACTO A image_d7f9dc.png */
+/* HEADER Y LOGO */
 .admin-header {
     display: flex;
     justify-content: space-between;
@@ -32,7 +32,7 @@
 }
 
 .brand-logo-img {
-    height: 25px; /* Ajusta este valor si lo quieres más grande o más chico */
+    height: 45px; /* Tamaño controlado para el nuevo logo */
     width: auto;
     object-fit: contain;
 }
@@ -47,7 +47,6 @@
     border: 1px solid var(--makia-border);
 }
 
-/* Saludo y Nombre centrados uno bajo el otro con espacio pequeño */
 .user-welcome-info {
     display: flex;
     flex-direction: column;
@@ -61,7 +60,6 @@
     color: var(--makia-muted); 
 }
 
-/* Nombre en azul, bold y un poco más pequeño según imagen d7f9dc.png */
 .user-name-blue-header { 
     font-weight: 800; 
     color: var(--makia-blue); 
@@ -97,7 +95,7 @@
     margin-bottom: 2.5rem;
 }
 
-/* TARJETAS DE ESTADÍSTICAS (CONTADORES) */
+/* TARJETAS DE ESTADÍSTICAS */
 .admin-stats {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -126,7 +124,7 @@
 .active-ventas { border-color: #10b981 !important; box-shadow: 0 0 20px rgba(16, 185, 129, 0.2); }
 .active-user { border-color: var(--makia-purple) !important; box-shadow: 0 0 20px rgba(139, 92, 246, 0.2); }
 
-/* CONTROLES */
+/* CONTROLES Y BUSCADOR (LUPA ACTUALIZADA) */
 .admin-controls-row {
     display: flex;
     justify-content: space-between;
@@ -141,6 +139,12 @@
     width: 380px;
     display: flex;
     align-items: center;
+    gap: 10px; /* Separación entre la lupa y el input */
+}
+
+.search-bar-makia i {
+    color: #000;
+    font-size: 18px; /* Lupa de FontAwesome recuperada y ajustada */
 }
 
 .search-bar-makia input {
@@ -149,6 +153,8 @@
     color: #000;
     width: 100%;
     outline: none;
+    font-family: inherit;
+    font-size: 0.95rem;
 }
 
 .admin-add-btn {
@@ -162,7 +168,7 @@
     text-transform: uppercase;
 }
 
-/* TABLAS TOTALMENTE CENTRADAS */
+/* TABLAS */
 .admin-table-wrapper {
     background: var(--makia-surface);
     border: 1px solid var(--makia-border);
@@ -182,7 +188,7 @@
     padding: 1.5rem;
     color: var(--makia-muted);
     text-transform: uppercase;
-    text-align: center; /* CENTRADO TOTAL */
+    text-align: center; 
     font-size: 0.8rem;
     letter-spacing: 1.5px;
 }
@@ -191,7 +197,7 @@
     padding: 1.5rem;
     border-bottom: 1px solid #1a1a1a;
     vertical-align: middle;
-    text-align: center; /* CENTRADO TOTAL */
+    text-align: center; 
     color: var(--makia-text);
 }
 
@@ -238,16 +244,16 @@
 .field-group label { font-size: 0.85rem; font-weight: 700; color: var(--makia-muted); text-transform: uppercase; }
 .field-group input, .field-group select { background: #111; border: 1px solid var(--makia-border); color: #fff; padding: 12px; border-radius: 10px; outline: none; }
 
-/* FILA DE COLOR Y URL EXPANDIDA CON PREVIEW AL FINAL */
+/* VARIANTES Y COLORES */
 .color-header-row { 
     display: flex; 
     gap: 20px; 
     align-items: flex-end; 
-    margin-bottom: 35px; /* ESPACIO PARA QUE NO SE PEGUE A LAS TALLAS */
+    margin-bottom: 35px;
 }
 
 .color-input-fixed { width: 220px; }
-.url-input-expanded { flex: 1; } /* EXPANSIÓN DEL CAMPO URL */
+.url-input-expanded { flex: 1; }
 
 .mini-preview-container { 
     display: flex; 
@@ -278,10 +284,9 @@
     color: #555;
 }
 
-/* SECCIÓN VARIANTES */
 .section-header-variants {
     display: flex;
-    justify-content: space-between; /* BOTÓN AÑADIR COLOR A LA DERECHA */
+    justify-content: space-between;
     align-items: center;
     margin: 2rem 0;
 }
@@ -303,12 +308,12 @@
     border-top: 1px solid #222;
 }
 
-/* CENTRADO VERTICAL DE TACHES ROJOS (✕) - image_d7fe3b.png */
+/* FILAS DE TALLAS Y EL TACHE */
 .size-row {
     display: flex;
     gap: 15px;
     background: #0f0f0f;
-    padding: 15px 70px 15px 15px; /* Espacio extra derecha para el tache */
+    padding: 15px 70px 15px 15px;
     border-radius: 10px;
     align-items: flex-end;
     position: relative;
@@ -318,8 +323,8 @@
 .btn-x {
     position: absolute;
     right: 25px;
-    top: 50%; /* CENTRADO AL ALTO DE LA TARJETA */
-    transform: translateY(-20%); /* AJUSTE FINO POR ALTURA DE ETIQUETAS */
+    top: 50%;
+    transform: translateY(-20%);
     background: none;
     color: var(--makia-danger);
     border: none;
@@ -331,7 +336,6 @@
 
 .btn-x:hover { color: #ff0000; transform: translateY(-20%) scale(1.2); }
 
-/* BOTÓN AÑADIR OTRA TALLA (DISEÑO ORIGINAL RESTAURADO) - image_d7fdfe.png */
 .btn-add-size {
     background: transparent;
     border: 1px solid #333;
@@ -382,7 +386,6 @@
     padding-top: 1.5rem;
 }
 
-/* OTROS ELEMENTOS */
 .role-badge {
     padding: 4px 10px;
     border-radius: 6px;
@@ -391,10 +394,4 @@
     font-size: 0.7rem;
     font-weight: bold;
     text-transform: uppercase;
-}
-
-.admin-pagination-theme {
-    margin-top: 3rem;
-    display: flex;
-    justify-content: center;
 }
