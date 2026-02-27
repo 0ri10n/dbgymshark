@@ -4,25 +4,28 @@
 :root {
     --makia-black: #000000;
     --makia-surface: #111111;
-    --makia-blue: #4da3ff;
+    --makia-blue: #4da3ff;        /* AZUL VIBRANTE MAKIA */
     --makia-border: #222222;
     --makia-text: #ffffff;
     --makia-muted: #888888;
-    --makia-danger: #ff4d4d;
+    --makia-danger: #ff4d4d;      /* ROJO ELIMINAR */
+    --makia-success: #10b981;
     --makia-purple: #8b5cf6;
     --radius: 12px;
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* CONTENEDOR PRINCIPAL */
 .admin-container {
     box-sizing: border-box;
     min-height: 100vh;
     padding: 2.5rem;
+    font-family: 'Poppins', sans-serif;
     background-color: var(--makia-black);
     color: var(--makia-text);
-    font-family: 'Poppins', sans-serif;
 }
 
-/* HEADER: AJUSTE EXACTO A LA ÚLTIMA IMAGEN */
+/* HEADER: AJUSTE SEGÚN IMAGEN image_d7f9dc.png */
 .admin-header {
     display: flex;
     justify-content: space-between;
@@ -35,6 +38,7 @@
     font-weight: 900;
     letter-spacing: 3px;
     margin: 0;
+    line-height: 1;
 }
 
 .admin-user-panel {
@@ -48,21 +52,22 @@
 }
 
 .user-welcome-info {
-    text-align: left; /* Alineado a la izquierda dentro del panel como en la imagen */
     display: flex;
     flex-direction: column;
+    text-align: left; /* Alineado a la izquierda dentro del panel */
 }
 
-.welcome-text {
-    font-size: 0.8rem;
-    color: var(--makia-muted);
+.welcome-text { 
+    font-size: 0.75rem; 
+    color: var(--makia-muted); 
     margin-bottom: -2px;
 }
 
-.user-name-header {
-    font-size: 1.25rem;
-    font-weight: 800;
-    color: var(--makia-blue);
+/* Administrador más pequeño según petición */
+.user-name-small { 
+    font-weight: 800; 
+    color: var(--makia-blue); 
+    font-size: 1.1rem; 
     line-height: 1;
 }
 
@@ -74,21 +79,30 @@
     border-radius: 10px;
     cursor: pointer;
     font-weight: 700;
-    transition: 0.3s;
+    transition: var(--transition);
 }
 
 .admin-logout-btn:hover {
     background: var(--makia-danger);
     border-color: var(--makia-danger);
+    box-shadow: 0 0 15px rgba(255, 77, 77, 0.5);
 }
 
+/* LÍNEA DIVISORIA Y SUBTÍTULO */
 .header-divider {
     border: 0;
     border-top: 1px solid var(--makia-border);
     margin: 0 0 1.5rem 0;
 }
 
-/* TARJETAS DE ESTADÍSTICAS (CONTADORES) */
+.panel-subtitle {
+    font-size: 1.6rem;
+    font-weight: 700;
+    margin-bottom: 2.5rem;
+    letter-spacing: 0.5px;
+}
+
+/* TARJETAS DE ESTADÍSTICAS E ILUMINACIÓN */
 .admin-stats {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -105,17 +119,16 @@
     justify-content: space-between;
     align-items: center;
     cursor: pointer;
-    transition: 0.3s;
+    transition: var(--transition);
 }
 
-.stat-count {
-    font-size: 2.5rem;
-    font-weight: 800;
-}
+.stat-info h3 { margin: 0; font-size: 1.2rem; }
+.stat-info p { margin: 5px 0 0; color: var(--makia-muted); font-size: 0.9rem; }
+.stat-count { font-size: 2.5rem; font-weight: 800; opacity: 0.9; }
 
-.active-prod { border-color: var(--makia-blue) !important; box-shadow: 0 0 20px rgba(77, 163, 255, 0.2); }
-.active-ventas { border-color: #10b981 !important; box-shadow: 0 0 20px rgba(16, 185, 129, 0.2); }
-.active-user { border-color: #8b5cf6 !important; box-shadow: 0 0 20px rgba(139, 92, 246, 0.2); }
+.active-prod { border-color: var(--makia-blue) !important; box-shadow: 0 0 25px rgba(77, 163, 255, 0.2); }
+.active-ventas { border-color: var(--makia-success) !important; box-shadow: 0 0 25px rgba(16, 185, 129, 0.2); }
+.active-user { border-color: var(--makia-purple) !important; box-shadow: 0 0 25px rgba(139, 92, 246, 0.2); }
 
 /* CONTROLES */
 .admin-controls-row {
@@ -126,12 +139,13 @@
 }
 
 .search-bar-makia {
-    background: #fff;
+    background: #ffffff;
     border-radius: 50px;
-    padding: 8px 22px;
-    width: 380px;
     display: flex;
     align-items: center;
+    padding: 8px 22px;
+    width: 380px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.25);
 }
 
 .search-bar-makia input {
@@ -141,20 +155,21 @@
     width: 100%;
     outline: none;
     font-size: 0.95rem;
+    font-weight: 500;
 }
 
 .admin-add-btn {
     background: var(--makia-blue);
-    color: #fff;
+    color: white;
+    border: none;
     padding: 14px 28px;
     border-radius: 12px;
     font-weight: 800;
-    border: none;
     cursor: pointer;
     text-transform: uppercase;
 }
 
-/* TABLAS TOTALMENTE CENTRADAS */
+/* TABLA MAKIA TOTALMENTE CENTRADA [ADECUACIÓN] */
 .admin-table-wrapper {
     background: var(--makia-surface);
     border: 1px solid var(--makia-border);
@@ -172,10 +187,10 @@
 .admin-table-fixed th {
     background: #080808;
     padding: 1.5rem;
+    text-align: center; /* CENTRADO TOTAL */
+    font-size: 0.8rem;
     color: var(--makia-muted);
     text-transform: uppercase;
-    text-align: center; /* CENTRADO DE HEADERS */
-    font-size: 0.8rem;
     letter-spacing: 1.5px;
 }
 
@@ -183,7 +198,7 @@
     padding: 1.5rem;
     border-bottom: 1px solid #1a1a1a;
     vertical-align: middle;
-    text-align: center; /* CENTRADO DE CONTENIDO */
+    text-align: center; /* CENTRADO TOTAL */
     color: var(--makia-text);
 }
 
@@ -201,14 +216,15 @@
     padding: 9px 18px;
     border-radius: 8px;
     font-weight: 800;
-    cursor: pointer;
-    margin: 0 5px;
     text-transform: uppercase;
     font-size: 0.7rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin: 0 5px;
 }
 
-.btn-edit { background: #fff; color: #000; }
-.btn-delete { background: var(--makia-danger); color: #fff; }
+.btn-edit { background: #ffffff; color: #000; }
+.btn-delete { background: var(--makia-danger); color: white; }
 
 /* MODALES */
 .modal-overlay {
@@ -233,50 +249,21 @@
     overflow-y: auto;
 }
 
-.admin-form-vertical {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-}
+.admin-form-vertical { display: flex; flex-direction: column; gap: 1.5rem; }
+.field-group { display: flex; flex-direction: column; gap: 8px; }
+.field-group label { font-size: 0.85rem; font-weight: 700; color: var(--makia-muted); text-transform: uppercase; }
+.field-group input, .field-group select { background: #111; border: 1px solid var(--makia-border); color: white; padding: 12px; border-radius: 10px; outline: none; }
 
-.field-group {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.field-group label {
-    font-size: 0.85rem;
-    font-weight: 700;
-    color: var(--makia-muted);
-    text-transform: uppercase;
-}
-
-.field-group input, 
-.field-group select {
-    background: #111;
-    border: 1px solid var(--makia-border);
-    color: #fff;
-    padding: 12px;
-    border-radius: 10px;
-    outline: none;
-}
-
-/* FILA DE COLOR Y URL EXPANDIDA CON PREVIEW AL FINAL */
+/* FILA DE COLOR Y URL EXPANDIDA CON PREVIEW AL FINAL [ADECUACIÓN] */
 .color-header-row { 
     display: flex; 
     gap: 20px; 
     align-items: flex-end; 
-    margin-bottom: 30px; /* ESPACIO CON LOS ELEMENTOS DE ABAJO */
+    margin-bottom: 35px; /* ESPACIO PARA QUE NO SE PEGUE A LAS TALLAS */
 }
 
-.color-box-small {
-    width: 220px;
-}
-
-.url-box-expanded {
-    flex: 1; /* EXPANDE EL CAMPO URL */
-}
+.color-input-fixed { width: 220px; }
+.url-input-expanded { flex: 1; } /* EXPANSIÓN DEL CAMPO URL */
 
 .mini-preview-container { 
     display: flex; 
@@ -327,48 +314,46 @@
 .sizes-grid {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 12px;
-    padding-top: 25px; /* ESPACIO RESPECTO A LA FILA DE COLOR */
+    gap: 15px;
+    padding-top: 25px; 
     border-top: 1px solid #222;
 }
 
-/* FILA DE TALLA Y CENTRADO DE TACHE ROJO */
+/* FILA DE TALLA Y CENTRADO DE TACHE ROJO [ADECUACIÓN] */
 .size-row {
     display: flex;
     gap: 15px;
     background: #0f0f0f;
-    padding: 15px 60px 15px 15px; /* ESPACIO EXTRA A LA DERECHA PARA EL TACHE */
+    padding: 15px 70px 15px 15px; /* Espacio extra derecha para el tache */
     border-radius: 10px;
     align-items: flex-end;
     position: relative;
     margin-bottom: 12px;
 }
 
+/* Tache rojo centrado al alto de su tarjeta image_d7fe3b.png */
 .btn-x {
     position: absolute;
-    right: 18px;
-    top: 50%; /* CENTRADO VERTICAL */
-    transform: translateY(-20%); /* AJUSTE FINO POR EL LABEL */
+    right: 25px;
+    top: 50%; 
+    transform: translateY(-20%); /* Ajuste por altura de labels */
     background: none;
     color: var(--makia-danger);
     border: none;
     cursor: pointer;
-    font-size: 1.5rem;
+    font-size: 1.6rem;
     font-weight: bold;
     transition: 0.2s;
 }
 
-.btn-x:hover {
-    color: #ff0000;
-    transform: translateY(-20%) scale(1.2);
-}
+.btn-x:hover { color: #ff0000; transform: translateY(-20%) scale(1.2); }
 
-/* BOTÓN AÑADIR OTRA TALLA (DISEÑO ORIGINAL RESTAURADO) */
+/* BOTÓN AÑADIR OTRA TALLA (DISEÑO ORIGINAL RESTAURADO) [ADECUACIÓN] */
 .btn-add-size {
     background: transparent;
     border: 1px solid #333;
     color: var(--makia-blue);
-    padding: 10px;
+    padding: 12px;
     width: 100%;
     border-radius: 8px;
     font-weight: 700;
@@ -382,7 +367,7 @@
     border-color: var(--makia-blue);
 }
 
-/* BOTONES FINALES DEL MODAL */
+/* FOOTER Y BOTONES MODAL */
 .btn-makia-save {
     background: var(--makia-blue);
     color: #fff;
@@ -414,12 +399,12 @@
     padding-top: 1.5rem;
 }
 
-/* BADGES Y PAGINACIÓN */
+/* OTROS */
 .role-badge {
     padding: 4px 12px;
     border-radius: 6px;
     background: #222;
-    color: #8b5cf6;
+    color: var(--makia-purple);
     font-size: 0.7rem;
     font-weight: bold;
     text-transform: uppercase;
