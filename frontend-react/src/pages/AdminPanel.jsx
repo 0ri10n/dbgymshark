@@ -54,7 +54,7 @@ const AdminPanel = () => {
                 const arregloProductos = Array.isArray(dataArr) ? dataArr : [];
                 setProductos(arregloProductos);
                 
-                // Calculamos el total real de registros en toda la BD
+                // Extrae el conteo real si el backend lo envía o lo deduce del arreglo
                 const conteoTotal = res.data.totalCount || arregloProductos.length;
                 setTotalProductosCount(conteoTotal); 
                 setTotalPagProductos(res.data.paginasTotales || Math.ceil(conteoTotal / itemsPorPagina) || 1);
@@ -76,7 +76,6 @@ const AdminPanel = () => {
                 const arr = Array.isArray(data) ? data : [];
                 setListaUsuarios(arr);
                 
-                // Calculamos el total real
                 const conteo = res.data.totalCount || arr.length;
                 setTotalUsuariosCount(conteo);
                 setTotalPagUsuarios(res.data.paginasTotales || Math.ceil(conteo / itemsPorPagina) || 1);
@@ -86,7 +85,6 @@ const AdminPanel = () => {
                 const arr = Array.isArray(data) ? data : [];
                 setListaVentas(arr);
                 
-                // Calculamos el total real
                 const conteo = res.data.totalCount || arr.length;
                 setTotalVentasCount(conteo);
                 setTotalPagVentas(res.data.paginasTotales || Math.ceil(conteo / itemsPorPagina) || 1);
@@ -173,8 +171,14 @@ const AdminPanel = () => {
         setModalUsuarioAbierto(true);
     };
 
-    // --- FUNCIONES DE CORTADO (SLICE) PARA EL RENDER ---
+    // --- FUNCIONES DE CORTADO (SLICE) INTELIGENTE ---
     const getPaginatedData = (array, page) => {
+        // Si el arreglo tiene 10 elementos o menos, significa que el backend ya hizo 
+        // la paginación correctamente y solo nos envió los datos de la página actual.
+        if (array.length <= itemsPorPagina) return array;
+
+        // Si el backend mandó todos los registros de golpe en un solo arreglo (ej. los 200), 
+        // el frontend se encarga de cortarlos según la página.
         const startIndex = (page - 1) * itemsPorPagina;
         return array.slice(startIndex, startIndex + itemsPorPagina);
     };
@@ -184,6 +188,7 @@ const AdminPanel = () => {
             <header className="admin-header">
                 {/* LOGO DE MAKIA */}
                 <img src="/logo-makia-pages.png" alt="Makia Logo" className="brand-logo-img" />
+                
                 <div className="admin-user-panel">
                     <div className="user-welcome-info">
                         <span className="welcome-text">¡Nos alegra verte de nuevo!</span>
@@ -276,7 +281,7 @@ const AdminPanel = () => {
                     </table>
                 </div>
 
-                {/* PAGINACIÓN DINÁMICA */}
+                {/* PAGINACIÓN DINÁMICA UTILIZANDO TU COMPONENTE IMPORTADO */}
                 {vistaActiva === 'productos' && <PaginationControls page={pagProductos} totalPages={totalPagProductos} onPageChange={setPagProductos} className="admin-pagination-theme" />}
                 {vistaActiva === 'usuarios' && <PaginationControls page={pagUsuarios} totalPages={totalPagUsuarios} onPageChange={setPagUsuarios} className="admin-pagination-theme" />}
                 {vistaActiva === 'ventas' && <PaginationControls page={pagVentas} totalPages={totalPagVentas} onPageChange={setPagVentas} className="admin-pagination-theme" />}

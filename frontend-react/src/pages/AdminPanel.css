@@ -32,7 +32,7 @@
 }
 
 .brand-logo-img {
-    height: 30px; /* Ajusta este valor si lo quieres más grande o más chico */
+    height: 25px; /* Ajusta este valor si lo quieres más grande o más chico */
     width: auto;
     object-fit: contain;
 }
