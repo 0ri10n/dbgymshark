@@ -54,10 +54,17 @@ const AdminPanel = () => {
                 const arregloProductos = Array.isArray(dataArr) ? dataArr : [];
                 setProductos(arregloProductos);
                 
-                // Extrae el conteo real si el backend lo envía o lo deduce del arreglo
-                const conteoTotal = res.data.totalCount || arregloProductos.length;
+                // Forzamos a que cuente y pagine todo lo que detecte el arreglo si viene de golpe
+                const conteoBackend = res.data.totalCount || res.data.total || 0;
+                const conteoTotal = arregloProductos.length > itemsPorPagina ? arregloProductos.length : (conteoBackend || arregloProductos.length);
+                
                 setTotalProductosCount(conteoTotal); 
-                setTotalPagProductos(res.data.paginasTotales || Math.ceil(conteoTotal / itemsPorPagina) || 1);
+                
+                const paginasReales = (res.data.paginasTotales && res.data.paginasTotales > 1) 
+                    ? res.data.paginasTotales 
+                    : Math.ceil(conteoTotal / itemsPorPagina) || 1;
+                    
+                setTotalPagProductos(paginasReales);
             }
         } catch (error) { console.error("Error al cargar productos:", error); }
         finally { setCargando(false); }
@@ -76,18 +83,32 @@ const AdminPanel = () => {
                 const arr = Array.isArray(data) ? data : [];
                 setListaUsuarios(arr);
                 
-                const conteo = res.data.totalCount || arr.length;
-                setTotalUsuariosCount(conteo);
-                setTotalPagUsuarios(res.data.paginasTotales || Math.ceil(conteo / itemsPorPagina) || 1);
+                const conteoBackend = res.data.totalCount || res.data.total || 0;
+                const conteoTotal = arr.length > itemsPorPagina ? arr.length : (conteoBackend || arr.length);
+                
+                setTotalUsuariosCount(conteoTotal);
+                
+                const paginasReales = (res.data.paginasTotales && res.data.paginasTotales > 1) 
+                    ? res.data.paginasTotales 
+                    : Math.ceil(conteoTotal / itemsPorPagina) || 1;
+                    
+                setTotalPagUsuarios(paginasReales);
             }
             if (vista === 'ventas') {
                 const data = res.data.ventas || res.data;
                 const arr = Array.isArray(data) ? data : [];
                 setListaVentas(arr);
                 
-                const conteo = res.data.totalCount || arr.length;
-                setTotalVentasCount(conteo);
-                setTotalPagVentas(res.data.paginasTotales || Math.ceil(conteo / itemsPorPagina) || 1);
+                const conteoBackend = res.data.totalCount || res.data.total || 0;
+                const conteoTotal = arr.length > itemsPorPagina ? arr.length : (conteoBackend || arr.length);
+                
+                setTotalVentasCount(conteoTotal);
+                
+                const paginasReales = (res.data.paginasTotales && res.data.paginasTotales > 1) 
+                    ? res.data.paginasTotales 
+                    : Math.ceil(conteoTotal / itemsPorPagina) || 1;
+                    
+                setTotalPagVentas(paginasReales);
             }
         } catch (error) { console.error(`Error en ${vista}:`, error); }
     };
@@ -171,14 +192,8 @@ const AdminPanel = () => {
         setModalUsuarioAbierto(true);
     };
 
-    // --- FUNCIONES DE CORTADO (SLICE) INTELIGENTE ---
+    // --- FUNCIONES DE CORTADO (SLICE) RESTAURADA A LA VERSIÓN FUNCIONAL ---
     const getPaginatedData = (array, page) => {
-        // Si el arreglo tiene 10 elementos o menos, significa que el backend ya hizo 
-        // la paginación correctamente y solo nos envió los datos de la página actual.
-        if (array.length <= itemsPorPagina) return array;
-
-        // Si el backend mandó todos los registros de golpe en un solo arreglo (ej. los 200), 
-        // el frontend se encarga de cortarlos según la página.
         const startIndex = (page - 1) * itemsPorPagina;
         return array.slice(startIndex, startIndex + itemsPorPagina);
     };
@@ -186,9 +201,7 @@ const AdminPanel = () => {
     return (
         <div className="admin-container">
             <header className="admin-header">
-                {/* LOGO DE MAKIA */}
                 <img src="/logo-makia-pages.png" alt="Makia Logo" className="brand-logo-img" />
-                
                 <div className="admin-user-panel">
                     <div className="user-welcome-info">
                         <span className="welcome-text">¡Nos alegra verte de nuevo!</span>
