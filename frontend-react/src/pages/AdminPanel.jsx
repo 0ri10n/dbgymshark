@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import PaginationControls from '../components/PaginationControls';
 import './AdminPanel.css';
 
-// --- FUNCIONES DE UTILIDAD (Lógica de MAKIA) ---
+// --- FUNCIONES DE UTILIDAD ---
 const getColorHex = (name = "") => {
     const n = name.toLowerCase();
     if (n.includes('blue')) return "#1e3a8a";
@@ -42,11 +42,6 @@ const AdminPanel = () => {
     const [vistaActiva, setVistaActiva] = useState('productos');
     const [listaUsuarios, setListaUsuarios] = useState([]);
     const [listaVentas, setListaVentas] = useState([]);
-    const [modalUsuarioAbierto, setModalUsuarioAbierto] = useState(false);
-    const [editandoUsuarioId, setEditandoUsuarioId] = useState(null);
-    const [formDataUsuario, setFormDataUsuario] = useState({
-        nombre: '', apellido: '', email: '', rol: 'cliente', password: '', direccion: ''
-    });
 
     const baseURL = import.meta.env.VITE_API_URL || 'https://dbgymshark-mb5q.onrender.com/api';
 
@@ -69,12 +64,11 @@ const AdminPanel = () => {
         };
     }, [productos]);
 
-    // --- CARGA DE DATOS (Sin límite de 20 para ver todo el inventario) ---
+    // --- CARGA DE DATOS (Restaurado el límite para habilitar el paginado) ---
     const cargarProductos = async () => {
         setCargando(true);
         try {
-            // Aumentamos el límite para asegurar que carguen todos los productos
-            const res = await axios.get(`${baseURL}/productos?page=${pagina}&limit=500`);
+            const res = await axios.get(`${baseURL}/productos?page=${pagina}&limit=10`);
             if (res.data.productos) {
                 setProductos(res.data.productos);
                 setTotalPaginas(res.data.paginasTotales || 1);
@@ -105,6 +99,22 @@ const AdminPanel = () => {
     }, [pagina]);
 
     // --- MANEJO DE PRODUCTOS ---
+    const abrirModalCrear = () => {
+        setEditandoId(null);
+        setFormData({ title: '', vendor: '', product_type: '', image_src: '', image_principal: '', variants: [] });
+        setModalAbierto(true);
+    };
+
+    const abrirModalEditar = (prod) => {
+        setEditandoId(prod._id);
+        setFormData({
+            title: prod.title || '', handle: prod.handle || '', vendor: prod.vendor || '',
+            product_type: prod.product_type || '', image_principal: prod.image_principal || '',
+            image_src: prod.image_src || '', variants: prod.variants || [] 
+        });
+        setModalAbierto(true);
+    };
+
     const handleGuardar = async (e) => {
         e.preventDefault();
         try {
@@ -131,7 +141,6 @@ const AdminPanel = () => {
 
     return (
         <div className="admin-container">
-            {/* Listas de Sugerencias */}
             <datalist id="list-categorias">{sugerencias.categorias.map(c => <option key={c} value={c} />)}</datalist>
             <datalist id="list-colores">{sugerencias.colores.map(c => <option key={c} value={c} />)}</datalist>
             <datalist id="list-tallas">{sugerencias.tallas.map(s => <option key={s} value={s} />)}</datalist>
@@ -139,13 +148,12 @@ const AdminPanel = () => {
             <header className="admin-header">
                 <div className="admin-brand-section">
                     <h1 className="brand-logo">MAKIA</h1>
-                    <span className="brand-subtitle">Administrador del Sistema</span>
                 </div>
                 
                 <div className="admin-user-panel">
                     <div className="user-welcome-info">
                         <span className="welcome-text">¡Nos alegra verte de nuevo!</span>
-                        <span className="user-name">Admin: {user?.nombre || 'Administrador'}</span>
+                        <span className="user-name">Admin: {user?.nombre || user?.name || 'Administrador'}</span>
                     </div>
                     <button onClick={logout} className="admin-logout-btn">Cerrar Sesión</button>
                 </div>
@@ -154,7 +162,6 @@ const AdminPanel = () => {
             <hr className="header-divider" />
 
             <main className="admin-main">
-                {/* Título movido debajo de la línea divisoria */}
                 <div className="section-title-wrapper">
                     <h2 className="panel-subtitle">Panel de Administración</h2>
                 </div>
@@ -187,7 +194,7 @@ const AdminPanel = () => {
                     <div className="admin-section-header">
                         <h2>Gestión de {vistaActiva.toUpperCase()}</h2>
                         {vistaActiva === 'productos' && (
-                            <button className="admin-add-btn" onClick={() => { setEditandoId(null); setFormData({title:'', vendor:'', product_type:'', image_src:'', image_principal:'', variants:[]}); setModalAbierto(true); }}>
+                            <button className="admin-add-btn" onClick={abrirModalCrear}>
                                 + Nuevo Producto
                             </button>
                         )}
@@ -207,7 +214,7 @@ const AdminPanel = () => {
                                         <td>{p.title}</td>
                                         <td>{p.product_type}</td>
                                         <td className="admin-row-actions">
-                                            <button className="admin-edit-btn" onClick={() => { setEditandoId(p._id); setFormData(p); setModalAbierto(true); }}>Editar</button>
+                                            <button className="admin-edit-btn" onClick={() => abrirModalEditar(p)}>Editar</button>
                                             <button className="admin-delete-btn" onClick={() => handleEliminar(p._id)}>Eliminar</button>
                                         </td>
                                     </tr>
@@ -218,7 +225,7 @@ const AdminPanel = () => {
                                         <td>{u.email}</td>
                                         <td><span className={`role-badge ${u.rol}`}>{u.rol}</span></td>
                                         <td className="admin-row-actions">
-                                            <button className="admin-edit-btn" onClick={() => { /* Editar Usuario */ }}>Editar</button>
+                                            <button className="admin-edit-btn" onClick={() => {/* Editar Usuario */}}>Editar</button>
                                         </td>
                                     </tr>
                                 ))}
@@ -237,7 +244,7 @@ const AdminPanel = () => {
                 </section>
             </main>
 
-            {/* --- MODAL PRODUCTOS CON CORRECCIÓN DE OVERFLOW --- */}
+            {/* --- MODAL PRODUCTOS --- */}
             {modalAbierto && (
                 <div className="modal-overlay">
                     <div className="modal-content modal-large">
@@ -261,7 +268,10 @@ const AdminPanel = () => {
                             </div>
 
                             <div className="variants-section">
-                                <h3>Variantes (Tallas, Colores e Inventario)</h3>
+                                <div className="variants-header">
+                                    <h3>Variantes (Tallas, Colores e Inventario)</h3>
+                                    <button type="button" className="btn-add-variant" onClick={() => setFormData({...formData, variants: [...formData.variants, {size:'', color:'', price:0, inventory_quantity: 0}]})}>+ Añadir Variante</button>
+                                </div>
                                 {formData.variants.map((v, i) => (
                                     <div key={i} className="variant-card fixed-layout">
                                         <div className="field-group">
@@ -286,18 +296,16 @@ const AdminPanel = () => {
                                                     const nv = [...formData.variants]; nv[i].price = Number(e.target.value); setFormData({...formData, variants: nv});
                                                 }} />
                                             </div>
-                                            <div className="field-group" style={{width: '100px'}}>
-                                                <label>Inventario</label>
+                                            <div className="field-group" style={{width: '90px'}}>
+                                                <label>Stock</label>
                                                 <input type="number" value={v.inventory_quantity || 0} onChange={e => {
                                                     const nv = [...formData.variants]; nv[i].inventory_quantity = Number(e.target.value); setFormData({...formData, variants: nv});
                                                 }} />
                                             </div>
-                                            {/* Botón X posicionado para no desbordar */}
                                             <button type="button" className="btn-remove-fixed" onClick={() => setFormData({...formData, variants: formData.variants.filter((_, idx) => idx !== i)})}>✕</button>
                                         </div>
                                     </div>
                                 ))}
-                                <button type="button" className="btn-add-variant" onClick={() => setFormData({...formData, variants: [...formData.variants, {size:'', color:'', price:0, inventory_quantity: 0}]})}>+ Añadir Variante</button>
                             </div>
 
                             <div className="modal-footer">

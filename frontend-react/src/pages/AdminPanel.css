@@ -4,15 +4,15 @@
 :root {
     --makia-black: #000000;
     --makia-surface: #111111;
-    --makia-blue: #4da3ff;        /* EL AZUL VIBRANTE DE TUS BOTONES */
+    --makia-blue: #4da3ff;        /* AZUL MAKIA */
     --makia-border: #222222;
     --makia-text: #ffffff;
     --makia-muted: #888888;
-    --makia-danger: #ff4d4d;
+    --makia-danger: #ff4d4d;      /* ROJO PARA ELIMINAR */
     --makia-success: #10b981;
     --makia-purple: #8b5cf6;
     --radius: 12px;
-    --transition: all 0.2s ease-in-out;
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* CONTENEDOR PRINCIPAL */
@@ -25,17 +25,12 @@
     color: var(--makia-text);
 }
 
-/* HEADER: BRANDING (IZQUIERDA) Y USUARIO (DERECHA) */
+/* HEADER: BRANDING Y PANEL DE USUARIO */
 .admin-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding-bottom: 2rem;
-}
-
-.admin-brand-section {
-    display: flex;
-    flex-direction: column;
 }
 
 .brand-logo {
@@ -44,14 +39,6 @@
     letter-spacing: 3px;
     margin: 0;
     line-height: 1;
-}
-
-.brand-subtitle {
-    font-size: 0.8rem;
-    color: var(--makia-muted);
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    margin-top: 5px;
 }
 
 .admin-user-panel {
@@ -70,32 +57,27 @@
     text-align: right;
 }
 
-.welcome-text {
-    font-size: 0.7rem;
-    color: var(--makia-muted);
-}
-
-.user-name {
-    font-weight: 700;
-    color: var(--makia-blue);
-}
+.welcome-text { font-size: 0.7rem; color: var(--makia-muted); }
+.user-name { font-weight: 700; color: var(--makia-blue); }
 
 .admin-logout-btn {
     background: transparent;
     border: 1px solid var(--makia-border);
     color: var(--makia-text);
     padding: 8px 16px;
-    border-radius: var(--radius);
+    border-radius: 10px;
     cursor: pointer;
+    font-weight: 600;
     transition: var(--transition);
 }
 
 .admin-logout-btn:hover {
     background: var(--makia-danger);
     border-color: var(--makia-danger);
+    box-shadow: 0 0 15px rgba(255, 77, 77, 0.4);
 }
 
-/* LÍNEA DIVISORIA Y TÍTULO DE SECCIÓN */
+/* LÍNEA DIVISORIA Y TÍTULO */
 .header-divider {
     border: 0;
     border-top: 1px solid var(--makia-border);
@@ -108,7 +90,7 @@
     margin-bottom: 2rem;
 }
 
-/* TARJETAS DE ESTADÍSTICAS CON CONTEO */
+/* TARJETAS DE ESTADÍSTICAS */
 .admin-stats {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -130,26 +112,12 @@
 
 .stat-info h3 { margin: 0; font-size: 1.1rem; }
 .stat-info p { margin: 4px 0 0; color: var(--makia-muted); font-size: 0.85rem; }
-
-.stat-count {
-    font-size: 2.2rem;
-    font-weight: 800;
-    opacity: 0.9;
-}
+.stat-count { font-size: 2.2rem; font-weight: 800; opacity: 0.9; }
 
 .active-prod { border-color: var(--makia-blue) !important; box-shadow: 0 5px 20px rgba(77, 163, 255, 0.1); }
-.active-ventas { border-color: var(--makia-success) !important; }
-.active-user { border-color: var(--makia-purple) !important; }
 
-/* BOTÓN NUEVO PRODUCTO (ALINEADO A LA DERECHA) */
-.admin-section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1.5rem;
-}
-
-.admin-add-btn {
+/* BOTONES CON EFECTO DE ILUMINACIÓN */
+.admin-add-btn, .btn-save, .btn-add-variant {
     background: var(--makia-blue);
     color: white;
     border: none;
@@ -157,10 +125,42 @@
     border-radius: 10px;
     font-weight: 700;
     cursor: pointer;
-    margin-left: auto; /* Empuja a la derecha */
+    transition: var(--transition);
+    text-transform: uppercase;
+    font-size: 0.8rem;
 }
 
-/* TABLA DE PRODUCTOS UNIFICADA */
+.admin-add-btn:hover, .btn-save:hover, .btn-add-variant:hover {
+    box-shadow: 0 0 20px rgba(77, 163, 255, 0.6);
+    filter: brightness(1.1);
+}
+
+/* BOTONES DE TABLA: EDITAR (BLANCO) Y ELIMINAR (ROJO) */
+.admin-edit-btn, .admin-delete-btn {
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    transition: var(--transition);
+}
+
+.admin-edit-btn { background: #ffffff; color: #000000; }
+.admin-edit-btn:hover {
+    background: var(--makia-blue);
+    color: #ffffff;
+    box-shadow: 0 0 15px rgba(77, 163, 255, 0.5);
+}
+
+.admin-delete-btn { background: var(--makia-danger); color: #ffffff; margin-left: 8px; }
+.admin-delete-btn:hover {
+    filter: brightness(1.2);
+    box-shadow: 0 0 15px rgba(255, 77, 77, 0.5);
+}
+
+/* TABLA */
 .admin-table-wrapper {
     background: var(--makia-surface);
     border: 1px solid var(--makia-border);
@@ -168,50 +168,12 @@
     overflow: hidden;
 }
 
-.admin-table {
-    width: 100%;
-    border-collapse: collapse;
-}
+.admin-table { width: 100%; border-collapse: collapse; }
+.admin-table th { background: #151515; padding: 1.2rem; text-align: left; font-size: 0.75rem; color: var(--makia-muted); text-transform: uppercase; }
+.admin-table td { padding: 1.2rem; border-bottom: 1px solid #1a1a1a; }
+.table-thumb { width: 45px; height: 45px; object-fit: cover; border-radius: 8px; }
 
-.admin-table th {
-    background: #151515;
-    padding: 1.2rem;
-    text-align: left;
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    color: var(--makia-muted);
-}
-
-.admin-table td {
-    padding: 1.2rem;
-    border-bottom: 1px solid #1a1a1a;
-}
-
-.table-thumb {
-    width: 45px;
-    height: 45px;
-    object-fit: cover;
-    border-radius: 8px;
-}
-
-/* BOTONES DE EDITAR Y ELIMINAR UNIFICADOS */
-.admin-edit-btn, .admin-delete-btn {
-    border: 1px solid var(--makia-border);
-    background: #1a1a1a;
-    color: white;
-    padding: 6px 14px;
-    border-radius: 6px;
-    cursor: pointer;
-    margin-right: 8px;
-    font-weight: 600;
-}
-
-.admin-edit-btn:hover { background: var(--makia-blue); border-color: var(--makia-blue); }
-.admin-delete-btn:hover { background: var(--makia-danger); border-color: var(--makia-danger); }
-
-/* =========================================
-   FORMULARIO Y CORRECCIÓN DE DESBORDAMIENTO
-   ========================================= */
+/* MODALES Y FORMULARIOS */
 .modal-overlay {
     position: fixed;
     inset: 0;
@@ -234,15 +196,21 @@
     overflow-y: auto;
 }
 
-.admin-form-vertical {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-}
-
+.admin-form-vertical { display: flex; flex-direction: column; gap: 1.5rem; }
 .field-group { display: flex; flex-direction: column; gap: 8px; }
 .field-group label { font-size: 0.8rem; font-weight: 700; color: var(--makia-muted); text-transform: uppercase; }
 .field-group input { background: #151515; border: 1px solid var(--makia-border); color: white; padding: 12px; border-radius: 10px; }
+
+/* PREVISUALIZACIÓN DE IMAGEN (REDUCIDA) */
+.image-preview-box {
+    max-width: 100%;
+    max-height: 180px; 
+    border-radius: 12px;
+    object-fit: contain;
+    background: #000;
+    border: 1px solid #333;
+    margin-top: 10px;
+}
 
 /* SECCIÓN DE VARIANTES (FIX OVERFLOW) */
 .variant-card.fixed-layout {
@@ -252,14 +220,14 @@
     padding: 1.5rem;
     border-radius: 15px;
     margin-bottom: 1rem;
-    position: relative; /* Base para posicionar la X */
+    position: relative;
 }
 
 .inline-fields.scroll-safe {
     display: flex;
     gap: 12px;
     align-items: flex-end;
-    width: calc(100% - 40px); /* Deja espacio para la X */
+    width: calc(100% - 45px); /* Espacio para el botón de eliminar */
 }
 
 .btn-remove-fixed {
@@ -268,23 +236,43 @@
     top: 50%;
     transform: translateY(-50%);
     background: transparent;
-    border: 1px solid rgba(255, 77, 77, 0.2);
     color: var(--makia-danger);
+    border: 1px solid rgba(255, 77, 77, 0.3);
     width: 35px;
     height: 35px;
     border-radius: 50%;
     cursor: pointer;
+    transition: var(--transition);
 }
 
-.btn-remove-fixed:hover { background: var(--makia-danger); color: white; }
+.btn-remove-fixed:hover { background: var(--makia-danger); color: white; box-shadow: 0 0 10px rgba(255, 77, 77, 0.4); }
 
 .modal-footer {
     display: flex;
     justify-content: flex-end;
-    gap: 1rem;
+    gap: 1.5rem;
     margin-top: 2rem;
     padding-top: 1.5rem;
     border-top: 1px solid var(--makia-border);
 }
 
-.btn-save { background: var(--makia-blue); border: none; padding: 12px 30px; border-radius: 10px; color: white; font-weight: 700; cursor: pointer; }
+.btn-cancel {
+    background: transparent;
+    border: 1px solid var(--makia-border);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 700;
+    transition: var(--transition);
+}
+
+.btn-cancel:hover { background: #222; box-shadow: 0 0 10px rgba(255, 255, 255, 0.1); }
+
+/* PAGINACIÓN */
+.admin-pagination-theme {
+    --pg-bg: #111111;
+    --pg-bg-hover: #1a1a1a;
+    --pg-bg-active: var(--makia-blue);
+    --pg-border: var(--makia-border);
+}
