@@ -91,7 +91,7 @@
     letter-spacing: 0.5px;
 }
 
-/* TARJETAS DE ESTADÍSTICAS E ILUMINACIÓN (TOTALES) */
+/* TARJETAS DE ESTADÍSTICAS E ILUMINACIÓN */
 .admin-stats {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -115,12 +115,11 @@
 .stat-info p { margin: 5px 0 0; color: var(--makia-muted); font-size: 0.9rem; }
 .stat-count { font-size: 2.5rem; font-weight: 800; opacity: 0.9; }
 
-/* Efectos Glow para Tabs Activos */
 .active-prod { border-color: var(--makia-blue) !important; box-shadow: 0 0 25px rgba(77, 163, 255, 0.2); }
 .active-ventas { border-color: var(--makia-success) !important; box-shadow: 0 0 25px rgba(16, 185, 129, 0.2); }
 .active-user { border-color: var(--makia-purple) !important; box-shadow: 0 0 25px rgba(139, 92, 246, 0.2); }
 
-/* CONTROLES: BUSCADOR MAKIA Y BOTÓN AÑADIR */
+/* CONTROLES */
 .admin-controls-row {
     display: flex;
     justify-content: space-between;
@@ -154,6 +153,8 @@
     font-weight: 500;
 }
 
+.search-bar-makia input::placeholder { color: #888; }
+
 .admin-add-btn {
     background: var(--makia-blue);
     color: white;
@@ -172,7 +173,7 @@
     transform: translateY(-2px);
 }
 
-/* TABLAS CENTRADAS Y DISTRIBUIDAS */
+/* TABLA */
 .admin-table-wrapper {
     background: var(--makia-surface);
     border: 1px solid var(--makia-border);
@@ -190,7 +191,7 @@
 .admin-table-fixed th {
     background: #080808;
     padding: 1.5rem;
-    text-align: center;          /* TÍTULOS CENTRADOS */
+    text-align: left;
     font-size: 0.8rem;
     color: var(--makia-muted);
     text-transform: uppercase;
@@ -201,14 +202,11 @@
     padding: 1.5rem;
     border-bottom: 1px solid #1a1a1a;
     vertical-align: middle;
-    text-align: center;          /* CONTENIDO CENTRADO BAJO TÍTULO */
 }
 
-/* Excepción de alineación para títulos de producto y nombres */
-.col-title { 
-    width: 38%; 
-    text-align: left !important; 
-}
+.col-img { width: 85px; }
+.col-title { width: 38%; }
+.col-actions { width: 260px; text-align: center; }
 
 .table-thumb {
     width: 55px;
@@ -218,47 +216,32 @@
     border: 1px solid #222;
 }
 
-/* BOTONES CON EFECTO GLOW (UNIFICADOS) */
-.btn-makia-save, .btn-makia-blue, .btn-table, .btn-add-size {
+.btn-table {
     border: none;
-    border-radius: 10px;
+    padding: 9px 18px;
+    border-radius: 8px;
     font-weight: 800;
     text-transform: uppercase;
+    font-size: 0.7rem;
+    min-width: 105px;
     cursor: pointer;
     transition: all 0.3s ease;
 }
 
-.btn-makia-save, .btn-makia-blue {
+.btn-edit { background: #ffffff; color: #000; }
+.btn-edit:hover {
     background: var(--makia-blue);
     color: white;
-    padding: 12px 25px;
-    box-shadow: 0 0 15px rgba(77, 163, 255, 0.4);
+    box-shadow: 0 0 15px rgba(77, 163, 255, 0.5);
 }
 
-.btn-makia-save:hover { box-shadow: 0 0 25px rgba(77, 163, 255, 0.6); }
-
-.btn-makia-cancel {
-    background: white;
-    color: black;
-    border: none;
-    padding: 12px 25px;
-    border-radius: 10px;
-    font-weight: 800;
-    text-transform: uppercase;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
-    margin-right: 15px;
+.btn-delete { background: var(--makia-danger); color: white; }
+.btn-delete:hover {
+    box-shadow: 0 0 15px rgba(255, 77, 77, 0.5);
+    filter: brightness(1.1);
 }
 
-/* BOTONES ESPECÍFICOS DE LA TABLA (BLANCO / ROJO) */
-.btn-edit { background: #ffffff; color: #000; }
-.btn-edit:hover { box-shadow: 0 0 15px white; }
-
-.btn-delete { background: var(--makia-danger); color: white; margin-left: 10px; }
-.btn-delete:hover { box-shadow: 0 0 15px var(--makia-danger); }
-
-/* MODALES Y VARIANTES */
+/* MODALES */
 .modal-overlay {
     position: fixed;
     inset: 0;
@@ -286,59 +269,65 @@
 .field-group label { font-size: 0.85rem; font-weight: 700; color: var(--makia-muted); text-transform: uppercase; }
 .field-group input, .field-group select { background: #111; border: 1px solid var(--makia-border); color: white; padding: 12px; border-radius: 10px; }
 
-/* BOTÓN AÑADIR COLOR A LA DERECHA Y ESPACIO */
-.section-header-right {
+/* AJUSTE BOTÓN AÑADIR COLOR Y TÍTULO SECCIÓN */
+.section-header-variants {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 25px;         /* PEQUEÑO ESPACIO CON EL CONTENIDO INFERIOR */
+    margin: 1.5rem 0 2rem 0; /* Espacio superior y gran espacio inferior respecto al form */
 }
 
-.section-header-right .btn-makia-blue {
-    margin-left: auto;           /* MUEVE EL BOTÓN A LA DERECHA */
-}
-
-/* SELECTOR DE COLOR CIRCULAR */
-.input-with-circle {
+/* MINI PREVIEW DE IMAGEN EN EL FORMULARIO */
+.mini-preview-wrapper {
     display: flex;
     align-items: center;
-    gap: 12px;
-}
-
-.color-circle-input {
-    -webkit-appearance: none;
-    border: none;
-    width: 35px;
-    height: 35px;
-    border-radius: 50%;          /* FORMA CIRCULAR */
-    cursor: pointer;
-    background: none;
-    padding: 0;
-    overflow: hidden;
-    border: 2px solid #444;
-}
-
-.color-circle-input::-webkit-color-swatch {
-    border: none;
-    border-radius: 50%;
-    padding: 0;
-}
-
-/* PREVISUALIZACIÓN DE IMAGEN PEQUEÑA EN FORMULARIO */
-.preview-centered {
-    display: flex;
     justify-content: center;
-    margin: 10px 0 20px 0;
+    padding-top: 1.8rem; /* Para alinearlo con los inputs */
 }
 
-.mini-preview-form {
-    max-height: 85px;             /* IMAGEN PEQUEÑA */
+.form-mini-preview {
+    width: 45px;
+    height: 45px;
+    border-radius: 8px;
+    object-fit: cover;
+    border: 1px solid var(--makia-border);
+    background: #080808;
+}
+
+.btn-makia-save, .btn-makia-blue {
+    background: var(--makia-blue);
+    color: white;
+    border: none;
+    padding: 12px 25px;
     border-radius: 10px;
-    border: 1px solid #333;
-    object-fit: contain;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    font-weight: 800;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.3s ease;
 }
 
+.btn-makia-save:hover, .btn-makia-blue:hover {
+    box-shadow: 0 0 20px rgba(77, 163, 255, 0.5);
+    filter: brightness(1.1);
+}
+
+.btn-makia-cancel {
+    background: white;
+    color: black;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-makia-cancel:hover {
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.4);
+}
+
+/* VARIANTES */
 .color-group-card {
     background: #0a0a0a;
     border: 1px solid var(--makia-border);
@@ -348,19 +337,29 @@
     margin-bottom: 2rem;
 }
 
+.color-header-row { display: flex; gap: 20px; align-items: flex-start; margin-bottom: 20px; }
+.flex-1 { flex: 1; }
+.flex-2 { flex: 2; }
+
+.sizes-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding-top: 15px;
+    border-top: 1px solid #1a1a1a;
+}
+
 .size-row {
     display: flex;
     gap: 15px;
     align-items: flex-end;
+    position: relative;
     background: #0f0f0f;
-    padding: 12px;
+    padding: 12px 50px 12px 12px;
     border-radius: 10px;
     border: 1px solid #1a1a1a;
-    position: relative;          /* PARA EL BOTÓN X */
-    margin-bottom: 10px;
 }
 
-/* BOTÓN ELIMINAR VARIANTE (X) */
 .btn-x {
     position: absolute;
     right: 10px;
@@ -372,10 +371,10 @@
     height: 35px;
     border-radius: 50%;
     cursor: pointer;
+    transition: var(--transition);
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: var(--transition);
 }
 
 .btn-x:hover { background: var(--makia-danger); color: white; }
@@ -388,23 +387,30 @@
     width: 100%;
     margin-top: 10px;
     border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
 }
 
 .btn-add-size:hover { background: #151515; border-color: var(--makia-blue); }
 
-/* FOOTER Y PAGINACIÓN ALINEADOS A LA DERECHA */
 .modal-footer {
     display: flex;
-    justify-content: flex-end;    /* BOTONES A LA DERECHA */
+    justify-content: flex-end;
     gap: 1.5rem;
     margin-top: 2.5rem;
     padding-top: 2rem;
     border-top: 1px solid var(--makia-border);
 }
 
-.admin-pagination-theme { margin-top: 3rem; }
+.admin-pagination-theme {
+    --pg-bg: #0a0a0a;
+    --pg-bg-hover: #151515;
+    --pg-bg-active: var(--makia-blue);
+    --pg-border: var(--makia-border);
+    margin-top: 3rem;
+}
 
-/* BADGES DE ROL */
 .role-badge {
     padding: 6px 12px;
     border-radius: 8px;
