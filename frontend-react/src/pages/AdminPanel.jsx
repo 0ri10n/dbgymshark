@@ -12,7 +12,9 @@ const AdminPanel = () => {
     const [busqueda, setBusqueda] = useState("");
     const [cargando, setCargando] = useState(false);
 
-    // --- ESTADOS DE DATOS Y PAGINACIÓN INDEPENDIENTE (Siguiendo lógica de Catalogo.jsx) ---
+    // --- ESTADOS DE DATOS Y PAGINACIÓN INDEPENDIENTE ---
+    const itemsPorPagina = 10;
+
     // Productos
     const [productos, setProductos] = useState([]);
     const [pagProductos, setPagProductos] = useState(1);
@@ -40,56 +42,64 @@ const AdminPanel = () => {
     const [editandoUsuarioId, setEditandoUsuarioId] = useState(null);
     const [formDataUsuario, setFormDataUsuario] = useState({ nombre: '', apellido: '', email: '', rol: 'cliente', password: '', direccion: '' });
 
-    const baseURL = import.meta.env.VITE_API_URL || 'https://dbgymshark-ddk1.onrender.com/api';
+    const baseURL = import.meta.env.VITE_API_URL || 'https://dbgymshark-mb5q.onrender.com/api';
 
-    // --- CARGA DE PRODUCTOS (Lógica Catalogo.jsx corregida) ---
+    // --- CARGA DE PRODUCTOS CON CONTADOR TOTAL ---
     const cargarProductos = async () => {
         setCargando(true);
         try {
-            // Se añade la página a la URL
-            const res = await axios.get(`${baseURL}/productos?page=${pagProductos}&limit=10&search=${busqueda}`);
+            const res = await axios.get(`${baseURL}/productos?page=${pagProductos}&limit=${itemsPorPagina}&search=${busqueda}`);
             if (res.data) {
-                setProductos(res.data.productos || []);
-                // Sincronización con el objeto pagination del backend
-                setTotalPagProductos(res.data.pagination?.pages || res.data.paginasTotales || 1);
-                // Contador total real de documentos en la DB
-                setTotalProductosCount(res.data.totalCount || res.data.totalProductos || 0); 
+                const dataArr = res.data.productos || res.data || [];
+                const arregloProductos = Array.isArray(dataArr) ? dataArr : [];
+                setProductos(arregloProductos);
+                
+                // La suma de registros de todas las páginas (contador total)
+                const conteoTotal = res.data.totalCount || arregloProductos.length;
+                setTotalProductosCount(conteoTotal); 
+                
+                setTotalPagProductos(res.data.paginasTotales || Math.ceil(conteoTotal / itemsPorPagina) || 1);
             }
         } catch (error) { console.error("Error al cargar productos:", error); }
         finally { setCargando(false); }
     };
 
-    // --- CARGA DE USUARIOS Y VENTAS (Solución Error 401 y Contadores) ---
+    // --- CARGA DE USUARIOS Y VENTAS CON CONTADOR TOTAL ---
     const cargarDatosExtra = async (vista) => {
         const paginaActual = vista === 'usuarios' ? pagUsuarios : pagVentas;
-        const token = localStorage.getItem('token');
-        if (!token) return; // Evita peticiones sin sesión
-
         try {
-            const config = { headers: { Authorization: `Bearer ${token}` } };
-            const res = await axios.get(`${baseURL}/admin/panel/${vista}?page=${paginaActual}&limit=10`, config);
+            const token = localStorage.getItem('token');
+            const config = { headers: { 'x-auth-token': token } }; 
+            const res = await axios.get(`${baseURL}/admin/panel/${vista}?page=${paginaActual}&limit=${itemsPorPagina}`, config);
             
             if (vista === 'usuarios') {
                 const data = res.data.usuarios || res.data;
-                setListaUsuarios(Array.isArray(data) ? data : []);
-                setTotalPagUsuarios(res.data.pagination?.pages || res.data.paginasTotales || 1);
-                setTotalUsuariosCount(res.data.totalCount || (Array.isArray(data) ? data.length : 0));
+                const arr = Array.isArray(data) ? data : [];
+                setListaUsuarios(arr);
+                
+                // La suma de registros de todas las páginas (contador total)
+                const conteo = res.data.totalCount || arr.length;
+                setTotalUsuariosCount(conteo);
+                setTotalPagUsuarios(res.data.paginasTotales || Math.ceil(conteo / itemsPorPagina) || 1);
             }
             if (vista === 'ventas') {
                 const data = res.data.ventas || res.data;
-                setListaVentas(Array.isArray(data) ? data : []);
-                setTotalPagVentas(res.data.pagination?.pages || res.data.paginasTotales || 1);
-                setTotalVentasCount(res.data.totalCount || (Array.isArray(data) ? data.length : 0));
+                const arr = Array.isArray(data) ? data : [];
+                setListaVentas(arr);
+                
+                // La suma de registros de todas las páginas (contador total)
+                const conteo = res.data.totalCount || arr.length;
+                setTotalVentasCount(conteo);
+                setTotalPagVentas(res.data.paginasTotales || Math.ceil(conteo / itemsPorPagina) || 1);
             }
         } catch (error) { console.error(`Error en ${vista}:`, error); }
     };
 
-    // Sincronización de efectos por cambio de página independiente
     useEffect(() => { cargarProductos(); }, [pagProductos, busqueda]);
     useEffect(() => { cargarDatosExtra('usuarios'); }, [pagUsuarios]);
     useEffect(() => { cargarDatosExtra('ventas'); }, [pagVentas]);
 
-    // --- SUGERENCIAS DINÁMICAS (Datalists) ---
+    // --- LÓGICA DE DATOS EXISTENTES PARA SUGERENCIAS ---
     const categoriasExistentes = useMemo(() => [...new Set(productos.map(p => p.product_type).filter(Boolean))], [productos]);
     const coloresExistentes = useMemo(() => {
         const colores = [];
@@ -102,7 +112,7 @@ const AdminPanel = () => {
         return [...new Set(tallas)];
     }, [productos]);
 
-    // --- VARIANTES ---
+    // --- LÓGICA DE VARIANTES AGRUPADAS ---
     const variantsByColor = useMemo(() => {
         const grouped = {};
         formData.variants.forEach((v, index) => {
@@ -115,7 +125,10 @@ const AdminPanel = () => {
 
     const addSizeToColor = (colorName) => {
         const existingVariant = formData.variants.find(v => v.color === colorName);
-        const newSize = { color: colorName, size: '', price: existingVariant?.price || 0, inventory_quantity: 0, image: existingVariant?.image || "" };
+        const newSize = { 
+            color: colorName, size: '', price: existingVariant?.price || 0, 
+            inventory_quantity: 0, image: existingVariant?.image || "" 
+        };
         setFormData({ ...formData, variants: [...formData.variants, newSize] });
     };
 
@@ -123,7 +136,7 @@ const AdminPanel = () => {
         setFormData({ ...formData, variants: [...formData.variants, { color: '', size: '', price: 0, inventory_quantity: 0, image: "" }] });
     };
 
-    // --- ACCIONES ---
+    // --- ACCIONES DE PRODUCTOS ---
     const abrirModalEditar = (prod) => {
         setEditandoId(prod._id);
         setFormData({ ...prod });
@@ -134,39 +147,49 @@ const AdminPanel = () => {
         e.preventDefault();
         try {
             const token = localStorage.getItem('token');
-            const config = { headers: { Authorization: `Bearer ${token}` } };
+            const config = { headers: { 'x-auth-token': token } }; 
             if (editandoId) await axios.put(`${baseURL}/productos/${editandoId}`, formData, config);
             else await axios.post(`${baseURL}/productos`, formData, config);
             setModalAbierto(false);
             cargarProductos();
-            alert("Guardado correctamente");
+            alert("Guardado con éxito");
         } catch (error) { alert("Error al guardar cambios"); }
     };
 
     const handleEliminar = async (id) => {
-        if (!window.confirm("¿Eliminar este registro permanentemente?")) return;
+        if (!window.confirm("¿Eliminar este producto permanentemente?")) return;
         try {
             const token = localStorage.getItem('token');
-            await axios.delete(`${baseURL}/productos/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+            await axios.delete(`${baseURL}/productos/${id}`, { headers: { 'x-auth-token': token } });
             cargarProductos();
         } catch (error) { alert("Error al eliminar"); }
     };
 
     const abrirModalEditarUsuario = (u) => {
         setEditandoUsuarioId(u._id);
-        setFormDataUsuario({ nombre: u.nombre || '', apellido: u.apellido || '', email: u.email || '', rol: u.rol || 'cliente', password: '', direccion: u.direccion || '' });
+        setFormDataUsuario({
+            nombre: u.nombre || '', apellido: u.apellido || '', email: u.email || '',
+            rol: u.rol || 'cliente', password: '', direccion: u.direccion || ''
+        });
         setModalUsuarioAbierto(true);
+    };
+
+    // --- FUNCIONES DE CORTADO (SLICE) PARA EL RENDER ---
+    const getPaginatedData = (array, page) => {
+        const startIndex = (page - 1) * itemsPorPagina;
+        return array.slice(startIndex, startIndex + itemsPorPagina);
     };
 
     return (
         <div className="admin-container">
             <header className="admin-header">
-                <h1 className="brand-logo">MAKIA</h1>
+                {/* CAMBIO AQUÍ: Imagen del logo de MAKIA */}
+                <img src="/logo-makia-pages.png" alt="Makia Logo" className="brand-logo-img" />
+                
                 <div className="admin-user-panel">
                     <div className="user-welcome-info">
                         <span className="welcome-text">¡Nos alegra verte de nuevo!</span>
-                        {/* Administrador centrado abajo, color azul marcado y más pequeño */}
-                        <span className="user-name-small-blue">{user?.nombre || 'Administrador'}</span>
+                        <span className="user-name-blue-header">{user?.nombre || 'Administrador'}</span>
                     </div>
                     <button onClick={logout} className="admin-logout-btn">Cerrar Sesión</button>
                 </div>
@@ -176,7 +199,6 @@ const AdminPanel = () => {
             <h2 className="panel-subtitle">Panel de Administración</h2>
 
             <main className="admin-main">
-                {/* CONTADORES MOSTRANDO TOTALES DE LA DB */}
                 <section className="admin-stats">
                     <div className={`admin-stat-card ${vistaActiva === 'productos' ? 'active-prod' : ''}`} onClick={() => setVistaActiva('productos')}>
                         <div className="stat-info"><h3>Productos</h3><p>Total en DB</p></div>
@@ -211,14 +233,14 @@ const AdminPanel = () => {
                                 <tr><th>Imagen</th><th className="col-title">Título</th><th>Tipo</th><th className="center">Acciones</th></tr>
                             )}
                             {vistaActiva === 'usuarios' && (
-                                <tr><th>Nombre</th><th>Email</th><th>Dirección</th><th>Rol</th><th className="center">Acciones</th></tr>
+                                <tr><th>Nombre Completo</th><th>Email</th><th>Dirección</th><th>Rol</th><th className="center">Acciones</th></tr>
                             )}
                             {vistaActiva === 'ventas' && (
                                 <tr><th>ID Venta</th><th>Cliente</th><th>Dirección</th><th>Fecha</th><th>Total</th><th className="center">Estado</th></tr>
                             )}
                         </thead>
                         <tbody>
-                            {vistaActiva === 'productos' && productos.map(p => (
+                            {vistaActiva === 'productos' && getPaginatedData(productos, pagProductos).map(p => (
                                 <tr key={p._id}>
                                     <td className="center"><img src={p.variants?.[0]?.image || p.image_principal} className="table-thumb" alt="p" /></td>
                                     <td className="col-title center">{p.title}</td>
@@ -229,21 +251,23 @@ const AdminPanel = () => {
                                     </td>
                                 </tr>
                             ))}
-                            {vistaActiva === 'usuarios' && listaUsuarios.map(u => (
+                            
+                            {vistaActiva === 'usuarios' && getPaginatedData(listaUsuarios, pagUsuarios).map(u => (
                                 <tr key={u._id}>
                                     <td className="center">{u.nombre} {u.apellido}</td>
                                     <td className="center">{u.email}</td>
-                                    <td className="center">{u.direccion || 'No registrada'}</td>
+                                    <td className="center">{u.direccion || 'N/A'}</td>
                                     <td className="center"><span className="role-badge">{u.rol}</span></td>
                                     <td className="col-actions center">
                                         <button className="btn-table btn-edit" onClick={() => abrirModalEditarUsuario(u)}>Editar</button>
                                     </td>
                                 </tr>
                             ))}
-                            {vistaActiva === 'ventas' && listaVentas.map(v => (
+                            
+                            {vistaActiva === 'ventas' && getPaginatedData(listaVentas, pagVentas).map(v => (
                                 <tr key={v._id}>
                                     <td className="center">{v._id.substring(0,8)}...</td>
-                                    <td className="center">{v.usuario?.nombre || 'Visitante'}</td>
+                                    <td className="center">{v.usuario?.nombre || 'Anon'}</td>
                                     <td className="center">{v.direccion || 'N/A'}</td>
                                     <td className="center">{new Date(v.fecha).toLocaleDateString()}</td>
                                     <td className="center">${v.total?.toFixed(2)}</td>
@@ -254,13 +278,13 @@ const AdminPanel = () => {
                     </table>
                 </div>
 
-                {/* PAGINACIÓN TOTALMENTE INDEPENDIENTE */}
+                {/* PAGINACIÓN DINÁMICA POR SECCIÓN */}
                 {vistaActiva === 'productos' && <PaginationControls page={pagProductos} totalPages={totalPagProductos} onPageChange={setPagProductos} className="admin-pagination-theme" />}
                 {vistaActiva === 'usuarios' && <PaginationControls page={pagUsuarios} totalPages={totalPagUsuarios} onPageChange={setPagUsuarios} className="admin-pagination-theme" />}
                 {vistaActiva === 'ventas' && <PaginationControls page={pagVentas} totalPages={totalPagVentas} onPageChange={setPagVentas} className="admin-pagination-theme" />}
             </main>
 
-            {/* MODAL PRODUCTO - DISEÑO CORREGIDO */}
+            {/* MODAL PRODUCTO */}
             {modalAbierto && (
                 <div className="modal-overlay">
                     <div className="modal-content modal-xl">
@@ -282,11 +306,10 @@ const AdminPanel = () => {
                                     <h3>Variantes por Color</h3>
                                     <button type="button" className="btn-makia-save" onClick={addEmptyColorGroup}>+ Añadir Color</button>
                                 </div>
-                                
                                 {variantsByColor.map((group, idx) => (
                                     <div key={idx} className="color-group-card">
                                         <div className="color-header-row">
-                                            <div className="field-group color-box-small">
+                                            <div className="field-group color-input-fixed">
                                                 <label>Color</label>
                                                 <input list="db-cols" type="text" value={group.color} onChange={(e) => {
                                                     const updated = formData.variants.map(v => v.color === group.color ? { ...v, color: e.target.value } : v);
@@ -294,26 +317,17 @@ const AdminPanel = () => {
                                                 }} />
                                                 <datalist id="db-cols">{coloresExistentes.map(c => <option key={c} value={c} />)}</datalist>
                                             </div>
-
-                                            {/* CAMPO URL EXPANDIDO */}
-                                            <div className="field-group url-box-expanded">
+                                            <div className="field-group url-input-expanded">
                                                 <label>URL Foto del Color</label>
                                                 <input type="text" value={group.image} onChange={(e) => {
                                                     const updated = formData.variants.map(v => v.color === group.color ? { ...v, image: e.target.value } : v);
                                                     setFormData({ ...formData, variants: updated });
                                                 }} />
                                             </div>
-
-                                            {/* PREVISUALIZACIÓN AL FINAL DE LA FILA */}
                                             <div className="mini-preview-container">
-                                                {group.image ? (
-                                                    <img src={group.image} alt="preview" className="form-mini-preview" />
-                                                ) : (
-                                                    <div className="form-mini-preview-placeholder">URL</div>
-                                                )}
+                                                {group.image ? <img src={group.image} alt="p" className="form-mini-preview" /> : <div className="form-mini-preview-placeholder">URL</div>}
                                             </div>
                                         </div>
-
                                         <div className="sizes-grid">
                                             {group.items.map((item) => (
                                                 <div key={item.originalIndex} className="size-row">
@@ -327,12 +341,9 @@ const AdminPanel = () => {
                                                     </div>
                                                     <div className="field-group"><label>Precio</label><input type="number" value={item.price} onChange={e => { const nv = [...formData.variants]; nv[item.originalIndex].price = Number(e.target.value); setFormData({...formData, variants: nv}); }} /></div>
                                                     <div className="field-group"><label>Stock</label><input type="number" value={item.inventory_quantity} onChange={e => { const nv = [...formData.variants]; nv[item.originalIndex].inventory_quantity = Number(e.target.value); setFormData({...formData, variants: nv}); }} /></div>
-                                                    
-                                                    {/* ELIMINAR VARIANTE (Tache centrado verticalmente en CSS) */}
                                                     <button type="button" className="btn-x" onClick={() => setFormData({...formData, variants: formData.variants.filter((_, i) => i !== item.originalIndex)})}>✕</button>
                                                 </div>
                                             ))}
-                                            {/* BOTÓN DISEÑO ORIGINAL image_d7fdfe.png */}
                                             <button type="button" className="btn-add-size" onClick={() => addSizeToColor(group.color)}>+ Añadir otra talla en este color</button>
                                         </div>
                                     </div>

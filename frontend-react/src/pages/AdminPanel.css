@@ -31,11 +31,10 @@
     padding-bottom: 1.5rem;
 }
 
-.brand-logo {
-    font-size: 2.1rem;
-    font-weight: 900;
-    letter-spacing: 3px;
-    margin: 0;
+.brand-logo-img {
+    height: 45px; /* Ajusta este valor si lo quieres más grande o más chico */
+    width: auto;
+    object-fit: contain;
 }
 
 .admin-user-panel {
