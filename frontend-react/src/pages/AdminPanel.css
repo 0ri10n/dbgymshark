@@ -1,44 +1,46 @@
-/* ESTILO PARA PREVISUALIZACIÓN DE IMAGEN */
-.form-image-section {
-    background: #0a0a0a;
-    padding: 15px;
-    border-radius: 10px;
+/* =========================================
+   VARIABLES DE MARCA - ADN MAKIA
+   ========================================= */
+:root {
+    --makia-black: #000000;
+    --makia-surface: #111111;
+    --makia-blue: #4da3ff;        /* EL AZUL VIBRANTE DE TU IMAGEN */
+    --makia-border: #222222;
+    --makia-text: #ffffff;
+    --makia-muted: #888888;
+    --makia-danger: #ff4d4d;
+    --makia-success: #10b981;
+    --makia-purple: #8b5cf6;
+    --radius: 8px;
+    --transition: all 0.2s ease-in-out;
+}
+
+/* CONTENEDOR BASE */
+.admin-container {
+    box-sizing: border-box;
+    min-height: 100vh;
+    padding: 2rem;
+    font-family: 'Poppins', sans-serif;
+    background-color: var(--makia-black);
+    color: var(--makia-text);
+}
+
+/* HEADER */
+.admin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--makia-border);
+    padding-bottom: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.admin-header h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+}
+
+.admin-logout-btn {
+    background: transparent;
     border: 1px solid var(--makia-border);
-}
-
-.preview-container {
-    margin-top: 15px;
-    text-align: center;
-}
-
-.preview-container p {
-    font-size: 0.75rem;
-    color: var(--makia-muted);
-    margin-bottom: 8px;
-    text-transform: uppercase;
-}
-
-.image-preview-box {
-    max-width: 100%;
-    max-height: 250px; /* Tamaño recomendado */
-    border-radius: 8px;
-    object-fit: contain;
-    border: 1px solid #333;
-    background: #000;
-}
-
-/* Mejora del Datalist (Nativo del navegador) */
-input[list]::-webkit-calendar-picker-indicator {
-    display: none !important; /* Limpia el icono nativo si quieres look personalizado */
-}
-
-/* Tarjeta de variante un poco más espaciosa */
-.variant-card {
-    border-left: 4px solid var(--makia-blue);
-    background: #141414;
-    transition: var(--transition);
-}
-
-.variant-card:hover {
-    background: #1a1a1a;
-}
