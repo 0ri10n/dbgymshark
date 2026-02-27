@@ -12,17 +12,20 @@ const AdminPanel = () => {
     const [busqueda, setBusqueda] = useState("");
     const [cargando, setCargando] = useState(false);
 
-    // --- ESTADOS DE DATOS Y PAGINACIÓN INDEPENDIENTE (10 por página) ---
+    // --- ESTADOS DE DATOS Y PAGINACIÓN INDEPENDIENTE (10 elementos por página) ---
+    // Productos
     const [productos, setProductos] = useState([]);
     const [pagProductos, setPagProductos] = useState(1);
     const [totalPagProductos, setTotalPagProductos] = useState(1);
     const [totalProductosCount, setTotalProductosCount] = useState(0); 
 
+    // Usuarios
     const [listaUsuarios, setListaUsuarios] = useState([]);
     const [pagUsuarios, setPagUsuarios] = useState(1);
     const [totalPagUsuarios, setTotalPagUsuarios] = useState(1);
     const [totalUsuariosCount, setTotalUsuariosCount] = useState(0);
 
+    // Ventas
     const [listaVentas, setListaVentas] = useState([]);
     const [pagVentas, setPagVentas] = useState(1);
     const [totalPagVentas, setTotalPagVentas] = useState(1);
@@ -39,21 +42,22 @@ const AdminPanel = () => {
 
     const baseURL = import.meta.env.VITE_API_URL || 'https://dbgymshark-mb5q.onrender.com/api';
 
-    // --- CARGA DE PRODUCTOS ---
+    // --- CARGA DE PRODUCTOS (Lógica de Paginación y Contadores) ---
     const cargarProductos = async () => {
         setCargando(true);
         try {
             const res = await axios.get(`${baseURL}/productos?page=${pagProductos}&limit=10&search=${busqueda}`);
-            if (res.data.productos) {
-                setProductos(res.data.productos);
+            if (res.data) {
+                setProductos(res.data.productos || []);
                 setTotalPagProductos(res.data.paginasTotales || 1);
-                setTotalProductosCount(res.data.totalCount || res.data.totalProductos || 0); 
+                // Contador total real de la base de datos
+                setTotalProductosCount(res.data.totalCount || 0); 
             }
         } catch (error) { console.error("Error al cargar productos:", error); }
         finally { setCargando(false); }
     };
 
-    // --- CARGA DE USUARIOS Y VENTAS ---
+    // --- CARGA DE USUARIOS Y VENTAS (Paginación Funcional) ---
     const cargarDatosExtra = async (vista) => {
         const paginaActual = vista === 'usuarios' ? pagUsuarios : pagVentas;
         try {
@@ -62,19 +66,21 @@ const AdminPanel = () => {
             const res = await axios.get(`${baseURL}/admin/panel/${vista}?page=${paginaActual}&limit=10`, config);
             
             if (vista === 'usuarios') {
-                setListaUsuarios(res.data.usuarios || res.data);
+                const data = res.data.usuarios || res.data;
+                setListaUsuarios(Array.isArray(data) ? data : []);
                 setTotalPagUsuarios(res.data.paginasTotales || 1);
-                setTotalUsuariosCount(res.data.totalCount || (Array.isArray(res.data) ? res.data.length : 0));
+                setTotalUsuariosCount(res.data.totalCount || (Array.isArray(data) ? data.length : 0));
             }
             if (vista === 'ventas') {
-                setListaVentas(res.data.ventas || res.data);
+                const data = res.data.ventas || res.data;
+                setListaVentas(Array.isArray(data) ? data : []);
                 setTotalPagVentas(res.data.paginasTotales || 1);
-                setTotalVentasCount(res.data.totalCount || (Array.isArray(res.data) ? res.data.length : 0));
+                setTotalVentasCount(res.data.totalCount || (Array.isArray(data) ? data.length : 0));
             }
         } catch (error) { console.error(`Error en ${vista}:`, error); }
     };
 
-    // --- EFECTOS DE SINCRONIZACIÓN ---
+    // Efectos de carga sincronizados con la paginación independiente
     useEffect(() => { cargarProductos(); }, [pagProductos, busqueda]);
     useEffect(() => { cargarDatosExtra('usuarios'); }, [pagUsuarios]);
     useEffect(() => { cargarDatosExtra('ventas'); }, [pagVentas]);
@@ -96,10 +102,8 @@ const AdminPanel = () => {
     const variantsByColor = useMemo(() => {
         const grouped = {};
         formData.variants.forEach((v, index) => {
-            const colorKey = v.color || "Nuevo Color";
-            if (!grouped[colorKey]) {
-                grouped[colorKey] = { color: v.color, image: v.image || '', items: [] };
-            }
+            const colorKey = v.color || "Sin Color";
+            if (!grouped[colorKey]) grouped[colorKey] = { color: v.color, image: v.image || '', items: [] };
             grouped[colorKey].items.push({ ...v, originalIndex: index });
         });
         return Object.values(grouped);
@@ -150,7 +154,6 @@ const AdminPanel = () => {
         } catch (error) { alert("Error al eliminar"); }
     };
 
-    // --- ACCIONES DE USUARIOS ---
     const abrirModalEditarUsuario = (u) => {
         setEditandoUsuarioId(u._id);
         setFormDataUsuario({
@@ -160,20 +163,6 @@ const AdminPanel = () => {
         setModalUsuarioAbierto(true);
     };
 
-    const handleGuardarUsuario = async (e) => {
-        e.preventDefault();
-        try {
-            const token = localStorage.getItem('token');
-            const config = { headers: { Authorization: `Bearer ${token}` } };
-            const data = { ...formDataUsuario };
-            if (!data.password) delete data.password;
-
-            if (editandoUsuarioId) await axios.put(`${baseURL}/admin/panel/usuarios/${editandoUsuarioId}`, data, config);
-            setModalUsuarioAbierto(false);
-            cargarDatosExtra('usuarios');
-        } catch (error) { alert("Error al actualizar usuario"); }
-    };
-
     return (
         <div className="admin-container">
             <header className="admin-header">
@@ -181,8 +170,8 @@ const AdminPanel = () => {
                 <div className="admin-user-panel">
                     <div className="user-welcome-info">
                         <span className="welcome-text">¡Nos alegra verte de nuevo!</span>
-                        {/* Texto Administrador más pequeño según imagen d7f9dc.png */}
-                        <span className="user-name-small">{user?.nombre || user?.name || 'Administrador'}</span>
+                        {/* Nombre del administrador centrado abajo y más pequeño */}
+                        <span className="user-name-blue-header">{user?.nombre || 'Administrador'}</span>
                     </div>
                     <button onClick={logout} className="admin-logout-btn">Cerrar Sesión</button>
                 </div>
@@ -194,7 +183,7 @@ const AdminPanel = () => {
             <main className="admin-main">
                 <section className="admin-stats">
                     <div className={`admin-stat-card ${vistaActiva === 'productos' ? 'active-prod' : ''}`} onClick={() => setVistaActiva('productos')}>
-                        <div className="stat-info"><h3>Productos</h3><p>Total en Catálogo</p></div>
+                        <div className="stat-info"><h3>Productos</h3><p>Total en DB</p></div>
                         <span className="stat-count">{totalProductosCount}</span>
                     </div>
                     <div className={`admin-stat-card ${vistaActiva === 'ventas' ? 'active-ventas' : ''}`} onClick={() => setVistaActiva('ventas')}>
@@ -226,7 +215,7 @@ const AdminPanel = () => {
                                 <tr><th>Imagen</th><th className="col-title">Título</th><th>Tipo</th><th className="center">Acciones</th></tr>
                             )}
                             {vistaActiva === 'usuarios' && (
-                                <tr><th>Nombre</th><th>Email</th><th>Dirección</th><th>Rol</th><th className="center">Acciones</th></tr>
+                                <tr><th>Nombre Completo</th><th>Email</th><th>Dirección</th><th>Rol</th><th className="center">Acciones</th></tr>
                             )}
                             {vistaActiva === 'ventas' && (
                                 <tr><th>ID Venta</th><th>Cliente</th><th>Dirección</th><th>Fecha</th><th>Total</th><th className="center">Estado</th></tr>
@@ -258,7 +247,7 @@ const AdminPanel = () => {
                             {vistaActiva === 'ventas' && listaVentas.map(v => (
                                 <tr key={v._id}>
                                     <td className="center">{v._id.substring(0,8)}...</td>
-                                    <td className="center">{v.usuario?.email || 'Anon'}</td>
+                                    <td className="center">{v.usuario?.nombre || 'Anon'}</td>
                                     <td className="center">{v.direccion || 'N/A'}</td>
                                     <td className="center">{new Date(v.fecha).toLocaleDateString()}</td>
                                     <td className="center">${v.total?.toFixed(2)}</td>
@@ -269,7 +258,7 @@ const AdminPanel = () => {
                     </table>
                 </div>
 
-                {/* PAGINACIÓN FUNCIONAL E INDEPENDIENTE */}
+                {/* PAGINACIÓN DINÁMICA POR SECCIÓN */}
                 {vistaActiva === 'productos' && <PaginationControls page={pagProductos} totalPages={totalPagProductos} onPageChange={setPagProductos} className="admin-pagination-theme" />}
                 {vistaActiva === 'usuarios' && <PaginationControls page={pagUsuarios} totalPages={totalPagUsuarios} onPageChange={setPagUsuarios} className="admin-pagination-theme" />}
                 {vistaActiva === 'ventas' && <PaginationControls page={pagVentas} totalPages={totalPagVentas} onPageChange={setPagVentas} className="admin-pagination-theme" />}
@@ -286,11 +275,11 @@ const AdminPanel = () => {
                                 <input type="text" required value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} />
                             </div>
 
-                            {/* CATEGORÍA DEBAJO DEL TÍTULO */}
+                            {/* CATEGORÍA DEBAJO DEL TÍTULO CON SUGERENCIAS */}
                             <div className="field-group">
                                 <label>Categoría</label>
-                                <input list="cats-list" type="text" placeholder="Selecciona o escribe..." value={formData.product_type} onChange={e => setFormData({...formData, product_type: e.target.value})} />
-                                <datalist id="cats-list">{categoriasExistentes.map(c => <option key={c} value={c} />)}</datalist>
+                                <input list="db-cats" type="text" placeholder="Selecciona o escribe..." value={formData.product_type} onChange={e => setFormData({...formData, product_type: e.target.value})} />
+                                <datalist id="db-cats">{categoriasExistentes.map(c => <option key={c} value={c} />)}</datalist>
                             </div>
                             
                             <div className="variants-section">
@@ -299,17 +288,16 @@ const AdminPanel = () => {
                                     {/* BOTÓN DESPLAZADO A LA DERECHA */}
                                     <button type="button" className="btn-makia-save" onClick={addEmptyColorGroup}>+ Añadir Color</button>
                                 </div>
-                                
                                 {variantsByColor.map((group, idx) => (
                                     <div key={idx} className="color-group-card">
                                         <div className="color-header-row">
                                             <div className="field-group color-input-fixed">
                                                 <label>Color</label>
-                                                <input list="cols-list" type="text" value={group.color} onChange={(e) => {
+                                                <input list="db-cols" type="text" value={group.color} onChange={(e) => {
                                                     const updated = formData.variants.map(v => v.color === group.color ? { ...v, color: e.target.value } : v);
                                                     setFormData({ ...formData, variants: updated });
                                                 }} />
-                                                <datalist id="cols-list">{coloresExistentes.map(c => <option key={c} value={c} />)}</datalist>
+                                                <datalist id="db-cols">{coloresExistentes.map(c => <option key={c} value={c} />)}</datalist>
                                             </div>
 
                                             {/* CAMPO URL EXPANDIDO */}
@@ -323,20 +311,15 @@ const AdminPanel = () => {
 
                                             {/* PREVISUALIZACIÓN AL FINAL DE LA FILA */}
                                             <div className="mini-preview-container">
-                                                {group.image ? (
-                                                    <img src={group.image} alt="preview" className="form-mini-preview" />
-                                                ) : (
-                                                    <div className="form-mini-preview-placeholder">URL</div>
-                                                )}
+                                                {group.image ? <img src={group.image} alt="p" className="form-mini-preview" /> : <div className="form-mini-preview-placeholder">URL</div>}
                                             </div>
                                         </div>
-
                                         <div className="sizes-grid">
                                             {group.items.map((item) => (
                                                 <div key={item.originalIndex} className="size-row">
                                                     <div className="field-group">
                                                         <label>Talla</label>
-                                                        <input list="tallas-list" type="text" value={item.size} onChange={e => { 
+                                                        <input list="db-tallas" type="text" value={item.size} onChange={e => { 
                                                             const nv = [...formData.variants]; 
                                                             nv[item.originalIndex].size = e.target.value; 
                                                             setFormData({...formData, variants: nv}); 
@@ -345,45 +328,20 @@ const AdminPanel = () => {
                                                     <div className="field-group"><label>Precio</label><input type="number" value={item.price} onChange={e => { const nv = [...formData.variants]; nv[item.originalIndex].price = Number(e.target.value); setFormData({...formData, variants: nv}); }} /></div>
                                                     <div className="field-group"><label>Stock</label><input type="number" value={item.inventory_quantity} onChange={e => { const nv = [...formData.variants]; nv[item.originalIndex].inventory_quantity = Number(e.target.value); setFormData({...formData, variants: nv}); }} /></div>
                                                     
-                                                    {/* ELIMINAR VARIANTE (Centrado en CSS) */}
+                                                    {/* ELIMINAR VARIANTE (Tache centrado en CSS) */}
                                                     <button type="button" className="btn-x" onClick={() => setFormData({...formData, variants: formData.variants.filter((_, i) => i !== item.originalIndex)})}>✕</button>
                                                 </div>
                                             ))}
-                                            {/* BOTÓN DISEÑO ORIGINAL */}
+                                            {/* BOTÓN DISEÑO ORIGINAL RESTAURADO */}
                                             <button type="button" className="btn-add-size" onClick={() => addSizeToColor(group.color)}>+ Añadir otra talla en este color</button>
                                         </div>
                                     </div>
                                 ))}
                             </div>
-                            <datalist id="tallas-list">{tallasExistentes.map(t => <option key={t} value={t} />)}</datalist>
+                            <datalist id="db-tallas">{tallasExistentes.map(t => <option key={t} value={t} />)}</datalist>
                             <div className="modal-footer">
                                 <button type="button" className="btn-makia-cancel" onClick={() => setModalAbierto(false)}>Cancelar</button>
                                 <button type="submit" className="btn-makia-save">Guardar Cambios</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
-
-            {/* MODAL USUARIO */}
-            {modalUsuarioAbierto && (
-                <div className="modal-overlay">
-                    <div className="modal-content">
-                        <h2>Editar Usuario</h2>
-                        <form onSubmit={handleGuardarUsuario} className="admin-form-vertical">
-                            <div className="field-group"><label>Nombre</label><input type="text" value={formDataUsuario.nombre} onChange={e => setFormDataUsuario({...formDataUsuario, nombre: e.target.value})} /></div>
-                            <div className="field-group"><label>Email</label><input type="email" value={formDataUsuario.email} onChange={e => setFormDataUsuario({...formDataUsuario, email: e.target.value})} /></div>
-                            <div className="field-group"><label>Dirección</label><input type="text" value={formDataUsuario.direccion} onChange={e => setFormDataUsuario({...formDataUsuario, direccion: e.target.value})} /></div>
-                            <div className="field-group">
-                                <label>Rol</label>
-                                <select value={formDataUsuario.rol} onChange={e => setFormDataUsuario({...formDataUsuario, rol: e.target.value})}>
-                                    <option value="cliente">Cliente</option>
-                                    <option value="admin">Administrador</option>
-                                </select>
-                            </div>
-                            <div className="modal-footer">
-                                <button type="button" className="btn-makia-cancel" onClick={() => setModalUsuarioAbierto(false)}>Cerrar</button>
-                                <button type="submit" className="btn-makia-save">Actualizar</button>
                             </div>
                         </form>
                     </div>

@@ -23,7 +23,7 @@
     font-family: 'Poppins', sans-serif;
 }
 
-/* HEADER: AJUSTE SEGÚN IMAGEN image_d7f9dc.png */
+/* HEADER: AJUSTE EXACTO A image_d7f9dc.png */
 .admin-header {
     display: flex;
     justify-content: space-between;
@@ -48,12 +48,13 @@
     border: 1px solid var(--makia-border);
 }
 
+/* Saludo y Nombre centrados uno bajo el otro con espacio pequeño */
 .user-welcome-info {
     display: flex;
     flex-direction: column;
-    align-items: center; /* CENTRADO SEGÚN PETICIÓN */
+    align-items: center;
     text-align: center;
-    gap: 2px;
+    gap: 4px;
 }
 
 .welcome-text { 
@@ -61,11 +62,11 @@
     color: var(--makia-muted); 
 }
 
-/* Administrador más pequeño y centrado debajo */
-.user-name-header { 
+/* Nombre en azul, bold y un poco más pequeño según imagen d7f9dc.png */
+.user-name-blue-header { 
     font-weight: 800; 
     color: var(--makia-blue); 
-    font-size: 1rem; /* TAMAÑO PEQUEÑO image_d7f9dc.png */
+    font-size: 1.05rem; 
     line-height: 1.1;
 }
 
@@ -97,7 +98,7 @@
     margin-bottom: 2.5rem;
 }
 
-/* TARJETAS DE ESTADÍSTICAS (CONTADORES REALES) */
+/* TARJETAS DE ESTADÍSTICAS (CONTADORES) */
 .admin-stats {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -135,7 +136,7 @@
 }
 
 .search-bar-makia {
-    background: #fff;
+    background: #ffffff;
     border-radius: 50px;
     padding: 8px 22px;
     width: 380px;
@@ -162,7 +163,7 @@
     text-transform: uppercase;
 }
 
-/* TABLA TOTALMENTE CENTRADA */
+/* TABLAS TOTALMENTE CENTRADAS */
 .admin-table-wrapper {
     background: var(--makia-surface);
     border: 1px solid var(--makia-border);
@@ -182,7 +183,7 @@
     padding: 1.5rem;
     color: var(--makia-muted);
     text-transform: uppercase;
-    text-align: center; /* CENTRADO */
+    text-align: center; /* CENTRADO TOTAL */
     font-size: 0.8rem;
     letter-spacing: 1.5px;
 }
@@ -191,8 +192,11 @@
     padding: 1.5rem;
     border-bottom: 1px solid #1a1a1a;
     vertical-align: middle;
-    text-align: center; /* CENTRADO */
+    text-align: center; /* CENTRADO TOTAL */
+    color: var(--makia-text);
 }
+
+.col-title { width: 30%; }
 
 .table-thumb {
     width: 55px;
@@ -207,7 +211,7 @@
 .btn-edit { background: #fff; color: #000; }
 .btn-delete { background: var(--makia-danger); color: #fff; }
 
-/* MODALES */
+/* MODALES Y FORMULARIO */
 .modal-overlay {
     position: fixed;
     inset: 0;
@@ -235,16 +239,16 @@
 .field-group label { font-size: 0.85rem; font-weight: 700; color: var(--makia-muted); text-transform: uppercase; }
 .field-group input, .field-group select { background: #111; border: 1px solid var(--makia-border); color: #fff; padding: 12px; border-radius: 10px; outline: none; }
 
-/* FILA DE COLOR Y URL EXPANDIDA CON IMAGEN AL FINAL */
+/* FILA DE COLOR Y URL EXPANDIDA CON PREVIEW AL FINAL */
 .color-header-row { 
     display: flex; 
     gap: 20px; 
     align-items: flex-end; 
-    margin-bottom: 35px; /* ESPACIO PARA QUE NO SE PEGUE ABAJO */
+    margin-bottom: 35px; /* ESPACIO PARA QUE NO SE PEGUE A LAS TALLAS */
 }
 
-.color-box-small { width: 220px; }
-.url-box-expanded { flex: 1; } /* EXPANSIÓN DEL CAMPO URL */
+.color-input-fixed { width: 220px; }
+.url-input-expanded { flex: 1; } /* EXPANSIÓN DEL CAMPO URL */
 
 .mini-preview-container { 
     display: flex; 
@@ -300,12 +304,12 @@
     border-top: 1px solid #222;
 }
 
-/* CENTRADO VERTICAL DE TACHES ROJOS (✕) */
+/* CENTRADO VERTICAL DE TACHES ROJOS (✕) - image_d7fe3b.png */
 .size-row {
     display: flex;
     gap: 15px;
     background: #0f0f0f;
-    padding: 15px 70px 15px 15px;
+    padding: 15px 70px 15px 15px; /* Espacio extra derecha para el tache */
     border-radius: 10px;
     align-items: flex-end;
     position: relative;
@@ -316,7 +320,7 @@
     position: absolute;
     right: 25px;
     top: 50%; /* CENTRADO AL ALTO DE LA TARJETA */
-    transform: translateY(-20%); /* AJUSTE POR ETIQUETAS */
+    transform: translateY(-20%); /* AJUSTE FINO POR ALTURA DE ETIQUETAS */
     background: none;
     color: var(--makia-danger);
     border: none;
@@ -328,7 +332,7 @@
 
 .btn-x:hover { color: #ff0000; transform: translateY(-20%) scale(1.2); }
 
-/* BOTÓN AÑADIR OTRA TALLA (DISEÑO ORIGINAL) */
+/* BOTÓN AÑADIR OTRA TALLA (DISEÑO ORIGINAL RESTAURADO) - image_d7fdfe.png */
 .btn-add-size {
     background: transparent;
     border: 1px solid #333;
@@ -347,7 +351,7 @@
     border-color: var(--makia-blue);
 }
 
-/* BOTONES FINALES */
+/* BOTONES FINALES MODAL */
 .btn-makia-save {
     background: var(--makia-blue);
     color: #fff;
@@ -379,7 +383,7 @@
     padding-top: 1.5rem;
 }
 
-/* OTROS */
+/* OTROS ELEMENTOS */
 .role-badge {
     padding: 4px 10px;
     border-radius: 6px;
