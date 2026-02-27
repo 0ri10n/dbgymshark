@@ -32,7 +32,7 @@
 }
 
 .brand-logo-img {
-    height: 45px; /* Tamaño controlado para el nuevo logo */
+    height: 20px; /* Tamaño controlado para el nuevo logo */
     width: auto;
     object-fit: contain;
 }
