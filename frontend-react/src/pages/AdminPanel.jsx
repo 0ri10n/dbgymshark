@@ -44,7 +44,7 @@ const AdminPanel = () => {
 
     const [modalUsuarioAbierto, setModalUsuarioAbierto] = useState(false);
     const [editandoUsuarioId, setEditandoUsuarioId] = useState(null);
-    const [formDataUsuario, setFormDataUsuario] = useState({ nombre: '', apellido: '', email: '', rol: 'cliente', password: '', direccion: '' });
+    const [formDataUsuario, setFormDataUsuario] = useState({ nombre: '', apellido: '', email: '', rol: 'cliente', direccion: '' });
 
     // URL BASE DEL SERVIDOR
     const baseURL = import.meta.env.VITE_API_URL || 'https://dbgymshark-ddk1.onrender.com/api';
@@ -177,7 +177,6 @@ const AdminPanel = () => {
             apellido: u.apellido || '', 
             email: u.email || '',
             rol: u.rol || 'cliente', 
-            password: '', 
             direccion: u.direccion || ''
         });
         setModalUsuarioAbierto(true);
@@ -188,12 +187,7 @@ const AdminPanel = () => {
         try {
             const config = { headers: getAuthHeaders() };
             const datosAEnviar = { ...formDataUsuario };
-            
-            if (!datosAEnviar.password) {
-                delete datosAEnviar.password;
-            }
 
-            // Petición PUT para actualizar el usuario
             await axios.put(`${baseURL}/usuarios/${editandoUsuarioId}`, datosAEnviar, config);
             
             setModalUsuarioAbierto(false);
@@ -242,7 +236,11 @@ const AdminPanel = () => {
                         <i className="fas fa-search" style={{ color: '#000', fontSize: '18px' }}></i>
                         <input 
                             type="text" 
-                            placeholder={`Buscar en ${vistaActiva}...`} 
+                            placeholder={
+                                vistaActiva === 'productos' ? 'Buscar por título o tipo...' : 
+                                vistaActiva === 'usuarios' ? 'Buscar por nombre o rol...' : 
+                                'Buscar por ID, cliente o estado...'
+                            } 
                             value={vistaActiva === 'productos' ? busquedaProd : vistaActiva === 'usuarios' ? busquedaUsr : busquedaVen} 
                             onChange={(e) => { 
                                 const valor = e.target.value;
@@ -419,10 +417,6 @@ const AdminPanel = () => {
                                     <option value="cliente">Cliente</option>
                                     <option value="admin">Administrador</option>
                                 </select>
-                            </div>
-                            <div className="field-group">
-                                <label>Nueva Contraseña</label>
-                                <input type="password" placeholder="Dejar en blanco para no cambiarla" value={formDataUsuario.password} onChange={e => setFormDataUsuario({...formDataUsuario, password: e.target.value})} />
                             </div>
                             
                             <div className="modal-footer">
