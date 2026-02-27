@@ -181,7 +181,7 @@
 .admin-table-fixed {
     width: 100%;
     border-collapse: collapse;
-    table-layout: fixed;
+    table-layout: fixed; /* Asegura tamaños iguales */
 }
 
 .admin-table-fixed th {
@@ -229,7 +229,7 @@
     cursor: pointer;
     text-transform: uppercase;
     font-size: 0.75rem;
-    min-width: 110px;
+    min-width: 110px; /* Tamaño unificado */
     transition: var(--transition);
 }
 
@@ -271,6 +271,10 @@
 
 .admin-form-vertical { display: flex; flex-direction: column; gap: 1.8rem; }
 
+.field-group { display: flex; flex-direction: column; gap: 10px; }
+.field-group label { font-size: 0.85rem; font-weight: 700; color: var(--makia-muted); text-transform: uppercase; }
+.field-group input { background: #111; border: 1px solid var(--makia-border); color: white; padding: 12px; border-radius: 10px; }
+
 /* PREVISUALIZACIÓN DE IMAGEN CENTRADA */
 .preview-centered {
     margin: 15px 0;
@@ -285,14 +289,14 @@
     box-shadow: 0 10px 30px rgba(0,0,0,0.5);
 }
 
-/* VARIANTES POR COLOR */
+/* VARIANTES AGRUPADAS POR COLOR */
 .color-group-card {
     background: #0a0a0a;
     border: 1px solid var(--makia-border);
     border-left: 6px solid var(--makia-blue);
     padding: 2rem;
     border-radius: 20px;
-    margin-bottom: 1.5rem;
+    margin-bottom: 2rem;
 }
 
 .color-header-row {
@@ -301,6 +305,9 @@
     align-items: flex-end;
     margin-bottom: 20px;
 }
+
+.flex-1 { flex: 1; }
+.flex-2 { flex: 2; }
 
 .sizes-grid {
     display: grid;
@@ -316,12 +323,15 @@
     align-items: flex-end;
     position: relative;
     background: #111;
-    padding: 12px;
+    padding: 12px 50px 12px 12px; /* Espacio para el botón X */
     border-radius: 10px;
 }
 
 /* BOTÓN ELIMINAR VARIANTE (X) */
 .btn-x {
+    position: absolute;
+    right: 10px;
+    bottom: 12px;
     background: transparent;
     color: var(--makia-danger);
     border: 1px solid rgba(255, 77, 77, 0.3);
@@ -382,7 +392,7 @@
     margin-top: 3rem;
 }
 
-/* BADGES */
+/* BADGES DE ROL */
 .role-badge {
     padding: 6px 12px;
     border-radius: 8px;
