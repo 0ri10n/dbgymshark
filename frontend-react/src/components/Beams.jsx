@@ -154,7 +154,7 @@ const Beams = ({
   const meshRef = useRef(null);
   const beamMaterial = useMemo(
     () =>
-      extendMaterial(THREE.MeshStandardMaterial, {
+      extendMaterial(THREE.MeshBasicMaterial, {
         header: `
   varying vec3 vEye;
   varying float vNoise;
@@ -198,10 +198,7 @@ const Beams = ({
         uniforms: {
           diffuse: new THREE.Color(...hexToNormalizedRGB('#000000')),
           time: { shared: true, mixed: true, linked: true, value: 0 },
-          roughness: 0.3,
-          metalness: 0.3,
           uSpeed: { shared: true, mixed: true, linked: true, value: speed },
-          envMapIntensity: 10,
           uNoiseIntensity: noiseIntensity,
           uScale: scale
         }
@@ -213,9 +210,7 @@ const Beams = ({
     <CanvasWrapper>
       <group rotation={[0, 0, degToRad(rotation)]}>
         <PlaneNoise ref={meshRef} material={beamMaterial} count={beamNumber} width={beamWidth} height={beamHeight} />
-        <DirLight color={lightColor} position={[0, 3, 10]} />
       </group>
-      <ambientLight intensity={1} />
       <color attach="background" args={['#000000']} />
       <PerspectiveCamera makeDefault position={[0, 0, 20]} fov={30} />
     </CanvasWrapper>
@@ -275,7 +270,7 @@ const MergedPlanes = forwardRef(({ material, width, count, height }, ref) => {
   useImperativeHandle(ref, () => mesh.current);
   const geometry = useMemo(
     // Redujimos los segmentos de 100 a 15 para salvar el CPU
-    () => createStackedPlanesBufferGeometry(count, width, height, 0, 15),
+    () => createStackedPlanesBufferGeometry(count, width, height, 0, 6),
     [count, width, height]
   );
   useFrame((_, delta) => {
