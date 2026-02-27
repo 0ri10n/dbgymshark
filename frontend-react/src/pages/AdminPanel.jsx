@@ -25,6 +25,7 @@ const getPrimaryImage = (p = {}) => {
 const AdminPanel = () => {
     const { user, logout } = useAuth();
     const [productos, setProductos] = useState([]);
+    const [totalProductosCount, setTotalProductosCount] = useState(0); 
     const [pagina, setPagina] = useState(1);
     const [totalPaginas, setTotalPaginas] = useState(1);
     const [cargando, setCargando] = useState(false);
@@ -49,12 +50,11 @@ const AdminPanel = () => {
 
     const baseURL = import.meta.env.VITE_API_URL || 'https://dbgymshark-mb5q.onrender.com/api';
 
-    // --- LÓGICA DE SUGERENCIAS (Extrae valores únicos de los productos cargados) ---
+    // --- LÓGICA DE SUGERENCIAS ---
     const sugerencias = useMemo(() => {
         const cats = new Set();
         const colors = new Set();
         const sizes = new Set();
-
         productos.forEach(p => {
             if (p.product_type) cats.add(p.product_type);
             p.variants?.forEach(v => {
@@ -62,7 +62,6 @@ const AdminPanel = () => {
                 if (v.size) sizes.add(v.size);
             });
         });
-
         return {
             categorias: Array.from(cats).sort(),
             colores: Array.from(colors).sort(),
@@ -78,6 +77,7 @@ const AdminPanel = () => {
             if (res.data.productos) {
                 setProductos(res.data.productos);
                 setTotalPaginas(res.data.paginasTotales || 1);
+                setTotalProductosCount(res.data.totalProductos || res.data.productos.length);
             }
         } catch (error) { console.error('Error productos:', error); }
         finally { setCargando(false); }
@@ -97,7 +97,11 @@ const AdminPanel = () => {
         } catch (error) { console.error(`Error ${vista}:`, error); }
     };
 
-    useEffect(() => { cargarProductos(); }, [pagina]);
+    useEffect(() => { 
+        cargarProductos(); 
+        cargarDatosExtra('usuarios');
+        cargarDatosExtra('ventas');
+    }, [pagina]);
 
     // --- MANEJO DE PRODUCTOS ---
     const abrirModalCrear = () => {
@@ -140,7 +144,6 @@ const AdminPanel = () => {
         } catch (error) { alert("Error al eliminar."); }
     };
 
-    // --- MANEJO DE USUARIOS ---
     const abrirModalEditarUsuario = (u) => {
         setEditandoUsuarioId(u._id);
         setFormDataUsuario({
@@ -168,15 +171,21 @@ const AdminPanel = () => {
 
     return (
         <div className="admin-container">
-            {/* Listas de Sugerencias Dinámicas */}
             <datalist id="list-categorias">{sugerencias.categorias.map(c => <option key={c} value={c} />)}</datalist>
             <datalist id="list-colores">{sugerencias.colores.map(c => <option key={c} value={c} />)}</datalist>
             <datalist id="list-tallas">{sugerencias.tallas.map(s => <option key={s} value={s} />)}</datalist>
 
             <header className="admin-header">
-                <h1>Panel de Administración - MAKIA</h1>
-                <div className="admin-header-actions">
-                    <span>Admin: <strong>{user?.role}</strong></span>
+                <div className="admin-brand-section">
+                    <h1 className="brand-logo">MAKIA</h1>
+                    <span className="brand-subtitle">Panel de Administración</span>
+                </div>
+                
+                <div className="admin-user-panel">
+                    <div className="user-welcome-info">
+                        <span className="welcome-text">¡Nos alegra verte de nuevo!</span>
+                        <span className="user-name">{user?.nombre || 'Administrador'}</span>
+                    </div>
                     <button onClick={logout} className="admin-logout-btn">Cerrar Sesión</button>
                 </div>
             </header>
@@ -184,23 +193,36 @@ const AdminPanel = () => {
             <main className="admin-main">
                 <section className="admin-stats">
                     <div className={`admin-stat-card ${vistaActiva === 'productos' ? 'active-prod' : ''}`} onClick={() => setVistaActiva('productos')}>
-                        <h3>Productos</h3>
-                        <p>Inventario Actual</p>
+                        <div className="stat-info">
+                            <h3>Productos</h3>
+                            <p>Inventario Actual</p>
+                        </div>
+                        <span className="stat-count">{totalProductosCount}</span>
                     </div>
                     <div className={`admin-stat-card ${vistaActiva === 'ventas' ? 'active-ventas' : ''}`} onClick={() => { setVistaActiva('ventas'); cargarDatosExtra('ventas'); }}>
-                        <h3>Ventas</h3>
-                        <p>Historial</p>
+                        <div className="stat-info">
+                            <h3>Ventas</h3>
+                            <p>Historial</p>
+                        </div>
+                        <span className="stat-count">{listaVentas.length}</span>
                     </div>
                     <div className={`admin-stat-card ${vistaActiva === 'usuarios' ? 'active-user' : ''}`} onClick={() => { setVistaActiva('usuarios'); cargarDatosExtra('usuarios'); }}>
-                        <h3>Usuarios</h3>
-                        <p>Base de Datos</p>
+                        <div className="stat-info">
+                            <h3>Usuarios</h3>
+                            <p>Base de Datos</p>
+                        </div>
+                        <span className="stat-count">{listaUsuarios.length}</span>
                     </div>
                 </section>
 
                 <section className="admin-actions">
                     <div className="admin-section-header">
                         <h2>Gestión de {vistaActiva.toUpperCase()}</h2>
-                        {vistaActiva === 'productos' && <button className="admin-add-btn" onClick={abrirModalCrear}>+ Nuevo Producto</button>}
+                        {vistaActiva === 'productos' && (
+                            <button className="admin-add-btn" onClick={abrirModalCrear}>
+                                + Nuevo Producto
+                            </button>
+                        )}
                     </div>
 
                     <div className="admin-table-wrapper">
@@ -243,8 +265,7 @@ const AdminPanel = () => {
                             </tbody>
                         </table>
                     </div>
-
-                    <PaginationControls page={pagina} totalPages={totalPaginasSeguras} onPageChange={setPagina} className="admin-pagination-theme" />
+                    {vistaActiva === 'productos' && <PaginationControls page={pagina} totalPages={totalPaginasSeguras} onPageChange={setPagina} className="admin-pagination-theme" />}
                 </section>
             </main>
 
@@ -278,11 +299,11 @@ const AdminPanel = () => {
                             </div>
 
                             <div className="variants-section">
-                                <h3>Variantes (Tallas y Colores)</h3>
+                                <h3>Variantes (Tallas, Colores e Inventario)</h3>
                                 {formData.variants.map((v, i) => (
                                     <div key={i} className="variant-card">
                                         <div className="field-group">
-                                            <label>Color (Sugerencias disponibles)</label>
+                                            <label>Color</label>
                                             <div className="color-input-wrapper">
                                                 <input type="text" list="list-colores" placeholder="Ej: Blue, Pink, Black" value={v.color} onChange={e => {
                                                     const nv = [...formData.variants]; nv[i].color = e.target.value; setFormData({...formData, variants: nv});
@@ -303,49 +324,22 @@ const AdminPanel = () => {
                                                     const nv = [...formData.variants]; nv[i].price = Number(e.target.value); setFormData({...formData, variants: nv});
                                                 }} />
                                             </div>
+                                            <div className="field-group" style={{flex: 1}}>
+                                                <label>Cantidad Inventario</label>
+                                                <input type="number" value={v.inventory_quantity || 0} onChange={e => {
+                                                    const nv = [...formData.variants]; nv[i].inventory_quantity = Number(e.target.value); setFormData({...formData, variants: nv});
+                                                }} />
+                                            </div>
                                             <button type="button" className="btn-remove" onClick={() => setFormData({...formData, variants: formData.variants.filter((_, idx) => idx !== i)})}>✕</button>
                                         </div>
                                     </div>
                                 ))}
-                                <button type="button" className="btn-add-variant" onClick={() => setFormData({...formData, variants: [...formData.variants, {size:'', color:'', price:0}]})}>+ Añadir Variante</button>
+                                <button type="button" className="btn-add-variant" onClick={() => setFormData({...formData, variants: [...formData.variants, {size:'', color:'', price:0, inventory_quantity: 0}]})}>+ Añadir Variante</button>
                             </div>
 
                             <div className="modal-footer">
                                 <button type="button" onClick={() => setModalAbierto(false)} className="btn-cancel">Cancelar</button>
                                 <button type="submit" className="btn-save">Guardar Cambios</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
-
-            {/* --- MODAL USUARIOS --- */}
-            {modalUsuarioAbierto && (
-                <div className="modal-overlay">
-                    <div className="modal-content">
-                        <h2>Editar Usuario</h2>
-                        <form onSubmit={handleGuardarUsuario} className="admin-form-vertical">
-                            <div className="field-group">
-                                <label>Nombre Completo</label>
-                                <div className="inline-fields">
-                                    <input type="text" placeholder="Nombre" value={formDataUsuario.nombre} onChange={e => setFormDataUsuario({...formDataUsuario, nombre: e.target.value})} />
-                                    <input type="text" placeholder="Apellido" value={formDataUsuario.apellido} onChange={e => setFormDataUsuario({...formDataUsuario, apellido: e.target.value})} />
-                                </div>
-                            </div>
-                            <div className="field-group">
-                                <label>Email</label>
-                                <input type="email" value={formDataUsuario.email} onChange={e => setFormDataUsuario({...formDataUsuario, email: e.target.value})} />
-                            </div>
-                            <div className="field-group">
-                                <label>Rol del Sistema</label>
-                                <select value={formDataUsuario.rol} onChange={e => setFormDataUsuario({...formDataUsuario, rol: e.target.value})}>
-                                    <option value="cliente">Cliente</option>
-                                    <option value="admin">Administrador</option>
-                                </select>
-                            </div>
-                            <div className="modal-footer">
-                                <button type="button" onClick={() => setModalUsuarioAbierto(false)} className="btn-cancel">Cerrar</button>
-                                <button type="submit" className="btn-save btn-user-purple">Actualizar</button>
                             </div>
                         </form>
                     </div>
