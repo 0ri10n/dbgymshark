@@ -7,16 +7,16 @@ import './AdminPanel.css';
 const AdminPanel = () => {
     const { user, logout } = useAuth();
     
-    // --- ESTADOS DE VISTA Y BÚSQUEDA ---
+    // --- ESTADOS DE VISTA ---
     const [vistaActiva, setVistaActiva] = useState('productos');
     const [busqueda, setBusqueda] = useState("");
     const [cargando, setCargando] = useState(false);
 
-    // --- ESTADOS DE DATOS Y PAGINACIÓN (Independientes para cada tabla) ---
+    // --- ESTADOS DE DATOS Y PAGINACIÓN POR SECCIÓN (10 items por página) ---
     const [productos, setProductos] = useState([]);
     const [pagProductos, setPagProductos] = useState(1);
     const [totalPagProductos, setTotalPagProductos] = useState(1);
-    const [totalProductosCount, setTotalProductosCount] = useState(0); 
+    const [totalProductosCount, setTotalProductosCount] = useState(0);
 
     const [listaUsuarios, setListaUsuarios] = useState([]);
     const [pagUsuarios, setPagUsuarios] = useState(1);
@@ -79,12 +79,27 @@ const AdminPanel = () => {
     useEffect(() => { cargarDatosExtra('usuarios'); }, [pagUsuarios]);
     useEffect(() => { cargarDatosExtra('ventas'); }, [pagVentas]);
 
-    // --- LÓGICA DE VARIANTES (Productos) ---
+    // --- LÓGICA DE DATOS EXISTENTES PARA DATALISTS (Sugerencias de BD) ---
+    const categoriasExistentes = useMemo(() => [...new Set(productos.map(p => p.product_type).filter(Boolean))], [productos]);
+    const coloresExistentes = useMemo(() => {
+        const colores = [];
+        productos.forEach(p => p.variants?.forEach(v => { if(v.color) colores.push(v.color) }));
+        return [...new Set(colores)];
+    }, [productos]);
+    const tallasExistentes = useMemo(() => {
+        const tallas = [];
+        productos.forEach(p => p.variants?.forEach(v => { if(v.size) tallas.push(v.size) }));
+        return [...new Set(tallas)];
+    }, [productos]);
+
+    // --- LÓGICA DE VARIANTES AGRUPADAS POR COLOR ---
     const variantsByColor = useMemo(() => {
         const grouped = {};
         formData.variants.forEach((v, index) => {
-            const colorKey = v.color || "Sin Color";
-            if (!grouped[colorKey]) grouped[colorKey] = { color: v.color, image: v.image || '', items: [] };
+            const colorKey = v.color || "Nuevo Color";
+            if (!grouped[colorKey]) {
+                grouped[colorKey] = { color: v.color, image: v.image || '', items: [] };
+            }
             grouped[colorKey].items.push({ ...v, originalIndex: index });
         });
         return Object.values(grouped);
@@ -92,7 +107,13 @@ const AdminPanel = () => {
 
     const addSizeToColor = (colorName) => {
         const existingVariant = formData.variants.find(v => v.color === colorName);
-        const newSize = { color: colorName, size: '', price: existingVariant?.price || 0, inventory_quantity: 0, image: existingVariant?.image || "" };
+        const newSize = { 
+            color: colorName, 
+            size: '', 
+            price: existingVariant?.price || 0, 
+            inventory_quantity: 0, 
+            image: existingVariant?.image || "" 
+        };
         setFormData({ ...formData, variants: [...formData.variants, newSize] });
     };
 
@@ -100,7 +121,7 @@ const AdminPanel = () => {
         setFormData({ ...formData, variants: [...formData.variants, { color: '', size: '', price: 0, inventory_quantity: 0, image: "" }] });
     };
 
-    // --- MANEJO DE PRODUCTOS ---
+    // --- ACCIONES PRODUCTOS ---
     const abrirModalEditar = (prod) => {
         setEditandoId(prod._id);
         setFormData({ ...prod });
@@ -129,7 +150,7 @@ const AdminPanel = () => {
         } catch (error) { alert("Error al eliminar"); }
     };
 
-    // --- MANEJO DE USUARIOS ---
+    // --- ACCIONES USUARIOS ---
     const abrirModalEditarUsuario = (u) => {
         setEditandoUsuarioId(u._id);
         setFormDataUsuario({
@@ -146,8 +167,10 @@ const AdminPanel = () => {
             const config = { headers: { Authorization: `Bearer ${token}` } };
             const data = { ...formDataUsuario };
             if (!data.password) delete data.password;
+
             if (editandoUsuarioId) await axios.put(`${baseURL}/admin/panel/usuarios/${editandoUsuarioId}`, data, config);
             else await axios.post(`${baseURL}/admin/panel/usuarios`, data, config);
+            
             setModalUsuarioAbierto(false);
             cargarDatosExtra('usuarios');
         } catch (error) { alert("Error al actualizar usuario"); }
@@ -160,7 +183,7 @@ const AdminPanel = () => {
                 <div className="admin-user-panel">
                     <div className="user-welcome-info">
                         <span className="welcome-text">¡Nos alegra verte de nuevo!</span>
-                        <span className="user-name">Admin: <strong>{user?.nombre || user?.name || 'Administrador'}</strong></span>
+                        <span className="user-name">Admin: <strong>{user?.nombre || 'Administrador'}</strong></span>
                     </div>
                     <button onClick={logout} className="admin-logout-btn">Cerrar Sesión</button>
                 </div>
@@ -188,10 +211,10 @@ const AdminPanel = () => {
                 <div className="admin-controls-row">
                     <div className="search-bar-makia">
                         <span className="search-icon">🔍</span>
-                        <input type="text" placeholder="Buscar..." value={busqueda} onChange={(e) => setBusqueda(e.target.value)} />
+                        <input type="text" placeholder="Buscar..." value={busqueda} onChange={(e) => { setBusqueda(e.target.value); setPagProductos(1); }} />
                     </div>
                     {vistaActiva === 'productos' && (
-                        <button className="admin-add-btn" onClick={() => { setEditandoId(null); setFormData({title:'', product_type: '', variants:[]}); setModalAbierto(true); }}>
+                        <button className="admin-add-btn" onClick={() => { setEditandoId(null); setFormData({title:'', product_type:'', variants:[]}); setModalAbierto(true); }}>
                             + Nuevo Producto
                         </button>
                     )}
@@ -226,7 +249,7 @@ const AdminPanel = () => {
                                 <tr key={u._id}>
                                     <td className="center">{u.nombre} {u.apellido}</td>
                                     <td className="center">{u.email}</td>
-                                    <td className="center">{u.direccion || 'Sin dirección'}</td>
+                                    <td className="center">{u.direccion || 'No registrada'}</td>
                                     <td className="center"><span className="role-badge">{u.rol}</span></td>
                                     <td className="col-actions center">
                                         <button className="btn-table btn-edit" onClick={() => abrirModalEditarUsuario(u)}>Editar</button>
@@ -236,26 +259,20 @@ const AdminPanel = () => {
                             {vistaActiva === 'ventas' && listaVentas.map(v => (
                                 <tr key={v._id}>
                                     <td className="center">{v._id.substring(0,8)}...</td>
-                                    <td className="center">{v.usuario?.nombre || 'Anon'}</td>
+                                    <td className="center">{v.usuario?.email || 'Anon'}</td>
                                     <td className="center">{new Date(v.fecha).toLocaleDateString()}</td>
-                                    <td className="center">${v.total.toFixed(2)}</td>
-                                    <td className="center"><span className="role-badge">{v.estado || 'Completado'}</span></td>
+                                    <td className="center">${v.total?.toFixed(2)}</td>
+                                    <td className="center"><span className="role-badge">{v.estado || 'Pagado'}</span></td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
                 </div>
 
-                {/* PAGINACIÓN SEGÚN VISTA ACTIVA */}
-                {vistaActiva === 'productos' && (
-                    <PaginationControls page={pagProductos} totalPages={totalPagProductos} onPageChange={setPagProductos} className="admin-pagination-theme" />
-                )}
-                {vistaActiva === 'usuarios' && (
-                    <PaginationControls page={pagUsuarios} totalPages={totalPagUsuarios} onPageChange={setPagUsuarios} className="admin-pagination-theme" />
-                )}
-                {vistaActiva === 'ventas' && (
-                    <PaginationControls page={pagVentas} totalPages={totalPagVentas} onPageChange={setPagVentas} className="admin-pagination-theme" />
-                )}
+                {/* PAGINACIÓN FUNCIONAL POR TABLA */}
+                {vistaActiva === 'productos' && <PaginationControls page={pagProductos} totalPages={totalPagProductos} onPageChange={setPagProductos} className="admin-pagination-theme" />}
+                {vistaActiva === 'usuarios' && <PaginationControls page={pagUsuarios} totalPages={totalPagUsuarios} onPageChange={setPagUsuarios} className="admin-pagination-theme" />}
+                {vistaActiva === 'ventas' && <PaginationControls page={pagVentas} totalPages={totalPagVentas} onPageChange={setPagVentas} className="admin-pagination-theme" />}
             </main>
 
             {/* MODAL PRODUCTO */}
@@ -271,7 +288,8 @@ const AdminPanel = () => {
 
                             <div className="field-group">
                                 <label>Categoría</label>
-                                <input type="text" value={formData.product_type} onChange={e => setFormData({...formData, product_type: e.target.value})} />
+                                <input list="cats" type="text" placeholder="Selecciona o escribe..." value={formData.product_type} onChange={e => setFormData({...formData, product_type: e.target.value})} />
+                                <datalist id="cats">{categoriasExistentes.map(c => <option key={c} value={c} />)}</datalist>
                             </div>
                             
                             <div className="variants-section">
@@ -284,39 +302,42 @@ const AdminPanel = () => {
                                         <div className="color-header-row">
                                             <div className="field-group flex-1">
                                                 <label>Color</label>
-                                                <input type="text" value={group.color} onChange={(e) => {
+                                                <input list="cols" type="text" value={group.color} onChange={(e) => {
                                                     const updated = formData.variants.map(v => v.color === group.color ? { ...v, color: e.target.value } : v);
                                                     setFormData({ ...formData, variants: updated });
                                                 }} />
+                                                <datalist id="cols">{coloresExistentes.map(c => <option key={c} value={c} />)}</datalist>
                                             </div>
                                             <div className="field-group flex-2">
-                                                <label>URL Foto</label>
+                                                <label>URL Foto del Color</label>
                                                 <input type="text" value={group.image} onChange={(e) => {
                                                     const updated = formData.variants.map(v => v.color === group.color ? { ...v, image: e.target.value } : v);
                                                     setFormData({ ...formData, variants: updated });
                                                 }} />
                                             </div>
-                                            {/* MINI PREVIEW DE IMAGEN */}
-                                            {group.image && (
-                                                <div className="mini-preview-container">
-                                                    <img src={group.image} alt="preview" className="form-mini-preview" />
-                                                </div>
-                                            )}
+                                            {/* PREVISUALIZACIÓN DE IMAGEN DINÁMICA */}
+                                            <div className="mini-preview-container">
+                                                {group.image ? <img src={group.image} alt="p" className="form-mini-preview" /> : <div className="form-mini-preview-placeholder">URL</div>}
+                                            </div>
                                         </div>
                                         <div className="sizes-grid">
                                             {group.items.map((item) => (
                                                 <div key={item.originalIndex} className="size-row">
-                                                    <div className="field-group"><label>Talla</label><input type="text" value={item.size} onChange={e => { const nv = [...formData.variants]; nv[item.originalIndex].size = e.target.value; setFormData({...formData, variants: nv}); }} /></div>
+                                                    <div className="field-group">
+                                                        <label>Talla</label>
+                                                        <input list="tallas" type="text" value={item.size} onChange={e => { const nv = [...formData.variants]; nv[item.originalIndex].size = e.target.value; setFormData({...formData, variants: nv}); }} />
+                                                    </div>
                                                     <div className="field-group"><label>Precio</label><input type="number" value={item.price} onChange={e => { const nv = [...formData.variants]; nv[item.originalIndex].price = Number(e.target.value); setFormData({...formData, variants: nv}); }} /></div>
                                                     <div className="field-group"><label>Stock</label><input type="number" value={item.inventory_quantity} onChange={e => { const nv = [...formData.variants]; nv[item.originalIndex].inventory_quantity = Number(e.target.value); setFormData({...formData, variants: nv}); }} /></div>
                                                     <button type="button" className="btn-x" onClick={() => setFormData({...formData, variants: formData.variants.filter((_, i) => i !== item.originalIndex)})}>✕</button>
                                                 </div>
                                             ))}
-                                            <button type="button" className="btn-add-size" onClick={() => addSizeToColor(group.color)}>+ Añadir talla</button>
+                                            <button type="button" className="btn-add-size" onClick={() => addSizeToColor(group.color)}>+ Añadir otra talla</button>
                                         </div>
                                     </div>
                                 ))}
                             </div>
+                            <datalist id="tallas">{tallasExistentes.map(t => <option key={t} value={t} />)}</datalist>
                             <div className="modal-footer">
                                 <button type="button" className="btn-makia-cancel" onClick={() => setModalAbierto(false)}>Cancelar</button>
                                 <button type="submit" className="btn-makia-save">Guardar Cambios</button>
