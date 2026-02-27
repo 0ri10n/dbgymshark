@@ -7,17 +7,26 @@ import './AdminPanel.css';
 const AdminPanel = () => {
     const { user, logout } = useAuth();
     
-    // --- ESTADOS DE DATOS ---
-    const [productos, setProductos] = useState([]);
-    const [pagina, setPagina] = useState(1);
-    const [totalPaginas, setTotalPaginas] = useState(1);
-    const [totalProductosCount, setTotalProductosCount] = useState(0); 
+    // --- ESTADOS DE VISTA Y BÚSQUEDA ---
+    const [vistaActiva, setVistaActiva] = useState('productos');
     const [busqueda, setBusqueda] = useState("");
     const [cargando, setCargando] = useState(false);
 
-    const [vistaActiva, setVistaActiva] = useState('productos');
+    // --- ESTADOS DE DATOS Y PAGINACIÓN (Independientes para cada tabla) ---
+    const [productos, setProductos] = useState([]);
+    const [pagProductos, setPagProductos] = useState(1);
+    const [totalPagProductos, setTotalPagProductos] = useState(1);
+    const [totalProductosCount, setTotalProductosCount] = useState(0); 
+
     const [listaUsuarios, setListaUsuarios] = useState([]);
+    const [pagUsuarios, setPagUsuarios] = useState(1);
+    const [totalPagUsuarios, setTotalPagUsuarios] = useState(1);
+    const [totalUsuariosCount, setTotalUsuariosCount] = useState(0);
+
     const [listaVentas, setListaVentas] = useState([]);
+    const [pagVentas, setPagVentas] = useState(1);
+    const [totalPagVentas, setTotalPagVentas] = useState(1);
+    const [totalVentasCount, setTotalVentasCount] = useState(0);
 
     // --- ESTADOS DE MODALES ---
     const [modalAbierto, setModalAbierto] = useState(false);
@@ -30,61 +39,52 @@ const AdminPanel = () => {
 
     const baseURL = import.meta.env.VITE_API_URL || 'https://dbgymshark-mb5q.onrender.com/api';
 
-    // --- CARGA DE DATOS ---
+    // --- CARGA DE PRODUCTOS ---
     const cargarProductos = async () => {
         setCargando(true);
         try {
-            const res = await axios.get(`${baseURL}/productos?page=${pagina}&limit=10&search=${busqueda}`);
+            const res = await axios.get(`${baseURL}/productos?page=${pagProductos}&limit=10&search=${busqueda}`);
             if (res.data.productos) {
                 setProductos(res.data.productos);
-                setTotalPaginas(res.data.paginasTotales || 1);
-                setTotalProductosCount(res.data.totalCount || res.data.totalProductos || res.data.productos.length); 
+                setTotalPagProductos(res.data.paginasTotales || 1);
+                setTotalProductosCount(res.data.totalCount || res.data.totalProductos || 0); 
             }
         } catch (error) { console.error("Error al cargar productos:", error); }
         finally { setCargando(false); }
     };
 
+    // --- CARGA DE USUARIOS Y VENTAS ---
     const cargarDatosExtra = async (vista) => {
+        const paginaActual = vista === 'usuarios' ? pagUsuarios : pagVentas;
         try {
             const token = localStorage.getItem('token');
             const config = { headers: { Authorization: `Bearer ${token}` } };
-            const res = await axios.get(`${baseURL}/admin/panel/${vista}`, config);
-            if (vista === 'usuarios') setListaUsuarios(res.data);
-            if (vista === 'ventas') setListaVentas(res.data);
+            const res = await axios.get(`${baseURL}/admin/panel/${vista}?page=${paginaActual}&limit=10`, config);
+            
+            if (vista === 'usuarios') {
+                setListaUsuarios(res.data.usuarios || res.data);
+                setTotalPagUsuarios(res.data.paginasTotales || 1);
+                setTotalUsuariosCount(res.data.totalCount || res.data.length || 0);
+            }
+            if (vista === 'ventas') {
+                setListaVentas(res.data.ventas || res.data);
+                setTotalPagVentas(res.data.paginasTotales || 1);
+                setTotalVentasCount(res.data.totalCount || res.data.length || 0);
+            }
         } catch (error) { console.error(`Error en ${vista}:`, error); }
     };
 
-    useEffect(() => { cargarProductos(); }, [pagina, busqueda]);
-    useEffect(() => { 
-        if (vistaActiva === 'usuarios') cargarDatosExtra('usuarios');
-        if (vistaActiva === 'ventas') cargarDatosExtra('ventas');
-    }, [vistaActiva]);
+    // --- EFECTOS DE CARGA ---
+    useEffect(() => { cargarProductos(); }, [pagProductos, busqueda]);
+    useEffect(() => { cargarDatosExtra('usuarios'); }, [pagUsuarios]);
+    useEffect(() => { cargarDatosExtra('ventas'); }, [pagVentas]);
 
-    // --- LÓGICA DE DATOS EXISTENTES PARA DESPLEGABLES (Datalists) ---
-    const categoriasExistentes = useMemo(() => {
-        return [...new Set(productos.map(p => p.product_type).filter(Boolean))];
-    }, [productos]);
-
-    const coloresExistentes = useMemo(() => {
-        const colores = [];
-        productos.forEach(p => p.variants?.forEach(v => { if(v.color) colores.push(v.color) }));
-        return [...new Set(colores)];
-    }, [productos]);
-
-    const tallasExistentes = useMemo(() => {
-        const tallas = [];
-        productos.forEach(p => p.variants?.forEach(v => { if(v.size) tallas.push(v.size) }));
-        return [...new Set(tallas)];
-    }, [productos]);
-
-    // --- LÓGICA DE VARIANTES AGRUPADAS POR COLOR ---
+    // --- LÓGICA DE VARIANTES (Productos) ---
     const variantsByColor = useMemo(() => {
         const grouped = {};
         formData.variants.forEach((v, index) => {
-            const colorKey = v.color || "Nuevo Color";
-            if (!grouped[colorKey]) {
-                grouped[colorKey] = { color: v.color, image: v.image || '', items: [] };
-            }
+            const colorKey = v.color || "Sin Color";
+            if (!grouped[colorKey]) grouped[colorKey] = { color: v.color, image: v.image || '', items: [] };
             grouped[colorKey].items.push({ ...v, originalIndex: index });
         });
         return Object.values(grouped);
@@ -92,13 +92,7 @@ const AdminPanel = () => {
 
     const addSizeToColor = (colorName) => {
         const existingVariant = formData.variants.find(v => v.color === colorName);
-        const newSize = { 
-            color: colorName, 
-            size: '', 
-            price: existingVariant?.price || 0, 
-            inventory_quantity: 0, 
-            image: existingVariant?.image || "" 
-        };
+        const newSize = { color: colorName, size: '', price: existingVariant?.price || 0, inventory_quantity: 0, image: existingVariant?.image || "" };
         setFormData({ ...formData, variants: [...formData.variants, newSize] });
     };
 
@@ -106,7 +100,7 @@ const AdminPanel = () => {
         setFormData({ ...formData, variants: [...formData.variants, { color: '', size: '', price: 0, inventory_quantity: 0, image: "" }] });
     };
 
-    // --- ACCIONES DE PRODUCTOS ---
+    // --- MANEJO DE PRODUCTOS ---
     const abrirModalEditar = (prod) => {
         setEditandoId(prod._id);
         setFormData({ ...prod });
@@ -135,7 +129,7 @@ const AdminPanel = () => {
         } catch (error) { alert("Error al eliminar"); }
     };
 
-    // --- ACCIONES DE USUARIOS ---
+    // --- MANEJO DE USUARIOS ---
     const abrirModalEditarUsuario = (u) => {
         setEditandoUsuarioId(u._id);
         setFormDataUsuario({
@@ -152,10 +146,8 @@ const AdminPanel = () => {
             const config = { headers: { Authorization: `Bearer ${token}` } };
             const data = { ...formDataUsuario };
             if (!data.password) delete data.password;
-
             if (editandoUsuarioId) await axios.put(`${baseURL}/admin/panel/usuarios/${editandoUsuarioId}`, data, config);
             else await axios.post(`${baseURL}/admin/panel/usuarios`, data, config);
-            
             setModalUsuarioAbierto(false);
             cargarDatosExtra('usuarios');
         } catch (error) { alert("Error al actualizar usuario"); }
@@ -185,21 +177,19 @@ const AdminPanel = () => {
                     </div>
                     <div className={`admin-stat-card ${vistaActiva === 'ventas' ? 'active-ventas' : ''}`} onClick={() => setVistaActiva('ventas')}>
                         <div className="stat-info"><h3>Ventas</h3><p>Historial</p></div>
-                        <span className="stat-count">{listaVentas.length}</span>
+                        <span className="stat-count">{totalVentasCount}</span>
                     </div>
                     <div className={`admin-stat-card ${vistaActiva === 'usuarios' ? 'active-user' : ''}`} onClick={() => setVistaActiva('usuarios')}>
                         <div className="stat-info"><h3>Usuarios</h3><p>Base de Datos</p></div>
-                        <span className="stat-count">{listaUsuarios.length}</span>
+                        <span className="stat-count">{totalUsuariosCount}</span>
                     </div>
                 </section>
 
                 <div className="admin-controls-row">
-                    {vistaActiva === 'productos' ? (
-                        <div className="search-bar-makia">
-                            <span className="search-icon">🔍</span>
-                            <input type="text" placeholder="Busca nombre o tipo de prenda..." value={busqueda} onChange={(e) => { setBusqueda(e.target.value); setPagina(1); }} />
-                        </div>
-                    ) : <div />}
+                    <div className="search-bar-makia">
+                        <span className="search-icon">🔍</span>
+                        <input type="text" placeholder="Buscar..." value={busqueda} onChange={(e) => setBusqueda(e.target.value)} />
+                    </div>
                     {vistaActiva === 'productos' && (
                         <button className="admin-add-btn" onClick={() => { setEditandoId(null); setFormData({title:'', product_type: '', variants:[]}); setModalAbierto(true); }}>
                             + Nuevo Producto
@@ -210,19 +200,23 @@ const AdminPanel = () => {
                 <div className="admin-table-wrapper">
                     <table className="admin-table-fixed">
                         <thead>
-                            {vistaActiva === 'productos' ? (
+                            {vistaActiva === 'productos' && (
                                 <tr><th>Imagen</th><th className="col-title">Título</th><th>Tipo</th><th className="center">Acciones</th></tr>
-                            ) : (
-                                <tr><th className="col-title">Nombre</th><th>Email</th><th>Rol</th><th className="center">Acciones</th></tr>
+                            )}
+                            {vistaActiva === 'usuarios' && (
+                                <tr><th>Nombre</th><th>Email</th><th>Dirección</th><th>Rol</th><th className="center">Acciones</th></tr>
+                            )}
+                            {vistaActiva === 'ventas' && (
+                                <tr><th>ID Venta</th><th>Cliente</th><th>Fecha</th><th>Total</th><th className="center">Estado</th></tr>
                             )}
                         </thead>
                         <tbody>
                             {vistaActiva === 'productos' && productos.map(p => (
                                 <tr key={p._id}>
-                                    <td className="col-img"><img src={p.variants?.[0]?.image || p.image_principal} className="table-thumb" alt="p" /></td>
-                                    <td className="col-title">{p.title}</td>
-                                    <td>{p.product_type}</td>
-                                    <td className="col-actions">
+                                    <td className="center"><img src={p.variants?.[0]?.image || p.image_principal} className="table-thumb" alt="p" /></td>
+                                    <td className="col-title center">{p.title}</td>
+                                    <td className="center">{p.product_type}</td>
+                                    <td className="col-actions center">
                                         <button className="btn-table btn-edit" onClick={() => abrirModalEditar(p)}>Editar</button>
                                         <button className="btn-table btn-delete" onClick={() => handleEliminar(p._id)}>Eliminar</button>
                                     </td>
@@ -230,126 +224,99 @@ const AdminPanel = () => {
                             ))}
                             {vistaActiva === 'usuarios' && listaUsuarios.map(u => (
                                 <tr key={u._id}>
-                                    <td className="col-title">{u.nombre} {u.apellido}</td>
-                                    <td>{u.email}</td>
-                                    <td><span className="role-badge">{u.rol}</span></td>
-                                    <td className="col-actions">
+                                    <td className="center">{u.nombre} {u.apellido}</td>
+                                    <td className="center">{u.email}</td>
+                                    <td className="center">{u.direccion || 'Sin dirección'}</td>
+                                    <td className="center"><span className="role-badge">{u.rol}</span></td>
+                                    <td className="col-actions center">
                                         <button className="btn-table btn-edit" onClick={() => abrirModalEditarUsuario(u)}>Editar</button>
                                     </td>
+                                </tr>
+                            ))}
+                            {vistaActiva === 'ventas' && listaVentas.map(v => (
+                                <tr key={v._id}>
+                                    <td className="center">{v._id.substring(0,8)}...</td>
+                                    <td className="center">{v.usuario?.nombre || 'Anon'}</td>
+                                    <td className="center">{new Date(v.fecha).toLocaleDateString()}</td>
+                                    <td className="center">${v.total.toFixed(2)}</td>
+                                    <td className="center"><span className="role-badge">{v.estado || 'Completado'}</span></td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
                 </div>
-                {vistaActiva === 'productos' && <PaginationControls page={pagina} totalPages={totalPaginas} onPageChange={setPagina} className="admin-pagination-theme" />}
+
+                {/* PAGINACIÓN SEGÚN VISTA ACTIVA */}
+                {vistaActiva === 'productos' && (
+                    <PaginationControls page={pagProductos} totalPages={totalPagProductos} onPageChange={setPagProductos} className="admin-pagination-theme" />
+                )}
+                {vistaActiva === 'usuarios' && (
+                    <PaginationControls page={pagUsuarios} totalPages={totalPagUsuarios} onPageChange={setPagUsuarios} className="admin-pagination-theme" />
+                )}
+                {vistaActiva === 'ventas' && (
+                    <PaginationControls page={pagVentas} totalPages={totalPagVentas} onPageChange={setPagVentas} className="admin-pagination-theme" />
+                )}
             </main>
 
-            {/* MODAL PRODUCTO - COMPLETO CON TUS REQUERIMIENTOS */}
+            {/* MODAL PRODUCTO */}
             {modalAbierto && (
                 <div className="modal-overlay">
                     <div className="modal-content modal-xl">
                         <h2>{editandoId ? 'Editar Producto' : 'Nuevo Producto'}</h2>
                         <form onSubmit={handleGuardar} className="admin-form-vertical">
-                            
                             <div className="field-group">
                                 <label>Nombre del Producto</label>
                                 <input type="text" required value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} />
                             </div>
 
-                            {/* CATEGORÍA DEBAJO DEL TÍTULO CON AUTOCOMPLETADO */}
                             <div className="field-group">
                                 <label>Categoría</label>
-                                <input 
-                                    list="categorias-list"
-                                    type="text" 
-                                    placeholder="Selecciona o escribe categoría..." 
-                                    value={formData.product_type} 
-                                    onChange={e => setFormData({...formData, product_type: e.target.value})} 
-                                />
-                                <datalist id="categorias-list">
-                                    {categoriasExistentes.map(cat => <option key={cat} value={cat} />)}
-                                </datalist>
+                                <input type="text" value={formData.product_type} onChange={e => setFormData({...formData, product_type: e.target.value})} />
                             </div>
                             
                             <div className="variants-section">
                                 <div className="section-header-variants">
                                     <h3>Variantes por Color</h3>
-                                    {/* BOTÓN DESPLAZADO A LA DERECHA */}
                                     <button type="button" className="btn-makia-save" onClick={addEmptyColorGroup}>+ Añadir Color</button>
                                 </div>
-                                
                                 {variantsByColor.map((group, idx) => (
                                     <div key={idx} className="color-group-card">
                                         <div className="color-header-row">
                                             <div className="field-group flex-1">
                                                 <label>Color</label>
-                                                <input 
-                                                    list="colores-list"
-                                                    type="text" 
-                                                    value={group.color} 
-                                                    onChange={(e) => {
-                                                        const updated = formData.variants.map(v => v.color === group.color ? { ...v, color: e.target.value } : v);
-                                                        setFormData({ ...formData, variants: updated });
-                                                    }} 
-                                                />
-                                                <datalist id="colores-list">
-                                                    {coloresExistentes.map(col => <option key={col} value={col} />)}
-                                                </datalist>
+                                                <input type="text" value={group.color} onChange={(e) => {
+                                                    const updated = formData.variants.map(v => v.color === group.color ? { ...v, color: e.target.value } : v);
+                                                    setFormData({ ...formData, variants: updated });
+                                                }} />
                                             </div>
                                             <div className="field-group flex-2">
-                                                <label>URL Foto del Color</label>
-                                                <input 
-                                                    type="text" 
-                                                    value={group.image} 
-                                                    onChange={(e) => {
-                                                        const updated = formData.variants.map(v => v.color === group.color ? { ...v, image: e.target.value } : v);
-                                                        setFormData({ ...formData, variants: updated });
-                                                    }} 
-                                                />
+                                                <label>URL Foto</label>
+                                                <input type="text" value={group.image} onChange={(e) => {
+                                                    const updated = formData.variants.map(v => v.color === group.color ? { ...v, image: e.target.value } : v);
+                                                    setFormData({ ...formData, variants: updated });
+                                                }} />
                                             </div>
-
-                                            {/* PREVISUALIZACIÓN MINIATURA DE LA IMAGEN URL */}
-                                            <div className="mini-preview-container">
-                                                {group.image ? (
+                                            {/* MINI PREVIEW DE IMAGEN */}
+                                            {group.image && (
+                                                <div className="mini-preview-container">
                                                     <img src={group.image} alt="preview" className="form-mini-preview" />
-                                                ) : (
-                                                    <div className="form-mini-preview-placeholder">URL</div>
-                                                )}
-                                            </div>
+                                                </div>
+                                            )}
                                         </div>
-
                                         <div className="sizes-grid">
                                             {group.items.map((item) => (
                                                 <div key={item.originalIndex} className="size-row">
-                                                    <div className="field-group">
-                                                        <label>Talla</label>
-                                                        <input 
-                                                            list="tallas-list"
-                                                            type="text" 
-                                                            value={item.size} 
-                                                            onChange={e => { 
-                                                                const nv = [...formData.variants]; 
-                                                                nv[item.originalIndex].size = e.target.value; 
-                                                                setFormData({...formData, variants: nv}); 
-                                                            }} 
-                                                        />
-                                                    </div>
+                                                    <div className="field-group"><label>Talla</label><input type="text" value={item.size} onChange={e => { const nv = [...formData.variants]; nv[item.originalIndex].size = e.target.value; setFormData({...formData, variants: nv}); }} /></div>
                                                     <div className="field-group"><label>Precio</label><input type="number" value={item.price} onChange={e => { const nv = [...formData.variants]; nv[item.originalIndex].price = Number(e.target.value); setFormData({...formData, variants: nv}); }} /></div>
                                                     <div className="field-group"><label>Stock</label><input type="number" value={item.inventory_quantity} onChange={e => { const nv = [...formData.variants]; nv[item.originalIndex].inventory_quantity = Number(e.target.value); setFormData({...formData, variants: nv}); }} /></div>
                                                     <button type="button" className="btn-x" onClick={() => setFormData({...formData, variants: formData.variants.filter((_, i) => i !== item.originalIndex)})}>✕</button>
                                                 </div>
                                             ))}
-                                            <button type="button" className="btn-add-size" onClick={() => addSizeToColor(group.color)}>+ Añadir otra talla en este color</button>
+                                            <button type="button" className="btn-add-size" onClick={() => addSizeToColor(group.color)}>+ Añadir talla</button>
                                         </div>
                                     </div>
                                 ))}
                             </div>
-
-                            {/* DATALIST PARA TALLAS (GLOBAL) */}
-                            <datalist id="tallas-list">
-                                {tallasExistentes.map(talla => <option key={talla} value={talla} />)}
-                            </datalist>
-
                             <div className="modal-footer">
                                 <button type="button" className="btn-makia-cancel" onClick={() => setModalAbierto(false)}>Cancelar</button>
                                 <button type="submit" className="btn-makia-save">Guardar Cambios</button>
@@ -367,6 +334,7 @@ const AdminPanel = () => {
                         <form onSubmit={handleGuardarUsuario} className="admin-form-vertical">
                             <div className="field-group"><label>Nombre</label><input type="text" value={formDataUsuario.nombre} onChange={e => setFormDataUsuario({...formDataUsuario, nombre: e.target.value})} /></div>
                             <div className="field-group"><label>Email</label><input type="email" value={formDataUsuario.email} onChange={e => setFormDataUsuario({...formDataUsuario, email: e.target.value})} /></div>
+                            <div className="field-group"><label>Dirección</label><input type="text" value={formDataUsuario.direccion} onChange={e => setFormDataUsuario({...formDataUsuario, direccion: e.target.value})} /></div>
                             <div className="field-group">
                                 <label>Rol</label>
                                 <select value={formDataUsuario.rol} onChange={e => setFormDataUsuario({...formDataUsuario, rol: e.target.value})}>
