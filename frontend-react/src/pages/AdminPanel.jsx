@@ -42,19 +42,17 @@ const AdminPanel = () => {
     const [editandoUsuarioId, setEditandoUsuarioId] = useState(null);
     const [formDataUsuario, setFormDataUsuario] = useState({ nombre: '', apellido: '', email: '', rol: 'cliente', password: '', direccion: '' });
 
-    const baseURL = import.meta.env.VITE_API_URL || 'https://dbgymshark-mb5q.onrender.com/api';
+    // URL ACTUALIZADA CON TU SERVIDOR CORRECTO (ddk1)
+    const baseURL = import.meta.env.VITE_API_URL || 'https://dbgymshark-ddk1.onrender.com/api';
 
-    // --- CARGA DE PRODUCTOS (Respetando el paginado del Backend) ---
+    // --- CARGA DE PRODUCTOS ---
     const cargarProductos = async () => {
         setCargando(true);
         try {
             const res = await axios.get(`${baseURL}/productos?page=${pagProductos}&limit=${itemsPorPagina}&search=${busqueda}`);
             if (res.data) {
-                // Tomamos el arreglo directo (el backend ya manda solo los 10)
                 const dataArr = res.data.productos || res.data || [];
                 setProductos(Array.isArray(dataArr) ? dataArr : []);
-                
-                // Extraemos las páginas y el total directamente de la metadata del backend
                 setTotalPagProductos(res.data.pagination?.pages || res.data.paginasTotales || 1);
                 setTotalProductosCount(res.data.pagination?.total || res.data.totalCount || res.data.total || (Array.isArray(dataArr) ? dataArr.length : 0)); 
             }
@@ -62,12 +60,13 @@ const AdminPanel = () => {
         finally { setCargando(false); }
     };
 
-    // --- CARGA DE USUARIOS Y VENTAS (Respetando el paginado del Backend) ---
+    // --- CARGA DE USUARIOS Y VENTAS (CON AUTENTICACIÓN BEARER CORREGIDA) ---
     const cargarDatosExtra = async (vista) => {
         const paginaActual = vista === 'usuarios' ? pagUsuarios : pagVentas;
         try {
             const token = localStorage.getItem('token');
-            const config = { headers: { 'x-auth-token': token } }; 
+            // AQUÍ ESTÁ LA MAGIA: Regresamos al Bearer que usa tu Catálogo
+            const config = { headers: { Authorization: `Bearer ${token}` } }; 
             const res = await axios.get(`${baseURL}/admin/panel/${vista}?page=${paginaActual}&limit=${itemsPorPagina}`, config);
             
             if (vista === 'usuarios') {
@@ -126,7 +125,7 @@ const AdminPanel = () => {
         setFormData({ ...formData, variants: [...formData.variants, { color: '', size: '', price: 0, inventory_quantity: 0, image: "" }] });
     };
 
-    // --- ACCIONES DE PRODUCTOS ---
+    // --- ACCIONES DE PRODUCTOS (CON AUTENTICACIÓN BEARER CORREGIDA) ---
     const abrirModalEditar = (prod) => {
         setEditandoId(prod._id);
         setFormData({ ...prod });
@@ -137,7 +136,7 @@ const AdminPanel = () => {
         e.preventDefault();
         try {
             const token = localStorage.getItem('token');
-            const config = { headers: { 'x-auth-token': token } }; 
+            const config = { headers: { Authorization: `Bearer ${token}` } }; 
             if (editandoId) await axios.put(`${baseURL}/productos/${editandoId}`, formData, config);
             else await axios.post(`${baseURL}/productos`, formData, config);
             setModalAbierto(false);
@@ -150,7 +149,7 @@ const AdminPanel = () => {
         if (!window.confirm("¿Eliminar este producto permanentemente?")) return;
         try {
             const token = localStorage.getItem('token');
-            await axios.delete(`${baseURL}/productos/${id}`, { headers: { 'x-auth-token': token } });
+            await axios.delete(`${baseURL}/productos/${id}`, { headers: { Authorization: `Bearer ${token}` } });
             cargarProductos();
         } catch (error) { alert("Error al eliminar"); }
     };
@@ -167,7 +166,6 @@ const AdminPanel = () => {
     return (
         <div className="admin-container">
             <header className="admin-header">
-                {/* LOGO EN IMAGEN */}
                 <img src="/logo-makia-pages.png" alt="Makia Logo" className="brand-logo-img" />
                 <div className="admin-user-panel">
                     <div className="user-welcome-info">
@@ -198,7 +196,6 @@ const AdminPanel = () => {
                 </section>
 
                 <div className="admin-controls-row">
-                    {/* BUSCADOR CON LUPA FONT AWESOME */}
                     <div className="search-bar-makia" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                         <i className="fas fa-search" style={{ color: '#000', fontSize: '18px' }}></i>
                         <input 
@@ -229,7 +226,6 @@ const AdminPanel = () => {
                             )}
                         </thead>
                         <tbody>
-                            {/* MAPEO DIRECTO (Ya viene cortado por página desde el Backend) */}
                             {vistaActiva === 'productos' && productos.map(p => (
                                 <tr key={p._id}>
                                     <td className="center"><img src={p.variants?.[0]?.image || p.image_principal} className="table-thumb" alt="p" /></td>
@@ -268,7 +264,6 @@ const AdminPanel = () => {
                     </table>
                 </div>
 
-                {/* CONTROLES DE PAGINACIÓN */}
                 {vistaActiva === 'productos' && <PaginationControls page={pagProductos} totalPages={totalPagProductos} onPageChange={setPagProductos} className="admin-pagination-theme" />}
                 {vistaActiva === 'usuarios' && <PaginationControls page={pagUsuarios} totalPages={totalPagUsuarios} onPageChange={setPagUsuarios} className="admin-pagination-theme" />}
                 {vistaActiva === 'ventas' && <PaginationControls page={pagVentas} totalPages={totalPagVentas} onPageChange={setPagVentas} className="admin-pagination-theme" />}
