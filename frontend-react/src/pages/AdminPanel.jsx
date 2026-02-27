@@ -199,6 +199,18 @@ const AdminPanel = () => {
         }
     };
 
+    const handleEliminarUsuario = async (id) => {
+        if (!window.confirm("¿Eliminar este usuario permanentemente?")) return;
+        try {
+            const config = { headers: getAuthHeaders() };
+            await axios.delete(`${baseURL}/usuarios/${id}`, config);
+            cargarDatosExtra('usuarios');
+        } catch (error) { 
+            console.error("Error al eliminar usuario:", error);
+            alert("Error al eliminar el usuario."); 
+        }
+    };
+
     return (
         <div className="admin-container">
             <header className="admin-header">
@@ -218,15 +230,15 @@ const AdminPanel = () => {
             <main className="admin-main">
                 <section className="admin-stats">
                     <div className={`admin-stat-card ${vistaActiva === 'productos' ? 'active-prod' : ''}`} onClick={() => setVistaActiva('productos')}>
-                        <div className="stat-info"><h3>Productos</h3><p>Total en DB</p></div>
+                        <div className="stat-info"><h3>Productos</h3><p>Total en Base de Datos</p></div>
                         <span className="stat-count">{totalProductosCount}</span>
                     </div>
                     <div className={`admin-stat-card ${vistaActiva === 'ventas' ? 'active-ventas' : ''}`} onClick={() => setVistaActiva('ventas')}>
-                        <div className="stat-info"><h3>Ventas</h3><p>Historial Total</p></div>
+                        <div className="stat-info"><h3>Ventas</h3><p>Historial</p></div>
                         <span className="stat-count">{totalVentasCount}</span>
                     </div>
                     <div className={`admin-stat-card ${vistaActiva === 'usuarios' ? 'active-user' : ''}`} onClick={() => setVistaActiva('usuarios')}>
-                        <div className="stat-info"><h3>Usuarios</h3><p>Base de Datos</p></div>
+                        <div className="stat-info"><h3>Usuarios</h3><p>Usuarios activos</p></div>
                         <span className="stat-count">{totalUsuariosCount}</span>
                     </div>
                 </section>
@@ -291,6 +303,7 @@ const AdminPanel = () => {
                                     <td className="center"><span className="role-badge">{u.rol}</span></td>
                                     <td className="col-actions center">
                                         <button className="btn-table btn-edit" onClick={() => abrirModalEditarUsuario(u)}>Editar</button>
+                                        <button className="btn-table btn-delete" onClick={() => handleEliminarUsuario(u._id)}>Eliminar</button>
                                     </td>
                                 </tr>
                             ))}
