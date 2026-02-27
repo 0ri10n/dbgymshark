@@ -54,7 +54,7 @@ const Login = () => {
                 <Beams
                     beamWidth={3}
                     beamHeight={30}
-                    beamNumber={20}
+                    beamNumber={10}
                     lightColor="#ffffff"
                     speed={2}
                     noiseIntensity={1.75}
