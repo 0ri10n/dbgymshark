@@ -34,7 +34,7 @@
 }
 
 .brand-logo {
-    font-size: 2.2rem;            /* TAMAÑO REDUCIDO PARA MAYOR ELEGANCIA */
+    font-size: 2.1rem;            /* TAMAÑO REFINADO */
     font-weight: 900;
     letter-spacing: 3px;
     margin: 0;
@@ -134,7 +134,7 @@
     display: flex;
     align-items: center;
     padding: 8px 22px;
-    width: 420px;                 /* ANCHO OPTIMIZADO */
+    width: 380px;                 /* ANCHO OPTIMIZADO */
     box-shadow: 0 4px 15px rgba(0,0,0,0.25);
 }
 
@@ -278,6 +278,40 @@
 .field-group label { font-size: 0.85rem; font-weight: 700; color: var(--makia-muted); text-transform: uppercase; }
 .field-group input, .field-group select { background: #111; border: 1px solid var(--makia-border); color: white; padding: 12px; border-radius: 10px; }
 
+/* BOTONES DE FORMULARIO UNIFICADOS (GLOW) */
+.btn-makia-save, .btn-makia-blue {
+    background: var(--makia-blue);
+    color: white;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-makia-save:hover, .btn-makia-blue:hover {
+    box-shadow: 0 0 20px rgba(77, 163, 255, 0.5);
+    filter: brightness(1.1);
+}
+
+.btn-makia-cancel {
+    background: white;
+    color: black;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-makia-cancel:hover {
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.4);
+}
+
 /* VARIANTES AGRUPADAS POR COLOR */
 .color-group-card {
     background: #0a0a0a;
@@ -292,10 +326,10 @@
 .flex-1 { flex: 1; }
 .flex-2 { flex: 2; }
 
-/* PREVISUALIZACIÓN DE IMAGEN */
+/* PREVISUALIZACIÓN DE IMAGEN CENTRADA */
 .preview-centered { display: flex; justify-content: center; margin: 15px 0; }
 .image-preview-box {
-    max-height: 120px;            /* TAMAÑO COMPACTO PARA NO SATURAR EL FORMULARIO */
+    max-height: 120px;            /* TAMAÑO COMPACTO */
     border-radius: 12px;
     border: 2px solid #222;
     box-shadow: 0 10px 30px rgba(0,0,0,0.5);
@@ -340,6 +374,22 @@
 
 .btn-x:hover { background: var(--makia-danger); color: white; }
 
+/* BOTÓN AÑADIR TALLA DENTRO DE COLOR */
+.btn-add-size {
+    background: transparent;
+    border: 1px solid #333;
+    color: var(--makia-blue);
+    padding: 8px;
+    width: 100%;
+    margin-top: 10px;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-add-size:hover { background: #151515; border-color: var(--makia-blue); }
+
 /* FOOTER Y PAGINACIÓN */
 .modal-footer {
     display: flex;
@@ -348,11 +398,6 @@
     margin-top: 2.5rem;
     padding-top: 2rem;
     border-top: 1px solid var(--makia-border);
-}
-
-.btn-save.shadow-blue {
-    background: var(--makia-blue);
-    box-shadow: 0 0 15px rgba(77, 163, 255, 0.4);
 }
 
 .admin-pagination-theme {
