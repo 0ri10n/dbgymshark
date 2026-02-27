@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import PaginationControls from '../components/PaginationControls';
 import './AdminPanel.css';
 
-// --- FUNCIONES DE UTILIDAD (Integradas según tu requerimiento) ---
+// --- FUNCIONES DE UTILIDAD ---
 const getColorHex = (name = "") => {
     const n = name.toLowerCase();
     if (n.includes('blue')) return "#1e3a8a";
@@ -30,7 +30,7 @@ const AdminPanel = () => {
     const [cargando, setCargando] = useState(false);
     const totalPaginasSeguras = Math.max(Number(totalPaginas) || 1, 1);
     
-    // Estados para Modales y Formularios
+    // Estados para Modales
     const [modalAbierto, setModalAbierto] = useState(false);
     const [editandoId, setEditandoId] = useState(null);
     const [formData, setFormData] = useState({
@@ -48,6 +48,27 @@ const AdminPanel = () => {
     });
 
     const baseURL = import.meta.env.VITE_API_URL || 'https://dbgymshark-mb5q.onrender.com/api';
+
+    // --- LÓGICA DE SUGERENCIAS (Extrae valores únicos de los productos cargados) ---
+    const sugerencias = useMemo(() => {
+        const cats = new Set();
+        const colors = new Set();
+        const sizes = new Set();
+
+        productos.forEach(p => {
+            if (p.product_type) cats.add(p.product_type);
+            p.variants?.forEach(v => {
+                if (v.color) colors.add(v.color);
+                if (v.size) sizes.add(v.size);
+            });
+        });
+
+        return {
+            categorias: Array.from(cats).sort(),
+            colores: Array.from(colors).sort(),
+            tallas: Array.from(sizes).sort()
+        };
+    }, [productos]);
 
     // --- CARGA DE DATOS ---
     const cargarProductos = async () => {
@@ -108,7 +129,7 @@ const AdminPanel = () => {
             
             setModalAbierto(false);
             cargarProductos();
-        } catch (error) { alert("Error al guardar el producto."); }
+        } catch (error) { alert("Error al guardar."); }
     };
 
     const handleEliminar = async (id) => {
@@ -147,6 +168,11 @@ const AdminPanel = () => {
 
     return (
         <div className="admin-container">
+            {/* Listas de Sugerencias Dinámicas */}
+            <datalist id="list-categorias">{sugerencias.categorias.map(c => <option key={c} value={c} />)}</datalist>
+            <datalist id="list-colores">{sugerencias.colores.map(c => <option key={c} value={c} />)}</datalist>
+            <datalist id="list-tallas">{sugerencias.tallas.map(s => <option key={s} value={s} />)}</datalist>
+
             <header className="admin-header">
                 <h1>Panel de Administración - MAKIA</h1>
                 <div className="admin-header-actions">
@@ -222,7 +248,7 @@ const AdminPanel = () => {
                 </section>
             </main>
 
-            {/* --- MODAL PRODUCTOS (Estructura Vertical con Labels) --- */}
+            {/* --- MODAL PRODUCTOS --- */}
             {modalAbierto && (
                 <div className="modal-overlay">
                     <div className="modal-content modal-large">
@@ -234,13 +260,21 @@ const AdminPanel = () => {
                             </div>
 
                             <div className="field-group">
-                                <label>Categoría / Tipo de Prenda</label>
-                                <input type="text" value={formData.product_type} onChange={e => setFormData({...formData, product_type: e.target.value})} />
+                                <label>Categoría / Tipo (Sugerencias disponibles)</label>
+                                <input type="text" list="list-categorias" value={formData.product_type} onChange={e => setFormData({...formData, product_type: e.target.value})} />
                             </div>
 
-                            <div className="field-group">
-                                <label>URL Imagen Principal (Catálogo)</label>
-                                <input type="text" value={formData.image_principal} onChange={e => setFormData({...formData, image_principal: e.target.value})} />
+                            <div className="form-image-section">
+                                <div className="field-group">
+                                    <label>URL Imagen Principal</label>
+                                    <input type="text" value={formData.image_principal} onChange={e => setFormData({...formData, image_principal: e.target.value})} />
+                                </div>
+                                {formData.image_principal && (
+                                    <div className="preview-container">
+                                        <p>Previsualización:</p>
+                                        <img src={formData.image_principal} alt="Preview" className="image-preview-box" />
+                                    </div>
+                                )}
                             </div>
 
                             <div className="variants-section">
@@ -248,9 +282,9 @@ const AdminPanel = () => {
                                 {formData.variants.map((v, i) => (
                                     <div key={i} className="variant-card">
                                         <div className="field-group">
-                                            <label>Color</label>
+                                            <label>Color (Sugerencias disponibles)</label>
                                             <div className="color-input-wrapper">
-                                                <input type="text" placeholder="Ej: Blue, Pink, Black" value={v.color} onChange={e => {
+                                                <input type="text" list="list-colores" placeholder="Ej: Blue, Pink, Black" value={v.color} onChange={e => {
                                                     const nv = [...formData.variants]; nv[i].color = e.target.value; setFormData({...formData, variants: nv});
                                                 }} />
                                                 <div className="color-preview" style={{ backgroundColor: getColorHex(v.color) }}></div>
@@ -259,7 +293,7 @@ const AdminPanel = () => {
                                         <div className="inline-fields">
                                             <div className="field-group" style={{flex: 1}}>
                                                 <label>Talla</label>
-                                                <input type="text" value={v.size} onChange={e => {
+                                                <input type="text" list="list-tallas" value={v.size} onChange={e => {
                                                     const nv = [...formData.variants]; nv[i].size = e.target.value; setFormData({...formData, variants: nv});
                                                 }} />
                                             </div>
