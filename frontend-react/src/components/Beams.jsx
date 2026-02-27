@@ -156,20 +156,13 @@ const Beams = ({
     () =>
       extendMaterial(THREE.MeshBasicMaterial, {
         header: `
-  varying vec3 vEye;
-  varying float vNoise;
   varying vec2 vUv;
-  varying vec3 vPosition;
   uniform float time;
-  uniform float uSpeed;
-  uniform float uNoiseIntensity;
-  uniform float uScale;
-  ${noise}`,
+  uniform float uSpeed;`,
         vertexHeader: `
   float getPos(vec3 pos) {
-    vec3 noisePos =
-      vec3(pos.x * 0., pos.y - uv.y, pos.z + time * uSpeed * 3.) * uScale;
-    return cnoise(noisePos);
+    // Usamos un seno simple en lugar de cnoise para liberar la CPU
+    return sin(pos.y * 0.5 + time * uSpeed) * 0.5;
   }
   vec3 getCurrentPos(vec3 pos) {
     vec3 newpos = pos;
@@ -190,9 +183,7 @@ const Beams = ({
           '#include <beginnormal_vertex>': `objectNormal = getNormal(position.xyz);`
         },
         fragment: {
-          '#include <dithering_fragment>': `
-    float randomNoise = noise(gl_FragCoord.xy);
-    gl_FragColor.rgb -= randomNoise / 15. * uNoiseIntensity;`
+          '#include <dithering_fragment>': ``
         },
         material: { fog: true },
         uniforms: {
@@ -274,7 +265,8 @@ const MergedPlanes = forwardRef(({ material, width, count, height }, ref) => {
     [count, width, height]
   );
   useFrame((_, delta) => {
-    mesh.current.material.uniforms.time.value += 0.1 * delta;
+    // Bajamos el incremento para que la CPU respire
+    mesh.current.material.uniforms.time.value += 0.05 * delta;
   });
   return <mesh ref={mesh} geometry={geometry} material={material} />;
 });
