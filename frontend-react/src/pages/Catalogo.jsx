@@ -71,7 +71,7 @@ const Catalogo = () => {
         const cargarData = async () => {
             setCargando(true);
             try {
-                const baseURL = import.meta.env.VITE_API_URL || 'https://dbgymshark-mb5q.onrender.com/api';
+                const baseURL = import.meta.env.VITE_API_URL || 'https://dbgymshark-ddk1.onrender.com/api';
                 const res = await axios.get(`${baseURL}/productos?page=${pagina}`);
                 if (res.data.productos) {
                     setProductos(res.data.productos);
@@ -140,7 +140,7 @@ const Catalogo = () => {
         };
 
         try {
-            const baseURL = import.meta.env.VITE_API_URL || 'https://dbgymshark-mb5q.onrender.com/api';
+            const baseURL = import.meta.env.VITE_API_URL || 'https://dbgymshark-ddk1.onrender.com/api';
             await axios.post(`${baseURL}/productos/ventas`, ventaData, {
                 headers: {
                 Authorization: `Bearer ${localStorage.getItem('token')}` // O donde sea que guardes tu JWT

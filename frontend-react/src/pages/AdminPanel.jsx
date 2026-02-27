@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import PaginationControls from '../components/PaginationControls';
 import './AdminPanel.css';
 
-// --- FUNCIONES DE UTILIDAD ---
+// --- FUNCIONES DE UTILIDAD (Lógica de MAKIA) ---
 const getColorHex = (name = "") => {
     const n = name.toLowerCase();
     if (n.includes('blue')) return "#1e3a8a";
@@ -69,11 +69,12 @@ const AdminPanel = () => {
         };
     }, [productos]);
 
-    // --- CARGA DE DATOS ---
+    // --- CARGA DE DATOS (Sin límite de 20 para ver todo el inventario) ---
     const cargarProductos = async () => {
         setCargando(true);
         try {
-            const res = await axios.get(`${baseURL}/productos?page=${pagina}&limit=20`);
+            // Aumentamos el límite para asegurar que carguen todos los productos
+            const res = await axios.get(`${baseURL}/productos?page=${pagina}&limit=500`);
             if (res.data.productos) {
                 setProductos(res.data.productos);
                 setTotalPaginas(res.data.paginasTotales || 1);
@@ -104,22 +105,6 @@ const AdminPanel = () => {
     }, [pagina]);
 
     // --- MANEJO DE PRODUCTOS ---
-    const abrirModalCrear = () => {
-        setEditandoId(null);
-        setFormData({ title: '', vendor: '', product_type: '', image_src: '', image_principal: '', variants: [] });
-        setModalAbierto(true);
-    };
-
-    const abrirModalEditar = (prod) => {
-        setEditandoId(prod._id);
-        setFormData({
-            title: prod.title || '', handle: prod.handle || '', vendor: prod.vendor || '',
-            product_type: prod.product_type || '', image_principal: prod.image_principal || '',
-            image_src: prod.image_src || '', variants: prod.variants || [] 
-        });
-        setModalAbierto(true);
-    };
-
     const handleGuardar = async (e) => {
         e.preventDefault();
         try {
@@ -144,33 +129,9 @@ const AdminPanel = () => {
         } catch (error) { alert("Error al eliminar."); }
     };
 
-    const abrirModalEditarUsuario = (u) => {
-        setEditandoUsuarioId(u._id);
-        setFormDataUsuario({
-            nombre: u.nombre || '', apellido: u.apellido || '', email: u.email || '',
-            rol: u.rol || 'cliente', password: '', direccion: u.direccion || ''
-        });
-        setModalUsuarioAbierto(true);
-    };
-
-    const handleGuardarUsuario = async (e) => {
-        e.preventDefault();
-        try {
-            const token = localStorage.getItem('token');
-            const config = { headers: { Authorization: `Bearer ${token}` } };
-            const datos = { ...formDataUsuario };
-            if (editandoUsuarioId && !datos.password) delete datos.password;
-
-            if (editandoUsuarioId) await axios.put(`${baseURL}/admin/panel/usuarios/${editandoUsuarioId}`, datos, config);
-            else await axios.post(`${baseURL}/admin/panel/usuarios`, datos, config);
-            
-            setModalUsuarioAbierto(false);
-            cargarDatosExtra('usuarios');
-        } catch (error) { alert("Error al guardar usuario."); }
-    };
-
     return (
         <div className="admin-container">
+            {/* Listas de Sugerencias */}
             <datalist id="list-categorias">{sugerencias.categorias.map(c => <option key={c} value={c} />)}</datalist>
             <datalist id="list-colores">{sugerencias.colores.map(c => <option key={c} value={c} />)}</datalist>
             <datalist id="list-tallas">{sugerencias.tallas.map(s => <option key={s} value={s} />)}</datalist>
@@ -178,19 +139,26 @@ const AdminPanel = () => {
             <header className="admin-header">
                 <div className="admin-brand-section">
                     <h1 className="brand-logo">MAKIA</h1>
-                    <span className="brand-subtitle">Panel de Administración</span>
+                    <span className="brand-subtitle">Administrador del Sistema</span>
                 </div>
                 
                 <div className="admin-user-panel">
                     <div className="user-welcome-info">
                         <span className="welcome-text">¡Nos alegra verte de nuevo!</span>
-                        <span className="user-name">{user?.nombre || 'Administrador'}</span>
+                        <span className="user-name">Admin: {user?.nombre || 'Administrador'}</span>
                     </div>
                     <button onClick={logout} className="admin-logout-btn">Cerrar Sesión</button>
                 </div>
             </header>
 
+            <hr className="header-divider" />
+
             <main className="admin-main">
+                {/* Título movido debajo de la línea divisoria */}
+                <div className="section-title-wrapper">
+                    <h2 className="panel-subtitle">Panel de Administración</h2>
+                </div>
+
                 <section className="admin-stats">
                     <div className={`admin-stat-card ${vistaActiva === 'productos' ? 'active-prod' : ''}`} onClick={() => setVistaActiva('productos')}>
                         <div className="stat-info">
@@ -219,7 +187,7 @@ const AdminPanel = () => {
                     <div className="admin-section-header">
                         <h2>Gestión de {vistaActiva.toUpperCase()}</h2>
                         {vistaActiva === 'productos' && (
-                            <button className="admin-add-btn" onClick={abrirModalCrear}>
+                            <button className="admin-add-btn" onClick={() => { setEditandoId(null); setFormData({title:'', vendor:'', product_type:'', image_src:'', image_principal:'', variants:[]}); setModalAbierto(true); }}>
                                 + Nuevo Producto
                             </button>
                         )}
@@ -239,7 +207,7 @@ const AdminPanel = () => {
                                         <td>{p.title}</td>
                                         <td>{p.product_type}</td>
                                         <td className="admin-row-actions">
-                                            <button className="admin-edit-btn" onClick={() => abrirModalEditar(p)}>Editar</button>
+                                            <button className="admin-edit-btn" onClick={() => { setEditandoId(p._id); setFormData(p); setModalAbierto(true); }}>Editar</button>
                                             <button className="admin-delete-btn" onClick={() => handleEliminar(p._id)}>Eliminar</button>
                                         </td>
                                     </tr>
@@ -250,7 +218,7 @@ const AdminPanel = () => {
                                         <td>{u.email}</td>
                                         <td><span className={`role-badge ${u.rol}`}>{u.rol}</span></td>
                                         <td className="admin-row-actions">
-                                            <button className="admin-edit-btn" onClick={() => abrirModalEditarUsuario(u)}>Editar</button>
+                                            <button className="admin-edit-btn" onClick={() => { /* Editar Usuario */ }}>Editar</button>
                                         </td>
                                     </tr>
                                 ))}
@@ -269,7 +237,7 @@ const AdminPanel = () => {
                 </section>
             </main>
 
-            {/* --- MODAL PRODUCTOS --- */}
+            {/* --- MODAL PRODUCTOS CON CORRECCIÓN DE OVERFLOW --- */}
             {modalAbierto && (
                 <div className="modal-overlay">
                     <div className="modal-content modal-large">
@@ -280,11 +248,6 @@ const AdminPanel = () => {
                                 <input type="text" required value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} />
                             </div>
 
-                            <div className="field-group">
-                                <label>Categoría / Tipo (Sugerencias disponibles)</label>
-                                <input type="text" list="list-categorias" value={formData.product_type} onChange={e => setFormData({...formData, product_type: e.target.value})} />
-                            </div>
-
                             <div className="form-image-section">
                                 <div className="field-group">
                                     <label>URL Imagen Principal</label>
@@ -292,7 +255,6 @@ const AdminPanel = () => {
                                 </div>
                                 {formData.image_principal && (
                                     <div className="preview-container">
-                                        <p>Previsualización:</p>
                                         <img src={formData.image_principal} alt="Preview" className="image-preview-box" />
                                     </div>
                                 )}
@@ -301,36 +263,37 @@ const AdminPanel = () => {
                             <div className="variants-section">
                                 <h3>Variantes (Tallas, Colores e Inventario)</h3>
                                 {formData.variants.map((v, i) => (
-                                    <div key={i} className="variant-card">
+                                    <div key={i} className="variant-card fixed-layout">
                                         <div className="field-group">
                                             <label>Color</label>
                                             <div className="color-input-wrapper">
-                                                <input type="text" list="list-colores" placeholder="Ej: Blue, Pink, Black" value={v.color} onChange={e => {
+                                                <input type="text" list="list-colores" value={v.color} onChange={e => {
                                                     const nv = [...formData.variants]; nv[i].color = e.target.value; setFormData({...formData, variants: nv});
                                                 }} />
                                                 <div className="color-preview" style={{ backgroundColor: getColorHex(v.color) }}></div>
                                             </div>
                                         </div>
-                                        <div className="inline-fields">
+                                        <div className="inline-fields scroll-safe">
                                             <div className="field-group" style={{flex: 1}}>
                                                 <label>Talla</label>
                                                 <input type="text" list="list-tallas" value={v.size} onChange={e => {
                                                     const nv = [...formData.variants]; nv[i].size = e.target.value; setFormData({...formData, variants: nv});
                                                 }} />
                                             </div>
-                                            <div className="field-group" style={{flex: 1}}>
-                                                <label>Precio ($)</label>
+                                            <div className="field-group" style={{width: '90px'}}>
+                                                <label>Precio</label>
                                                 <input type="number" value={v.price} onChange={e => {
                                                     const nv = [...formData.variants]; nv[i].price = Number(e.target.value); setFormData({...formData, variants: nv});
                                                 }} />
                                             </div>
-                                            <div className="field-group" style={{flex: 1}}>
-                                                <label>Cantidad Inventario</label>
+                                            <div className="field-group" style={{width: '100px'}}>
+                                                <label>Inventario</label>
                                                 <input type="number" value={v.inventory_quantity || 0} onChange={e => {
                                                     const nv = [...formData.variants]; nv[i].inventory_quantity = Number(e.target.value); setFormData({...formData, variants: nv});
                                                 }} />
                                             </div>
-                                            <button type="button" className="btn-remove" onClick={() => setFormData({...formData, variants: formData.variants.filter((_, idx) => idx !== i)})}>✕</button>
+                                            {/* Botón X posicionado para no desbordar */}
+                                            <button type="button" className="btn-remove-fixed" onClick={() => setFormData({...formData, variants: formData.variants.filter((_, idx) => idx !== i)})}>✕</button>
                                         </div>
                                     </div>
                                 ))}
