@@ -67,7 +67,7 @@ const AdminPanel = () => {
         const paginaActual = vista === 'usuarios' ? pagUsuarios : pagVentas;
         try {
             const token = localStorage.getItem('token');
-            const config = { headers: { Authorization: `Bearer ${token}` } };
+            const config = { headers: { 'x-auth-token': token } }; 
             const res = await axios.get(`${baseURL}/admin/panel/${vista}?page=${paginaActual}&limit=${itemsPorPagina}`, config);
             
             if (vista === 'usuarios') {
@@ -143,7 +143,7 @@ const AdminPanel = () => {
         e.preventDefault();
         try {
             const token = localStorage.getItem('token');
-            const config = { headers: { Authorization: `Bearer ${token}` } };
+            const config = { headers: { 'x-auth-token': token } }; 
             if (editandoId) await axios.put(`${baseURL}/productos/${editandoId}`, formData, config);
             else await axios.post(`${baseURL}/productos`, formData, config);
             setModalAbierto(false);
@@ -156,7 +156,7 @@ const AdminPanel = () => {
         if (!window.confirm("¿Eliminar este producto permanentemente?")) return;
         try {
             const token = localStorage.getItem('token');
-            await axios.delete(`${baseURL}/productos/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+            await axios.delete(`${baseURL}/productos/${id}`, { headers: { 'x-auth-token': token } });
             cargarProductos();
         } catch (error) { alert("Error al eliminar"); }
     };
