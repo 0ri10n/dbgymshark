@@ -7,12 +7,12 @@ import './AdminPanel.css';
 const AdminPanel = () => {
     const { user, logout } = useAuth();
     
-    // --- ESTADOS DE VISTA ---
+    // --- ESTADOS DE VISTA Y BÚSQUEDA ---
     const [vistaActiva, setVistaActiva] = useState('productos');
     const [busqueda, setBusqueda] = useState("");
     const [cargando, setCargando] = useState(false);
 
-    // --- ESTADOS DE DATOS Y PAGINACIÓN INDEPENDIENTE (10 elementos por página) ---
+    // --- ESTADOS DE DATOS Y PAGINACIÓN INDEPENDIENTE (10 por página) ---
     const [productos, setProductos] = useState([]);
     const [pagProductos, setPagProductos] = useState(1);
     const [totalPagProductos, setTotalPagProductos] = useState(1);
@@ -53,7 +53,7 @@ const AdminPanel = () => {
         finally { setCargando(false); }
     };
 
-    // --- CARGA DE USUARIOS Y VENTAS (Paginación Funcional) ---
+    // --- CARGA DE USUARIOS Y VENTAS ---
     const cargarDatosExtra = async (vista) => {
         const paginaActual = vista === 'usuarios' ? pagUsuarios : pagVentas;
         try {
@@ -62,13 +62,11 @@ const AdminPanel = () => {
             const res = await axios.get(`${baseURL}/admin/panel/${vista}?page=${paginaActual}&limit=10`, config);
             
             if (vista === 'usuarios') {
-                // Se asume que el backend devuelve { usuarios, totalCount, paginasTotales }
                 setListaUsuarios(res.data.usuarios || res.data);
                 setTotalPagUsuarios(res.data.paginasTotales || 1);
                 setTotalUsuariosCount(res.data.totalCount || (Array.isArray(res.data) ? res.data.length : 0));
             }
             if (vista === 'ventas') {
-                // Se asume que el backend devuelve { ventas, totalCount, paginasTotales }
                 setListaVentas(res.data.ventas || res.data);
                 setTotalPagVentas(res.data.paginasTotales || 1);
                 setTotalVentasCount(res.data.totalCount || (Array.isArray(res.data) ? res.data.length : 0));
@@ -76,12 +74,12 @@ const AdminPanel = () => {
         } catch (error) { console.error(`Error en ${vista}:`, error); }
     };
 
-    // Efectos de sincronización por sección
+    // --- EFECTOS DE SINCRONIZACIÓN ---
     useEffect(() => { cargarProductos(); }, [pagProductos, busqueda]);
     useEffect(() => { cargarDatosExtra('usuarios'); }, [pagUsuarios]);
     useEffect(() => { cargarDatosExtra('ventas'); }, [pagVentas]);
 
-    // --- LÓGICA DE DATOS EXISTENTES PARA SUGERENCIAS (Datalists) ---
+    // --- LÓGICA DE DATOS EXISTENTES PARA SUGERENCIAS (Datalists extraídos de la BD) ---
     const categoriasExistentes = useMemo(() => [...new Set(productos.map(p => p.product_type).filter(Boolean))], [productos]);
     const coloresExistentes = useMemo(() => {
         const colores = [];
@@ -94,11 +92,11 @@ const AdminPanel = () => {
         return [...new Set(tallas)];
     }, [productos]);
 
-    // --- LÓGICA DE VARIANTES AGRUPADAS POR COLOR ---
+    // --- LÓGICA DE VARIANTES ---
     const variantsByColor = useMemo(() => {
         const grouped = {};
         formData.variants.forEach((v, index) => {
-            const colorKey = v.color || "Nuevo Color";
+            const colorKey = v.color || "Sin Color";
             if (!grouped[colorKey]) grouped[colorKey] = { color: v.color, image: v.image || '', items: [] };
             grouped[colorKey].items.push({ ...v, originalIndex: index });
         });
@@ -107,13 +105,7 @@ const AdminPanel = () => {
 
     const addSizeToColor = (colorName) => {
         const existingVariant = formData.variants.find(v => v.color === colorName);
-        const newSize = { 
-            color: colorName, 
-            size: '', 
-            price: existingVariant?.price || 0, 
-            inventory_quantity: 0, 
-            image: existingVariant?.image || "" 
-        };
+        const newSize = { color: colorName, size: '', price: existingVariant?.price || 0, inventory_quantity: 0, image: existingVariant?.image || "" };
         setFormData({ ...formData, variants: [...formData.variants, newSize] });
     };
 
@@ -181,7 +173,7 @@ const AdminPanel = () => {
                 <div className="admin-user-panel">
                     <div className="user-welcome-info">
                         <span className="welcome-text">¡Nos alegra verte de nuevo!</span>
-                        <span className="user-name">Admin: <strong>{user?.nombre || 'Administrador'}</strong></span>
+                        <span className="user-name-header">{user?.nombre || 'Administrador'}</span>
                     </div>
                     <button onClick={logout} className="admin-logout-btn">Cerrar Sesión</button>
                 </div>
@@ -193,11 +185,11 @@ const AdminPanel = () => {
             <main className="admin-main">
                 <section className="admin-stats">
                     <div className={`admin-stat-card ${vistaActiva === 'productos' ? 'active-prod' : ''}`} onClick={() => setVistaActiva('productos')}>
-                        <div className="stat-info"><h3>Productos</h3><p>Inventario Actual</p></div>
+                        <div className="stat-info"><h3>Productos</h3><p>Total en DB</p></div>
                         <span className="stat-count">{totalProductosCount}</span>
                     </div>
                     <div className={`admin-stat-card ${vistaActiva === 'ventas' ? 'active-ventas' : ''}`} onClick={() => setVistaActiva('ventas')}>
-                        <div className="stat-info"><h3>Ventas</h3><p>Historial</p></div>
+                        <div className="stat-info"><h3>Ventas</h3><p>Total Historial</p></div>
                         <span className="stat-count">{totalVentasCount}</span>
                     </div>
                     <div className={`admin-stat-card ${vistaActiva === 'usuarios' ? 'active-user' : ''}`} onClick={() => setVistaActiva('usuarios')}>
@@ -234,10 +226,10 @@ const AdminPanel = () => {
                         <tbody>
                             {vistaActiva === 'productos' && productos.map(p => (
                                 <tr key={p._id}>
-                                    <td className="center"><img src={p.variants?.[0]?.image || p.image_principal} className="table-thumb" alt="p" /></td>
-                                    <td className="col-title center">{p.title}</td>
-                                    <td className="center">{p.product_type}</td>
-                                    <td className="col-actions center">
+                                    <td><img src={p.variants?.[0]?.image || p.image_principal} className="table-thumb" alt="p" /></td>
+                                    <td className="col-title">{p.title}</td>
+                                    <td>{p.product_type}</td>
+                                    <td className="col-actions">
                                         <button className="btn-table btn-edit" onClick={() => abrirModalEditar(p)}>Editar</button>
                                         <button className="btn-table btn-delete" onClick={() => handleEliminar(p._id)}>Eliminar</button>
                                     </td>
@@ -245,23 +237,23 @@ const AdminPanel = () => {
                             ))}
                             {vistaActiva === 'usuarios' && listaUsuarios.map(u => (
                                 <tr key={u._id}>
-                                    <td className="center">{u.nombre} {u.apellido}</td>
-                                    <td className="center">{u.email}</td>
-                                    <td className="center">{u.direccion || 'N/A'}</td>
-                                    <td className="center"><span className="role-badge">{u.rol}</span></td>
-                                    <td className="col-actions center">
+                                    <td>{u.nombre} {u.apellido}</td>
+                                    <td>{u.email}</td>
+                                    <td>{u.direccion || 'N/A'}</td>
+                                    <td><span className="role-badge">{u.rol}</span></td>
+                                    <td className="col-actions">
                                         <button className="btn-table btn-edit" onClick={() => abrirModalEditarUsuario(u)}>Editar</button>
                                     </td>
                                 </tr>
                             ))}
                             {vistaActiva === 'ventas' && listaVentas.map(v => (
                                 <tr key={v._id}>
-                                    <td className="center">{v._id.substring(0,8)}...</td>
-                                    <td className="center">{v.usuario?.nombre || 'Anon'}</td>
-                                    <td className="center">{v.direccion || 'N/A'}</td>
-                                    <td className="center">{new Date(v.fecha).toLocaleDateString()}</td>
-                                    <td className="center">${v.total?.toFixed(2)}</td>
-                                    <td className="center"><span className="role-badge">{v.estado || 'Pagado'}</span></td>
+                                    <td>{v._id.substring(0,8)}...</td>
+                                    <td>{v.usuario?.nombre || 'Anon'}</td>
+                                    <td>{v.direccion || 'N/A'}</td>
+                                    <td>{new Date(v.fecha).toLocaleDateString()}</td>
+                                    <td>${v.total?.toFixed(2)}</td>
+                                    <td><span className="role-badge">{v.estado || 'Pagado'}</span></td>
                                 </tr>
                             ))}
                         </tbody>
@@ -269,18 +261,12 @@ const AdminPanel = () => {
                 </div>
 
                 {/* PAGINACIÓN SEGÚN VISTA ACTIVA */}
-                {vistaActiva === 'productos' && (
-                    <PaginationControls page={pagProductos} totalPages={totalPagProductos} onPageChange={setPagProductos} className="admin-pagination-theme" />
-                )}
-                {vistaActiva === 'usuarios' && (
-                    <PaginationControls page={pagUsuarios} totalPages={totalPagUsuarios} onPageChange={setPagUsuarios} className="admin-pagination-theme" />
-                )}
-                {vistaActiva === 'ventas' && (
-                    <PaginationControls page={pagVentas} totalPages={totalPagVentas} onPageChange={setPagVentas} className="admin-pagination-theme" />
-                )}
+                {vistaActiva === 'productos' && <PaginationControls page={pagProductos} totalPages={totalPagProductos} onPageChange={setPagProductos} className="admin-pagination-theme" />}
+                {vistaActiva === 'usuarios' && <PaginationControls page={pagUsuarios} totalPages={totalPagUsuarios} onPageChange={setPagUsuarios} className="admin-pagination-theme" />}
+                {vistaActiva === 'ventas' && <PaginationControls page={pagVentas} totalPages={totalPagVentas} onPageChange={setPagVentas} className="admin-pagination-theme" />}
             </main>
 
-            {/* MODAL PRODUCTO - AJUSTES DE FORMULARIO */}
+            {/* MODAL PRODUCTO - ACTUALIZADO */}
             {modalAbierto && (
                 <div className="modal-overlay">
                     <div className="modal-content modal-xl">
@@ -291,7 +277,6 @@ const AdminPanel = () => {
                                 <input type="text" required value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} />
                             </div>
 
-                            {/* CATEGORÍA DEBAJO DEL TÍTULO */}
                             <div className="field-group">
                                 <label>Categoría</label>
                                 <input list="cats-list" type="text" placeholder="Selecciona o escribe..." value={formData.product_type} onChange={e => setFormData({...formData, product_type: e.target.value})} />
@@ -303,7 +288,6 @@ const AdminPanel = () => {
                                     <h3>Variantes por Color</h3>
                                     <button type="button" className="btn-makia-save" onClick={addEmptyColorGroup}>+ Añadir Color</button>
                                 </div>
-                                
                                 {variantsByColor.map((group, idx) => (
                                     <div key={idx} className="color-group-card">
                                         <div className="color-header-row">
@@ -316,7 +300,6 @@ const AdminPanel = () => {
                                                 <datalist id="cols-list">{coloresExistentes.map(c => <option key={c} value={c} />)}</datalist>
                                             </div>
 
-                                            {/* CAMPO URL EXPANDIDO */}
                                             <div className="field-group url-input-expanded">
                                                 <label>URL Foto del Color</label>
                                                 <input type="text" value={group.image} onChange={(e) => {
@@ -325,16 +308,10 @@ const AdminPanel = () => {
                                                 }} />
                                             </div>
 
-                                            {/* PREVISUALIZACIÓN AL FINAL DE LA FILA */}
                                             <div className="mini-preview-container">
-                                                {group.image ? (
-                                                    <img src={group.image} alt="preview" className="form-mini-preview" />
-                                                ) : (
-                                                    <div className="form-mini-preview-placeholder">URL</div>
-                                                )}
+                                                {group.image ? <img src={group.image} alt="p" className="form-mini-preview" /> : <div className="form-mini-preview-placeholder">URL</div>}
                                             </div>
                                         </div>
-
                                         <div className="sizes-grid">
                                             {group.items.map((item) => (
                                                 <div key={item.originalIndex} className="size-row">
@@ -362,7 +339,7 @@ const AdminPanel = () => {
                 </div>
             )}
 
-            {/* MODAL USUARIOS */}
+            {/* MODAL USUARIO */}
             {modalUsuarioAbierto && (
                 <div className="modal-overlay">
                     <div className="modal-content">
@@ -371,17 +348,8 @@ const AdminPanel = () => {
                             <div className="field-group"><label>Nombre</label><input type="text" value={formDataUsuario.nombre} onChange={e => setFormDataUsuario({...formDataUsuario, nombre: e.target.value})} /></div>
                             <div className="field-group"><label>Email</label><input type="email" value={formDataUsuario.email} onChange={e => setFormDataUsuario({...formDataUsuario, email: e.target.value})} /></div>
                             <div className="field-group"><label>Dirección</label><input type="text" value={formDataUsuario.direccion} onChange={e => setFormDataUsuario({...formDataUsuario, direccion: e.target.value})} /></div>
-                            <div className="field-group">
-                                <label>Rol</label>
-                                <select value={formDataUsuario.rol} onChange={e => setFormDataUsuario({...formDataUsuario, rol: e.target.value})}>
-                                    <option value="cliente">Cliente</option>
-                                    <option value="admin">Administrador</option>
-                                </select>
-                            </div>
-                            <div className="modal-footer">
-                                <button type="button" className="btn-makia-cancel" onClick={() => setModalUsuarioAbierto(false)}>Cerrar</button>
-                                <button type="submit" className="btn-makia-save">Actualizar</button>
-                            </div>
+                            <div className="field-group"><label>Rol</label><select value={formDataUsuario.rol} onChange={e => setFormDataUsuario({...formDataUsuario, rol: e.target.value})}><option value="cliente">Cliente</option><option value="admin">Administrador</option></select></div>
+                            <div className="modal-footer"><button type="button" className="btn-makia-cancel" onClick={() => setModalUsuarioAbierto(false)}>Cerrar</button><button type="submit" className="btn-makia-save">Actualizar</button></div>
                         </form>
                     </div>
                 </div>

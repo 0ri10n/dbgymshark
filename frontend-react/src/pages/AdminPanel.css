@@ -1,5 +1,5 @@
 /* =========================================
-   ESTILOS MAKIA - ADMIN PANEL FINAL
+   ESTILOS MAKIA - ADMIN PANEL FINAL COMPLETO
    ========================================= */
 :root {
     --makia-black: #000000;
@@ -22,7 +22,7 @@
     font-family: 'Poppins', sans-serif;
 }
 
-/* HEADER */
+/* HEADER: AJUSTE EXACTO A LA ÚLTIMA IMAGEN */
 .admin-header {
     display: flex;
     justify-content: space-between;
@@ -47,9 +47,23 @@
     border: 1px solid var(--makia-border);
 }
 
-.user-name {
-    font-weight: 700;
+.user-welcome-info {
+    text-align: left; /* Alineado a la izquierda dentro del panel como en la imagen */
+    display: flex;
+    flex-direction: column;
+}
+
+.welcome-text {
+    font-size: 0.8rem;
+    color: var(--makia-muted);
+    margin-bottom: -2px;
+}
+
+.user-name-header {
+    font-size: 1.25rem;
+    font-weight: 800;
     color: var(--makia-blue);
+    line-height: 1;
 }
 
 .admin-logout-btn {
@@ -59,6 +73,7 @@
     padding: 8px 18px;
     border-radius: 10px;
     cursor: pointer;
+    font-weight: 700;
     transition: 0.3s;
 }
 
@@ -73,7 +88,7 @@
     margin: 0 0 1.5rem 0;
 }
 
-/* TARJETAS DE ESTADÍSTICAS */
+/* TARJETAS DE ESTADÍSTICAS (CONTADORES) */
 .admin-stats {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -96,14 +111,13 @@
 .stat-count {
     font-size: 2.5rem;
     font-weight: 800;
-    opacity: 0.9;
 }
 
 .active-prod { border-color: var(--makia-blue) !important; box-shadow: 0 0 20px rgba(77, 163, 255, 0.2); }
 .active-ventas { border-color: #10b981 !important; box-shadow: 0 0 20px rgba(16, 185, 129, 0.2); }
-.active-user { border-color: var(--makia-purple) !important; box-shadow: 0 0 20px rgba(139, 92, 246, 0.2); }
+.active-user { border-color: #8b5cf6 !important; box-shadow: 0 0 20px rgba(139, 92, 246, 0.2); }
 
-/* BUSCADOR Y BOTÓN */
+/* CONTROLES */
 .admin-controls-row {
     display: flex;
     justify-content: space-between;
@@ -140,7 +154,7 @@
     text-transform: uppercase;
 }
 
-/* TABLAS COMPLETAMENTE CENTRADAS */
+/* TABLAS TOTALMENTE CENTRADAS */
 .admin-table-wrapper {
     background: var(--makia-surface);
     border: 1px solid var(--makia-border);
@@ -160,7 +174,7 @@
     padding: 1.5rem;
     color: var(--makia-muted);
     text-transform: uppercase;
-    text-align: center; /* CENTRADO TOTAL */
+    text-align: center; /* CENTRADO DE HEADERS */
     font-size: 0.8rem;
     letter-spacing: 1.5px;
 }
@@ -169,7 +183,7 @@
     padding: 1.5rem;
     border-bottom: 1px solid #1a1a1a;
     vertical-align: middle;
-    text-align: center; /* CENTRADO TOTAL */
+    text-align: center; /* CENTRADO DE CONTENIDO */
     color: var(--makia-text);
 }
 
@@ -196,7 +210,7 @@
 .btn-edit { background: #fff; color: #000; }
 .btn-delete { background: var(--makia-danger); color: #fff; }
 
-/* MODAL Y FORMULARIO */
+/* MODALES */
 .modal-overlay {
     position: fixed;
     inset: 0;
@@ -253,14 +267,14 @@
     display: flex; 
     gap: 20px; 
     align-items: flex-end; 
-    margin-bottom: 30px; /* ESPACIO CON LAS TALLAS DE ABAJO */
+    margin-bottom: 30px; /* ESPACIO CON LOS ELEMENTOS DE ABAJO */
 }
 
-.color-input-fixed {
-    width: 200px;
+.color-box-small {
+    width: 220px;
 }
 
-.url-input-expanded {
+.url-box-expanded {
     flex: 1; /* EXPANDE EL CAMPO URL */
 }
 
@@ -269,13 +283,13 @@
     align-items: center; 
     justify-content: center; 
     padding-bottom: 2px;
-    width: 65px;
+    width: 70px;
 }
 
 .form-mini-preview {
     width: 55px;
     height: 55px;
-    border-radius: 8px;
+    border-radius: 10px;
     object-fit: cover;
     border: 1px solid var(--makia-border);
     background: #080808;
@@ -284,7 +298,7 @@
 .form-mini-preview-placeholder {
     width: 55px;
     height: 55px;
-    border-radius: 8px;
+    border-radius: 10px;
     border: 1px dashed #444;
     display: flex;
     align-items: center;
@@ -296,13 +310,14 @@
 /* SECCIÓN VARIANTES */
 .section-header-variants {
     display: flex;
-    justify-content: space-between; /* BOTÓN A LA DERECHA */
+    justify-content: space-between; /* BOTÓN AÑADIR COLOR A LA DERECHA */
     align-items: center;
     margin: 2rem 0;
 }
 
 .color-group-card {
     background: #0a0a0a;
+    border: 1px solid var(--makia-border);
     border-left: 6px solid var(--makia-blue);
     padding: 2rem;
     border-radius: 18px;
@@ -317,28 +332,57 @@
     border-top: 1px solid #222;
 }
 
+/* FILA DE TALLA Y CENTRADO DE TACHE ROJO */
 .size-row {
     display: flex;
-    gap: 12px;
+    gap: 15px;
     background: #0f0f0f;
-    padding: 15px;
+    padding: 15px 60px 15px 15px; /* ESPACIO EXTRA A LA DERECHA PARA EL TACHE */
     border-radius: 10px;
     align-items: flex-end;
     position: relative;
+    margin-bottom: 12px;
 }
 
 .btn-x {
     position: absolute;
-    right: 10px;
-    top: 10px;
+    right: 18px;
+    top: 50%; /* CENTRADO VERTICAL */
+    transform: translateY(-20%); /* AJUSTE FINO POR EL LABEL */
     background: none;
     color: var(--makia-danger);
     border: none;
     cursor: pointer;
-    font-size: 1.2rem;
+    font-size: 1.5rem;
+    font-weight: bold;
+    transition: 0.2s;
 }
 
-/* BOTONES FINALES */
+.btn-x:hover {
+    color: #ff0000;
+    transform: translateY(-20%) scale(1.2);
+}
+
+/* BOTÓN AÑADIR OTRA TALLA (DISEÑO ORIGINAL RESTAURADO) */
+.btn-add-size {
+    background: transparent;
+    border: 1px solid #333;
+    color: var(--makia-blue);
+    padding: 10px;
+    width: 100%;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 15px;
+    transition: all 0.2s ease;
+}
+
+.btn-add-size:hover {
+    background: #151515;
+    border-color: var(--makia-blue);
+}
+
+/* BOTONES FINALES DEL MODAL */
 .btn-makia-save {
     background: var(--makia-blue);
     color: #fff;
@@ -365,12 +409,12 @@
     display: flex;
     justify-content: flex-end;
     gap: 1.5rem;
-    margin-top: 2rem;
+    margin-top: 2.5rem;
     border-top: 1px solid var(--makia-border);
     padding-top: 1.5rem;
 }
 
-/* OTROS */
+/* BADGES Y PAGINACIÓN */
 .role-badge {
     padding: 4px 12px;
     border-radius: 6px;
