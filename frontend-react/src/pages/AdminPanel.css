@@ -169,7 +169,7 @@
     transform: translateY(-2px);
 }
 
-/* TABLA MAKIA */
+/* TABLA MAKIA PROPORCIONADA */
 .admin-table-wrapper {
     background: var(--makia-surface);
     border: 1px solid var(--makia-border);
@@ -204,7 +204,7 @@
 .col-img { width: 100px; }
 .col-title { width: 40%; }
 .col-type { width: 20%; }
-.col-actions { width: 250px; text-align: center; }
+.col-actions { width: 280px; text-align: center; }
 
 .table-thumb {
     width: 55px;
@@ -221,7 +221,7 @@
     gap: 12px;
 }
 
-.admin-edit-btn, .admin-delete-btn {
+.btn-table {
     border: none;
     padding: 10px 20px;
     border-radius: 10px;
@@ -229,19 +229,19 @@
     cursor: pointer;
     text-transform: uppercase;
     font-size: 0.75rem;
-    min-width: 100px;
+    min-width: 110px;
     transition: var(--transition);
 }
 
-.admin-edit-btn { background: #ffffff; color: #000; }
-.admin-edit-btn:hover {
+.btn-edit { background: #ffffff; color: #000; }
+.btn-edit:hover {
     background: var(--makia-blue);
     color: white;
     box-shadow: 0 0 15px rgba(77, 163, 255, 0.6);
 }
 
-.admin-delete-btn { background: var(--makia-danger); color: white; }
-.admin-delete-btn:hover {
+.btn-delete { background: var(--makia-danger); color: white; }
+.btn-delete:hover {
     filter: brightness(1.2);
     box-shadow: 0 0 15px rgba(255, 77, 77, 0.6);
 }
@@ -272,16 +272,14 @@
 .admin-form-vertical { display: flex; flex-direction: column; gap: 1.8rem; }
 
 /* PREVISUALIZACIÓN DE IMAGEN CENTRADA */
-.preview-container.centered {
-    margin-top: 15px;
+.preview-centered {
+    margin: 15px 0;
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
+    justify-content: center;
 }
 
-.image-preview-box.small-centered {
-    max-height: 160px;
+.image-preview-box {
+    max-height: 140px;
     border-radius: 15px;
     border: 2px solid #222;
     box-shadow: 0 10px 30px rgba(0,0,0,0.5);
@@ -304,14 +302,6 @@
     margin-bottom: 20px;
 }
 
-.mini-preview {
-    width: 60px;
-    height: 60px;
-    object-fit: cover;
-    border-radius: 10px;
-    border: 1px solid #333;
-}
-
 .sizes-grid {
     display: grid;
     grid-template-columns: 1fr;
@@ -325,22 +315,24 @@
     gap: 15px;
     align-items: flex-end;
     position: relative;
-    padding-right: 50px; /* Espacio para el botón X */
+    background: #111;
+    padding: 12px;
+    border-radius: 10px;
 }
 
 /* BOTÓN ELIMINAR VARIANTE (X) */
 .btn-x {
-    position: absolute;
-    right: 0;
-    bottom: 5px;
     background: transparent;
     color: var(--makia-danger);
     border: 1px solid rgba(255, 77, 77, 0.3);
-    width: 38px;
-    height: 38px;
+    width: 35px;
+    height: 35px;
     border-radius: 50%;
     cursor: pointer;
     transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .btn-x:hover { background: var(--makia-danger); color: white; box-shadow: 0 0 10px rgba(255, 77, 77, 0.4); }
@@ -355,9 +347,30 @@
     border-top: 1px solid var(--makia-border);
 }
 
-.btn-save.shadow-blue {
+.btn-add-variant, .btn-save {
     background: var(--makia-blue);
-    box-shadow: 0 0 15px rgba(77, 163, 255, 0.4);
+    color: white;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 10px;
+    font-weight: 800;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: var(--transition);
+}
+
+.btn-add-variant:hover, .btn-save:hover {
+    box-shadow: 0 0 20px rgba(77, 163, 255, 0.5);
+}
+
+.btn-cancel {
+    background: transparent;
+    border: 1px solid var(--makia-border);
+    color: white;
+    padding: 12px 28px;
+    border-radius: 12px;
+    font-weight: 700;
+    cursor: pointer;
 }
 
 /* PAGINACIÓN */
@@ -377,6 +390,6 @@
     font-weight: 700;
     text-transform: uppercase;
     background: #1a1a1a;
-    color: var(--makia-muted);
+    color: var(--makia-purple);
+    border: 1px solid var(--makia-purple);
 }
-.role-badge.admin { color: var(--makia-purple); border: 1px solid var(--makia-purple); }
