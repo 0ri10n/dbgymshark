@@ -91,7 +91,7 @@
     letter-spacing: 0.5px;
 }
 
-/* TARJETAS DE ESTADÍSTICAS E ILUMINACIÓN */
+/* TARJETAS DE ESTADÍSTICAS */
 .admin-stats {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -119,7 +119,7 @@
 .active-ventas { border-color: var(--makia-success) !important; box-shadow: 0 0 25px rgba(16, 185, 129, 0.2); }
 .active-user { border-color: var(--makia-purple) !important; box-shadow: 0 0 25px rgba(139, 92, 246, 0.2); }
 
-/* CONTROLES */
+/* CONTROLES (BUSCADOR Y BOTÓN NUEVO) */
 .admin-controls-row {
     display: flex;
     justify-content: space-between;
@@ -137,11 +137,7 @@
     box-shadow: 0 4px 15px rgba(0,0,0,0.25);
 }
 
-.search-icon { 
-    margin-right: 12px; 
-    color: #444; 
-    font-size: 1rem;
-}
+.search-icon { margin-right: 12px; color: #444; font-size: 1rem; }
 
 .search-bar-makia input {
     border: none;
@@ -153,8 +149,6 @@
     font-weight: 500;
 }
 
-.search-bar-makia input::placeholder { color: #888; }
-
 .admin-add-btn {
     background: var(--makia-blue);
     color: white;
@@ -164,7 +158,6 @@
     font-weight: 800;
     cursor: pointer;
     text-transform: uppercase;
-    letter-spacing: 1px;
     transition: var(--transition);
 }
 
@@ -173,7 +166,7 @@
     transform: translateY(-2px);
 }
 
-/* TABLA */
+/* TABLA DE PRODUCTOS/USUARIOS */
 .admin-table-wrapper {
     background: var(--makia-surface);
     border: 1px solid var(--makia-border);
@@ -185,7 +178,6 @@
 .admin-table-fixed {
     width: 100%;
     border-collapse: collapse;
-    table-layout: fixed;
 }
 
 .admin-table-fixed th {
@@ -204,10 +196,6 @@
     vertical-align: middle;
 }
 
-.col-img { width: 85px; }
-.col-title { width: 38%; }
-.col-actions { width: 260px; text-align: center; }
-
 .table-thumb {
     width: 55px;
     height: 55px;
@@ -223,23 +211,13 @@
     font-weight: 800;
     text-transform: uppercase;
     font-size: 0.7rem;
-    min-width: 105px;
     cursor: pointer;
     transition: all 0.3s ease;
+    margin: 0 5px;
 }
 
 .btn-edit { background: #ffffff; color: #000; }
-.btn-edit:hover {
-    background: var(--makia-blue);
-    color: white;
-    box-shadow: 0 0 15px rgba(77, 163, 255, 0.5);
-}
-
 .btn-delete { background: var(--makia-danger); color: white; }
-.btn-delete:hover {
-    box-shadow: 0 0 15px rgba(255, 77, 77, 0.5);
-    filter: brightness(1.1);
-}
 
 /* MODALES */
 .modal-overlay {
@@ -265,36 +243,64 @@
 }
 
 .admin-form-vertical { display: flex; flex-direction: column; gap: 1.8rem; }
+
 .field-group { display: flex; flex-direction: column; gap: 10px; }
 .field-group label { font-size: 0.85rem; font-weight: 700; color: var(--makia-muted); text-transform: uppercase; }
-.field-group input, .field-group select { background: #111; border: 1px solid var(--makia-border); color: white; padding: 12px; border-radius: 10px; }
+
+.field-group input, 
+.field-group select { 
+    background: #111; 
+    border: 1px solid var(--makia-border); 
+    color: white; 
+    padding: 12px; 
+    border-radius: 10px; 
+    outline: none;
+}
 
 /* AJUSTE BOTÓN AÑADIR COLOR Y TÍTULO SECCIÓN */
 .section-header-variants {
     display: flex;
-    justify-content: space-between;
+    justify-content: space-between; /* Manda el botón a la derecha */
     align-items: center;
-    margin: 1.5rem 0 2rem 0; /* Espacio superior y gran espacio inferior respecto al form */
+    margin: 2rem 0 1.5rem 0; /* Espacio extra entre el botón y el formulario */
 }
 
 /* MINI PREVIEW DE IMAGEN EN EL FORMULARIO */
-.mini-preview-wrapper {
+.mini-preview-container {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding-top: 1.8rem; /* Para alinearlo con los inputs */
+    padding-top: 1.8rem; /* Alineado visualmente con los inputs */
 }
 
 .form-mini-preview {
-    width: 45px;
-    height: 45px;
+    width: 50px;
+    height: 50px;
     border-radius: 8px;
     object-fit: cover;
     border: 1px solid var(--makia-border);
     background: #080808;
+    transition: transform 0.2s ease;
 }
 
-.btn-makia-save, .btn-makia-blue {
+.form-mini-preview:hover {
+    transform: scale(1.2);
+}
+
+.form-mini-preview-placeholder {
+    width: 50px;
+    height: 50px;
+    border-radius: 8px;
+    border: 1px dashed var(--makia-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.6rem;
+    color: var(--makia-muted);
+}
+
+/* BOTONES DEL MODAL */
+.btn-makia-save {
     background: var(--makia-blue);
     color: white;
     border: none;
@@ -303,12 +309,6 @@
     font-weight: 800;
     text-transform: uppercase;
     cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.btn-makia-save:hover, .btn-makia-blue:hover {
-    box-shadow: 0 0 20px rgba(77, 163, 255, 0.5);
-    filter: brightness(1.1);
 }
 
 .btn-makia-cancel {
@@ -320,14 +320,9 @@
     font-weight: 800;
     text-transform: uppercase;
     cursor: pointer;
-    transition: all 0.3s ease;
 }
 
-.btn-makia-cancel:hover {
-    box-shadow: 0 0 15px rgba(255, 255, 255, 0.4);
-}
-
-/* VARIANTES */
+/* TARJETAS DE VARIANTES (COLORES) */
 .color-group-card {
     background: #0a0a0a;
     border: 1px solid var(--makia-border);
@@ -337,10 +332,17 @@
     margin-bottom: 2rem;
 }
 
-.color-header-row { display: flex; gap: 20px; align-items: flex-start; margin-bottom: 20px; }
+.color-header-row { 
+    display: flex; 
+    gap: 20px; 
+    align-items: flex-start; 
+    margin-bottom: 20px; 
+}
+
 .flex-1 { flex: 1; }
 .flex-2 { flex: 2; }
 
+/* GRILLA DE TALLAS */
 .sizes-grid {
     display: grid;
     grid-template-columns: 1fr;
@@ -360,6 +362,7 @@
     border: 1px solid #1a1a1a;
 }
 
+/* BOTÓN ELIMINAR VARIANTE (X) */
 .btn-x {
     position: absolute;
     right: 10px;
@@ -379,6 +382,7 @@
 
 .btn-x:hover { background: var(--makia-danger); color: white; }
 
+/* BOTÓN AÑADIR TALLA DENTRO DE COLOR */
 .btn-add-size {
     background: transparent;
     border: 1px solid #333;
@@ -394,6 +398,7 @@
 
 .btn-add-size:hover { background: #151515; border-color: var(--makia-blue); }
 
+/* FOOTER DEL MODAL */
 .modal-footer {
     display: flex;
     justify-content: flex-end;
@@ -403,14 +408,7 @@
     border-top: 1px solid var(--makia-border);
 }
 
-.admin-pagination-theme {
-    --pg-bg: #0a0a0a;
-    --pg-bg-hover: #151515;
-    --pg-bg-active: var(--makia-blue);
-    --pg-border: var(--makia-border);
-    margin-top: 3rem;
-}
-
+/* BADGE DE ROL */
 .role-badge {
     padding: 6px 12px;
     border-radius: 8px;
@@ -420,4 +418,9 @@
     background: #1a1a1a;
     color: var(--makia-purple);
     border: 1px solid var(--makia-purple);
+}
+
+/* PAGINACIÓN */
+.admin-pagination-theme {
+    margin-top: 3rem;
 }

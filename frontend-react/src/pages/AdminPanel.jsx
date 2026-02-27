@@ -30,7 +30,7 @@ const AdminPanel = () => {
 
     const baseURL = import.meta.env.VITE_API_URL || 'https://dbgymshark-mb5q.onrender.com/api';
 
-    // --- CARGA DE DATOS DESDE LA DB ---
+    // --- CARGA DE DATOS ---
     const cargarProductos = async () => {
         setCargando(true);
         try {
@@ -60,12 +60,31 @@ const AdminPanel = () => {
         if (vistaActiva === 'ventas') cargarDatosExtra('ventas');
     }, [vistaActiva]);
 
+    // --- LÓGICA DE DATOS EXISTENTES PARA DESPLEGABLES (Datalists) ---
+    const categoriasExistentes = useMemo(() => {
+        return [...new Set(productos.map(p => p.product_type).filter(Boolean))];
+    }, [productos]);
+
+    const coloresExistentes = useMemo(() => {
+        const colores = [];
+        productos.forEach(p => p.variants?.forEach(v => { if(v.color) colores.push(v.color) }));
+        return [...new Set(colores)];
+    }, [productos]);
+
+    const tallasExistentes = useMemo(() => {
+        const tallas = [];
+        productos.forEach(p => p.variants?.forEach(v => { if(v.size) tallas.push(v.size) }));
+        return [...new Set(tallas)];
+    }, [productos]);
+
     // --- LÓGICA DE VARIANTES AGRUPADAS POR COLOR ---
     const variantsByColor = useMemo(() => {
         const grouped = {};
         formData.variants.forEach((v, index) => {
-            const colorKey = v.color || "Sin Color";
-            if (!grouped[colorKey]) grouped[colorKey] = { color: v.color, image: v.image || '', items: [] };
+            const colorKey = v.color || "Nuevo Color";
+            if (!grouped[colorKey]) {
+                grouped[colorKey] = { color: v.color, image: v.image || '', items: [] };
+            }
             grouped[colorKey].items.push({ ...v, originalIndex: index });
         });
         return Object.values(grouped);
@@ -225,21 +244,31 @@ const AdminPanel = () => {
                 {vistaActiva === 'productos' && <PaginationControls page={pagina} totalPages={totalPaginas} onPageChange={setPagina} className="admin-pagination-theme" />}
             </main>
 
-            {/* MODAL PRODUCTO - MEJORADO */}
+            {/* MODAL PRODUCTO - COMPLETO CON TUS REQUERIMIENTOS */}
             {modalAbierto && (
                 <div className="modal-overlay">
                     <div className="modal-content modal-xl">
                         <h2>{editandoId ? 'Editar Producto' : 'Nuevo Producto'}</h2>
                         <form onSubmit={handleGuardar} className="admin-form-vertical">
+                            
                             <div className="field-group">
                                 <label>Nombre del Producto</label>
                                 <input type="text" required value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} />
                             </div>
 
-                            {/* CAMPO DE CATEGORÍA DEBAJO DEL TÍTULO */}
+                            {/* CATEGORÍA DEBAJO DEL TÍTULO CON AUTOCOMPLETADO */}
                             <div className="field-group">
                                 <label>Categoría</label>
-                                <input type="text" placeholder="Ej. Hoodie, Camiseta, Pantalón..." value={formData.product_type} onChange={e => setFormData({...formData, product_type: e.target.value})} />
+                                <input 
+                                    list="categorias-list"
+                                    type="text" 
+                                    placeholder="Selecciona o escribe categoría..." 
+                                    value={formData.product_type} 
+                                    onChange={e => setFormData({...formData, product_type: e.target.value})} 
+                                />
+                                <datalist id="categorias-list">
+                                    {categoriasExistentes.map(cat => <option key={cat} value={cat} />)}
+                                </datalist>
                             </div>
                             
                             <div className="variants-section">
@@ -254,29 +283,57 @@ const AdminPanel = () => {
                                         <div className="color-header-row">
                                             <div className="field-group flex-1">
                                                 <label>Color</label>
-                                                <input type="text" value={group.color} onChange={(e) => {
-                                                    const updated = formData.variants.map(v => v.color === group.color ? { ...v, color: e.target.value } : v);
-                                                    setFormData({ ...formData, variants: updated });
-                                                }} />
+                                                <input 
+                                                    list="colores-list"
+                                                    type="text" 
+                                                    value={group.color} 
+                                                    onChange={(e) => {
+                                                        const updated = formData.variants.map(v => v.color === group.color ? { ...v, color: e.target.value } : v);
+                                                        setFormData({ ...formData, variants: updated });
+                                                    }} 
+                                                />
+                                                <datalist id="colores-list">
+                                                    {coloresExistentes.map(col => <option key={col} value={col} />)}
+                                                </datalist>
                                             </div>
                                             <div className="field-group flex-2">
                                                 <label>URL Foto del Color</label>
-                                                <input type="text" value={group.image} onChange={(e) => {
-                                                    const updated = formData.variants.map(v => v.color === group.color ? { ...v, image: e.target.value } : v);
-                                                    setFormData({ ...formData, variants: updated });
-                                                }} />
+                                                <input 
+                                                    type="text" 
+                                                    value={group.image} 
+                                                    onChange={(e) => {
+                                                        const updated = formData.variants.map(v => v.color === group.color ? { ...v, image: e.target.value } : v);
+                                                        setFormData({ ...formData, variants: updated });
+                                                    }} 
+                                                />
                                             </div>
-                                            {/* PREVISUALIZACIÓN DE IMAGEN PEQUEÑA */}
-                                            {group.image && (
-                                                <div className="mini-preview-wrapper">
+
+                                            {/* PREVISUALIZACIÓN MINIATURA DE LA IMAGEN URL */}
+                                            <div className="mini-preview-container">
+                                                {group.image ? (
                                                     <img src={group.image} alt="preview" className="form-mini-preview" />
-                                                </div>
-                                            )}
+                                                ) : (
+                                                    <div className="form-mini-preview-placeholder">URL</div>
+                                                )}
+                                            </div>
                                         </div>
+
                                         <div className="sizes-grid">
                                             {group.items.map((item) => (
                                                 <div key={item.originalIndex} className="size-row">
-                                                    <div className="field-group"><label>Talla</label><input type="text" value={item.size} onChange={e => { const nv = [...formData.variants]; nv[item.originalIndex].size = e.target.value; setFormData({...formData, variants: nv}); }} /></div>
+                                                    <div className="field-group">
+                                                        <label>Talla</label>
+                                                        <input 
+                                                            list="tallas-list"
+                                                            type="text" 
+                                                            value={item.size} 
+                                                            onChange={e => { 
+                                                                const nv = [...formData.variants]; 
+                                                                nv[item.originalIndex].size = e.target.value; 
+                                                                setFormData({...formData, variants: nv}); 
+                                                            }} 
+                                                        />
+                                                    </div>
                                                     <div className="field-group"><label>Precio</label><input type="number" value={item.price} onChange={e => { const nv = [...formData.variants]; nv[item.originalIndex].price = Number(e.target.value); setFormData({...formData, variants: nv}); }} /></div>
                                                     <div className="field-group"><label>Stock</label><input type="number" value={item.inventory_quantity} onChange={e => { const nv = [...formData.variants]; nv[item.originalIndex].inventory_quantity = Number(e.target.value); setFormData({...formData, variants: nv}); }} /></div>
                                                     <button type="button" className="btn-x" onClick={() => setFormData({...formData, variants: formData.variants.filter((_, i) => i !== item.originalIndex)})}>✕</button>
@@ -287,6 +344,12 @@ const AdminPanel = () => {
                                     </div>
                                 ))}
                             </div>
+
+                            {/* DATALIST PARA TALLAS (GLOBAL) */}
+                            <datalist id="tallas-list">
+                                {tallasExistentes.map(talla => <option key={talla} value={talla} />)}
+                            </datalist>
+
                             <div className="modal-footer">
                                 <button type="button" className="btn-makia-cancel" onClick={() => setModalAbierto(false)}>Cancelar</button>
                                 <button type="submit" className="btn-makia-save">Guardar Cambios</button>
