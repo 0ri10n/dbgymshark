@@ -108,11 +108,11 @@ const Login = () => {
                             />
                         </div>
 
-                        <a href="#" className="forgot-pass">Restablecer Contraseña</a>
                         <button type="submit" className="btn-login">Iniciar Sesión</button>
                     </form>
 
                     <Link to="/registro" className="link-register">Registrarse</Link>
+                    <button type="button" onClick={() => setIsLoginVisible(false)} className="link-volver">Volver</button>
                 </div>
             </div>
         </div>

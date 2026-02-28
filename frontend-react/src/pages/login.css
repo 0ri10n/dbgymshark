@@ -30,7 +30,7 @@
 
 .brand-title {
     margin: 0;
-    font-size: clamp(3rem, 12vw, 8rem);
+    font-size: clamp(4rem, 18vw, 12rem);
     letter-spacing: clamp(6px, 2.3vw, 16px);
     color: rgba(255, 255, 255, 0.16);
 }
@@ -144,16 +144,6 @@
     padding-right: 36px;
 }
 
-.forgot-pass {
-    display: block; 
-    text-align: right; 
-    margin-top: 4px; 
-    margin-bottom: 20px; 
-    color: rgba(255, 255, 255, 0.72);
-    text-decoration: none;
-    font-size: 0.82rem; 
-    transition: color 0.2s ease; 
-}
 
 .btn-login {
     width: 100%;
@@ -176,8 +166,7 @@
     transition: color 0.2s ease;
 }
 
-.link-register:hover,
-.forgot-pass:hover {
+.link-register:hover {
     color: #ffffff;
 }
 
@@ -229,4 +218,23 @@
     .brand-subtitle {
         font-size: 0.66rem;
     }
+}
+
+.link-volver {
+    display: block;
+    width: 100%;
+    text-align: center;
+    margin-top: 16px;
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: color 0.2s ease;
+    font-family: inherit;
+    padding: 0;
+}
+
+.link-volver:hover {
+    color: #ffffff;
 }
