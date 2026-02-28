@@ -5,14 +5,10 @@ import { CartContext } from '../context/CartContext';
 import PaginationControls from '../components/PaginationControls';
 import './Catalogo.css';
 
-const CATEGORIAS_LIMPIAS = [
-    'Accessories', 'Bags', 'Baselayers', 'Bodysuits', 'Bottles', 'Bottoms',
-    'Crop Tops', 'Dresses', 'Footwear', 'Gift Cards', 'Headwear', 'Hoodies',
-    'Jackets', 'Jackets & Outerwear', 'Joggers', 'Leggings', 'Long Sleeve Tops',
-    'Miscellaneous', 'One Pieces', 'Outerwear', 'Pants', 'Pullovers',
-    'Short Sleeve Tops', 'Shorts', 'Skorts', 'Sleeveless Tops', 'Socks',
-    'Sports Bras', 'Stringers', 'Sweaters', 'Swimwear', 'T-Shirts',
-    'Tanks', 'Tops', 'Uncategorized', 'Underwear', 'Vests'
+const CATEGORIAS_MENU = [
+    { id: 'womens', label: 'Womens' },
+    { id: 'mens', label: 'Mens' },
+    { id: 'accessories', label: 'Accessories' }
 ];
 
 // PALETA DE COLORES MAKIA COMPLETA
@@ -53,7 +49,6 @@ const Catalogo = () => {
     const [totalPaginas, setTotalPaginas] = useState(1);
     
     const [catFiltro, setCatFiltro] = useState(null);
-    const [dropdownAbierto, setDropdownAbierto] = useState(false);
     const [rangoPrecio, setRangoPrecio] = useState(5000); 
     
     const [tallasSeleccionadas, setTallasSeleccionadas] = useState({});
@@ -76,7 +71,6 @@ const Catalogo = () => {
 
     const granTotal = cart.reduce((acc, item) => acc + ((item.precioMXN || item.price) * item.quantity), 0);
 
-    // FUNCIÓN DE COMPRA - SOLUCIÓN AL ERROR 500
     const handleFinalizarCompra = async () => {
         if (!user) {
             alert("Inicia sesión para finalizar tu compra.");
@@ -114,7 +108,7 @@ const Catalogo = () => {
     };
 
     const productosFiltrados = productos.filter(p => {
-        const cumpleCat = !catFiltro || p.product_type === catFiltro;
+        const cumpleCat = !catFiltro || p.product_type?.toLowerCase().includes(catFiltro.toLowerCase());
         const cumplePrecio = (p.precioMXN || p.price) <= rangoPrecio;
         return cumpleCat && cumplePrecio;
     });
@@ -139,32 +133,44 @@ const Catalogo = () => {
             <div className="store-layout-container">
                 <aside className="sidebar-filter-box">
                     <div className="sidebar-sticky-wrapper">
-                        {/* FILTRO DROPDOWN CATEGORÍAS */}
-                        <div className="filter-dropdown-container">
-                            <button className="filter-dropdown-btn" onClick={() => setDropdownAbierto(!dropdownAbierto)}>
-                                <span>{catFiltro || "Categorías"}</span>
-                                <i className={`fas fa-chevron-${dropdownAbierto ? 'up' : 'down'}`}></i>
-                            </button>
-                            {dropdownAbierto && (
-                                <div className="filter-dropdown-menu">
-                                    {CATEGORIAS_LIMPIAS.map(cat => (
-                                        <div key={cat} className="dropdown-item" onClick={() => { setCatFiltro(cat); setDropdownAbierto(false); }}>
-                                            {cat}
-                                        </div>
-                                    ))}
+                        
+                        {/* SECCIÓN CATEGORÍAS TIPO IMAGEN */}
+                        <h2 className="sidebar-section-title">CATEGORÍA</h2>
+                        <div className="filter-group-stack">
+                            {CATEGORIAS_MENU.map((item) => (
+                                <div key={item.id} className="filter-item-accordion">
+                                    <button 
+                                        className={`accordion-header ${catFiltro === item.label ? 'active' : ''}`}
+                                        onClick={() => setCatFiltro(catFiltro === item.label ? null : item.label)}
+                                    >
+                                        <span>{item.label}</span>
+                                        <i className={`fas fa-chevron-down ${catFiltro === item.label ? 'rotate' : ''}`}></i>
+                                    </button>
                                 </div>
-                            )}
+                            ))}
+                        </div>
+
+                        {/* SECCIÓN PRESUPUESTO TIPO IMAGEN */}
+                        <div className="price-filter-section-new">
+                            <h2 className="sidebar-section-title">PRESUPUESTO: ${rangoPrecio}</h2>
+                            <div className="slider-container">
+                                <input 
+                                    type="range" 
+                                    min="0" 
+                                    max="5000" 
+                                    step="50" 
+                                    value={rangoPrecio} 
+                                    onChange={(e) => setRangoPrecio(Number(e.target.value))} 
+                                    className="makia-custom-slider" 
+                                />
+                            </div>
                         </div>
 
                         {catFiltro && (
-                            <button className="btn-clear-filter" onClick={() => setCatFiltro(null)}>Limpiar ✕</button>
+                            <button className="btn-clear-minimal" onClick={() => setCatFiltro(null)}>
+                                Limpiar filtros ✕
+                            </button>
                         )}
-
-                        {/* FILTRO RANGO PRECIO */}
-                        <div className="price-filter-section">
-                            <h2 className="sidebar-h2">Precio máx: ${rangoPrecio}</h2>
-                            <input type="range" min="0" max="5000" step="100" value={rangoPrecio} onChange={(e) => setRangoPrecio(Number(e.target.value))} className="makia-range-slider" />
-                        </div>
                     </div>
                 </aside>
 
@@ -210,7 +216,7 @@ const Catalogo = () => {
                 </main>
             </div>
 
-            {/* MODAL BOLSA CON MINIATURAS CORREGIDAS */}
+            {/* MODAL BOLSA */}
             {isCartOpen && (
                 <div className="cart-modal-overlay" onClick={() => setIsCartOpen(false)}>
                     <div className="cart-modal-panel" onClick={e => e.stopPropagation()}>
@@ -221,8 +227,8 @@ const Catalogo = () => {
                         <div className="cart-modal-list">
                             {cart.map((item, i) => (
                                 <div key={i} className="cart-modal-row">
-                                    <div style={{ width: '70px', height: '90px', borderRadius: '8px', overflow: 'hidden', flexShrink: 0, border: '1px solid #222' }}>
-                                        <img src={item.selectedImage} alt="item" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    <div className="cart-img-fixed-box">
+                                        <img src={item.selectedImage} alt="item" className="cart-item-mini-img" />
                                     </div>
                                     <div className="cart-item-info">
                                         <p className="cart-item-title">{item.title}</p>
