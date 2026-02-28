@@ -19,12 +19,11 @@ const getColorHex = (name = "") => {
     const n = name.toLowerCase().trim();
     if (n === 'black') return "#111111";
     if (n === 'white') return "#FFFFFF";
-    if (n.includes('teal')) return "#008080";
-    if (n.includes('green')) return "#2d4d43";
     if (n.includes('blue')) return "#1e3a8a";
-    if (n.includes('pink') || n.includes('rose')) return "#db2777";
     if (n.includes('red')) return "#991b1b";
-    if (n.includes('grey') || n.includes('gray')) return "#4b5563";
+    if (n.includes('pink')) return "#db2777";
+    if (n.includes('green')) return "#2d4d43";
+    if (n.includes('teal')) return "#008080";
     return "#374151"; 
 };
 
@@ -91,7 +90,7 @@ const Catalogo = () => {
 
         try {
             const token = localStorage.getItem('token');
-            // Se juntan los campos de nombre y apellido para el registro de venta
+            // Concatenación de nombre y apellido real del usuario logueado
             const nombreCompleto = `${user.nombre || ''} ${user.apellido || ''}`.trim();
 
             const ordenData = {
@@ -108,7 +107,10 @@ const Catalogo = () => {
             };
 
             await axios.post(`${baseURL}/admin/panel/ventas`, ordenData, {
-                headers: { 'x-auth-token': token }
+                headers: { 
+                    'x-auth-token': token,
+                    'Authorization': `Bearer ${token}` 
+                }
             });
             
             alert("¡Compra finalizada con éxito!");
@@ -116,7 +118,7 @@ const Catalogo = () => {
             setIsCartOpen(false);
         } catch (error) {
             console.error("Error al procesar compra:", error);
-            alert("Error al procesar la compra en el servidor.");
+            alert("Error 500: Fallo en el servidor. Revisa los logs del backend.");
         }
     };
 
@@ -202,8 +204,8 @@ const Catalogo = () => {
                         <div className="cart-modal-list">
                             {cart.map((item, i) => (
                                 <div key={i} className="cart-modal-row">
-                                    <div style={{ width: '70px', height: '90px', borderRadius: '8px', overflow: 'hidden', flexShrink: 0, border: '1px solid #333' }}>
-                                        <img src={item.selectedImage} alt="item" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    <div className="cart-img-container">
+                                        <img src={item.selectedImage} alt="item" className="cart-item-mini-img" />
                                     </div>
                                     <div className="cart-item-info">
                                         <p className="cart-item-title">{item.title}</p>
