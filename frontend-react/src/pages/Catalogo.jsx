@@ -6,8 +6,7 @@ import PaginationControls from '../components/PaginationControls';
 import Login from './Login';
 import './Catalogo.css';
 
-const TIPO_CAMBIO_USD_MXN = 17.00;
-
+// Lista completa de categorías
 const CATEGORIAS_LIMPIAS = [
     'Accessories', 'Bags', 'Baselayers', 'Bodysuits', 'Bottles', 'Bottoms',
     'Crop Tops', 'Dresses', 'Footwear', 'Gift Cards', 'Headwear', 'Hoodies',
@@ -64,7 +63,7 @@ const Catalogo = () => {
     const [precioMax, setPrecioMax] = useState(3500);
     const [tallasSeleccionadas, setTallasSeleccionadas] = useState({});
     const [colorVisual, setColorVisual] = useState({});
-    const [catDesplegado, setCatDesplegado] = useState(false);
+    const [catDesplegado, setCatDesplegado] = useState(true);
 
     useEffect(() => {
         const cargarData = async () => {
@@ -82,10 +81,11 @@ const Catalogo = () => {
         cargarData();
     }, [pagina, busqueda]);
 
+    // Filtrado basado directamente en lo que responda tu API (precioMXN)
     const productosAMostrar = productos.filter(p => {
-        const precioPesos = p.precioMXN || (Number(p.price) * TIPO_CAMBIO_USD_MXN);
+        const precioActual = p.precioMXN || p.price; 
         const matchCat = !catFiltro || p.product_type === catFiltro;
-        const matchPrecio = precioPesos <= precioMax;
+        const matchPrecio = precioActual <= precioMax;
         return matchCat && matchPrecio;
     });
 
@@ -103,7 +103,7 @@ const Catalogo = () => {
             ...p, 
             selectedSize: talla, 
             selectedColor: colorActivo,
-            selectedImage: imagenSeleccionada, // Guardamos la imagen del color específico
+            selectedImage: imagenSeleccionada,
             quantity: 1
         });
         setIsCartOpen(true); 
@@ -132,13 +132,51 @@ const Catalogo = () => {
                         <h2 className="sidebar-h2">Filtros</h2>
                         <button className="clear-filters-btn" onClick={() => {setCatFiltro(null); setBusqueda(''); setPrecioMax(3500);}}>Limpiar</button>
                     </div>
-                    {/* ... (resto del sidebar intacto) */}
+                    
+                    <div className="filter-group">
+                        <div className="cat-header-clickable" onClick={() => setCatDesplegado(!catDesplegado)}>
+                            <h3 className="sidebar-h3" style={{margin:0}}>Categorías</h3>
+                            <i className={`fas fa-chevron-${catDesplegado ? 'up' : 'down'}`} style={{color: 'var(--text-muted)'}}></i>
+                        </div>
+                        
+                        {catDesplegado && (
+                            <div className="cat-dropdown-list">
+                                {CATEGORIAS_LIMPIAS.map(cat => (
+                                    <div 
+                                        key={cat} 
+                                        className={`sub-item ${catFiltro === cat ? 'active' : ''}`} 
+                                        onClick={() => setCatFiltro(catFiltro === cat ? null : cat)}
+                                    >
+                                        {cat}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="filter-group" style={{marginTop: '25px'}}>
+                        <h3 className="sidebar-h3">Presupuesto: ${precioMax}</h3>
+                        <input 
+                            type="range" 
+                            min="0" 
+                            max="3500" 
+                            step="100" 
+                            value={precioMax} 
+                            onChange={(e) => setPrecioMax(Number(e.target.value))} 
+                            className="price-slider" 
+                        />
+                    </div>
                 </aside>
 
                 <main className="shop-main-content">
                     <div className="white-search-box">
                         <i className="fas fa-search"></i>
-                        <input type="text" placeholder="Que estas buscando hoy?" value={busqueda} onChange={(e) => {setBusqueda(e.target.value); setPagina(1);}} />
+                        <input 
+                            type="text" 
+                            placeholder="Que estas buscando hoy?" 
+                            value={busqueda} 
+                            onChange={(e) => {setBusqueda(e.target.value); setPagina(1);}} 
+                        />
                     </div>
 
                     <div className="fixed-grid-3">
@@ -152,7 +190,7 @@ const Catalogo = () => {
                                     <div className="info-frame">
                                         <div className="cat-badge">{prod.product_type}</div>
                                         <h3>{prod.title}</h3>
-                                        <p className="p-price">${(prod.precioMXN || prod.price * TIPO_CAMBIO_USD_MXN).toLocaleString()} MXN</p>
+                                        <p className="p-price">${(prod.precioMXN || prod.price).toLocaleString()} MXN</p>
                                         
                                         <div className="swatch-row-carrusel">
                                             {prod.colors_available?.map(col => (
@@ -166,7 +204,11 @@ const Catalogo = () => {
                                         </div>
 
                                         <div className="card-footer">
-                                            <select className="makia-size-dropdown" value={tallasSeleccionadas[prod._id] || ""} onChange={(e) => setTallasSeleccionadas(prev => ({ ...prev, [prod._id]: e.target.value }))}>
+                                            <select 
+                                                className="makia-size-dropdown" 
+                                                value={tallasSeleccionadas[prod._id] || ""} 
+                                                onChange={(e) => setTallasSeleccionadas(prev => ({ ...prev, [prod._id]: e.target.value }))}
+                                            >
                                                 <option value="">Selecciona Talla</option>
                                                 {(prod.sizes_available || []).map(t => <option key={t} value={t}>{t}</option>)}
                                             </select>
@@ -191,20 +233,20 @@ const Catalogo = () => {
                         <div className="cart-modal-list">
                             {cart.map((item, i) => (
                                 <div key={i} className="cart-modal-row">
-                                    {/* Imagen en pequeño añadida a la bolsa */}
                                     <img src={item.selectedImage} alt={item.title} className="cart-item-mini-img" />
-                                    
                                     <div className="cart-item-info">
                                         <p className="cart-item-title">{item.title}</p>
-                                        <p className="cart-item-details">Color: {item.selectedColor} | Talla: {item.selectedSize}</p>
+                                        <p className="cart-item-details">{item.selectedColor} / {item.selectedSize}</p>
                                         <div className="qty-controls">
                                             <button onClick={() => updateCartItem(i, { ...item, quantity: Math.max(1, item.quantity - 1) })}>-</button>
                                             <span>{item.quantity}</span>
                                             <button onClick={() => updateCartItem(i, { ...item, quantity: item.quantity + 1 })}>+</button>
                                         </div>
                                     </div>
-                                    <p className="cart-item-price">${((item.precioMXN || item.price * TIPO_CAMBIO_USD_MXN) * item.quantity).toLocaleString()}</p>
-                                    <button onClick={() => removeFromCart(i)} className="btn-remove">&times;</button>
+                                    <div className="cart-item-end">
+                                        <p className="cart-item-price">${((item.precioMXN || item.price) * item.quantity).toLocaleString()}</p>
+                                        <button onClick={() => removeFromCart(i)} className="btn-remove">&times;</button>
+                                    </div>
                                 </div>
                             ))}
                         </div>
