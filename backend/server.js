@@ -45,7 +45,10 @@ app.use(express.urlencoded({ extended: true }));
 
 // --- MIDDLEWARES DE SEGURIDAD  ---
 // 1. Protege las cabeceras HTTP
-app.use(helmet());
+app.use(helmet({
+    contentSecurityPolicy: false,
+    crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
 // 2. Bloquea inyecciones NoSQL 
 //app.use(mongoSanitize());
 
