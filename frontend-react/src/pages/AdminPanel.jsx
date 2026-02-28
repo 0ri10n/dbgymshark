@@ -43,7 +43,7 @@ const AdminPanel = () => {
 
     const baseURL = import.meta.env.VITE_API_URL || 'https://dbgymshark-ddk1.onrender.com/api';
 
-    // --- EXTRACCIÓN DE OPCIONES ÚNICAS PARA DATALISTS ---
+    // --- EXTRACCIÓN DE OPCIONES PARA DATALISTS (PRODUCT_TYPE, COLOR, TALLA) ---
     const categoriasExistentes = useMemo(() => 
         [...new Set(productos.map(p => p.product_type))].filter(Boolean), 
     [productos]);
@@ -132,16 +132,12 @@ const AdminPanel = () => {
         e.preventDefault();
         try {
             const prices = formData.variants.map(v => v.price);
-            const allImages = [...new Set(formData.variants.map(v => v.image))].filter(img => img).join(', ');
-            const allColors = [...new Set(formData.variants.map(v => v.color))].filter(c => c);
-            const allSizes = [...new Set(formData.variants.map(v => v.size))].filter(s => s);
-
             const payload = {
                 ...formData,
-                image_src: allImages,
+                image_src: [...new Set(formData.variants.map(v => v.image))].filter(img => img).join(', '),
                 image_principal: formData.variants[0]?.image || "",
-                colors_available: allColors,
-                sizes_available: allSizes,
+                colors_available: [...new Set(formData.variants.map(v => v.color))].filter(c => c),
+                sizes_available: [...new Set(formData.variants.map(v => v.size))].filter(s => s),
                 price_range: { 
                     min: prices.length > 0 ? Math.min(...prices) : formData.price,
                     max: prices.length > 0 ? Math.max(...prices) : formData.price
@@ -156,7 +152,7 @@ const AdminPanel = () => {
             cargarProductos();
             alert("Guardado con éxito");
         } catch (error) {
-            alert(error.response?.data?.msg || "Error 400: SKU requerido en cada variante.");
+            alert(error.response?.data?.msg || "Error al guardar. Verifique SKU.");
         }
     };
 
@@ -169,21 +165,14 @@ const AdminPanel = () => {
     return (
         <div className="admin-container">
             {/* Listas de autocompletado */}
-            <datalist id="lista-categorias">
-                {categoriasExistentes.map(cat => <option key={cat} value={cat} />)}
-            </datalist>
-            <datalist id="lista-colores">
-                {coloresExistentes.map(col => <option key={col} value={col} />)}
-            </datalist>
-            <datalist id="lista-tallas">
-                {tallasExistentes.map(talla => <option key={talla} value={talla} />)}
-            </datalist>
+            <datalist id="lista-categorias">{categoriasExistentes.map(cat => <option key={cat} value={cat} />)}</datalist>
+            <datalist id="lista-colores">{coloresExistentes.map(col => <option key={col} value={col} />)}</datalist>
+            <datalist id="lista-tallas">{tallasExistentes.map(talla => <option key={talla} value={talla} />)}</datalist>
 
             <header className="admin-header">
                 <img src="/logo-makia-pages.png" alt="Logo" className="brand-logo-img" />
                 <div className="admin-user-panel">
                     <div className="user-welcome-info">
-                        {/* Texto de bienvenida solicitado */}
                         <span className="welcome-text">¡Nos alegra verte de nuevo!</span>
                         <span className="user-name-blue-header">{user?.nombre || 'Administrador'}</span>
                     </div>
@@ -222,8 +211,8 @@ const AdminPanel = () => {
                     <table className="admin-table-fixed">
                         <thead>
                             {vistaActiva === 'productos' && <tr><th>Imagen</th><th className="col-title">Título</th><th>Tipo</th><th className="center">Acciones</th></tr>}
-                            {vistaActiva === 'usuarios' && <tr><th>Nombre Completo</th><th>Email</th><th>Rol</th><th className="center">Acciones</th></tr>}
-                            {vistaActiva === 'ventas' && <tr><th>Número de Orden</th><th>Cliente</th><th>Fecha</th><th>Total</th><th className="center">Estado</th></tr>}
+                            {vistaActiva === 'usuarios' && <tr><th>Nombre Completo</th><th>Email</th><th>Rol</th><th>Registro</th></tr>}
+                            {vistaActiva === 'ventas' && <tr><th>Orden</th><th>Cliente</th><th>Fecha</th><th>Total</th><th>Estado</th></tr>}
                         </thead>
                         <tbody>
                             {vistaActiva === 'productos' && productos.map(p => (
@@ -239,17 +228,15 @@ const AdminPanel = () => {
                             {vistaActiva === 'usuarios' && listaUsuarios.map(u => (
                                 <tr key={u._id}>
                                     <td>{u.nombre} {u.apellido}</td><td>{u.email}</td><td><span className="role-badge">{u.rol}</span></td>
-                                    <td className="col-actions center">
-                                        <button className="btn-table btn-edit" onClick={() => { setEditandoUsuarioId(u._id); setFormDataUsuario({...u}); setModalUsuarioAbierto(true); }}>Editar</button>
-                                    </td>
+                                    <td>{formatFecha(u.createdAt)}</td>
                                 </tr>
                             ))}
                             {vistaActiva === 'ventas' && listaVentas.map(v => (
                                 <tr key={v._id}>
-                                    <td className="center">#{v.numeroOrden || v.order_number || v._id.substring(0,8)}</td>
-                                    <td className="center">{v.usuario?.nombre ? `${v.usuario.nombre} ${v.usuario.apellido || ''}` : 'Anon'}</td>
-                                    <td className="center">{formatFecha(v.fecha)}</td>
-                                    <td className="center">${v.total?.toFixed(2)}</td><td className="center"><span className="role-badge">{v.estado || 'Pagado'}</span></td>
+                                    <td className="center">#{v.numeroOrden || v._id.substring(0,8)}</td>
+                                    <td>{v.usuario?.nombre || 'Anónimo'}</td>
+                                    <td>{formatFecha(v.fecha)}</td>
+                                    <td>${v.total?.toFixed(2)}</td><td><span className="role-badge">{v.estado || 'Pagado'}</span></td>
                                 </tr>
                             ))}
                         </tbody>
