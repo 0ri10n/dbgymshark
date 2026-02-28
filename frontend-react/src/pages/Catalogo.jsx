@@ -5,7 +5,6 @@ import { CartContext } from '../context/CartContext';
 import PaginationControls from '../components/PaginationControls';
 import './Catalogo.css';
 
-// Lista completa de categorías solicitada
 const CATEGORIAS_LIMPIAS = [
     'Accessories', 'Bags', 'Baselayers', 'Bodysuits', 'Bottles', 'Bottoms',
     'Crop Tops', 'Dresses', 'Footwear', 'Gift Cards', 'Headwear', 'Hoodies',
@@ -16,16 +15,13 @@ const CATEGORIAS_LIMPIAS = [
     'Tanks', 'Tops', 'Uncategorized', 'Underwear', 'Vests'
 ];
 
-// Paleta de colores completa para los círculos
 const getColorHex = (name = "") => {
     const n = name.toLowerCase().trim();
     if (n === 'black') return "#111111";
     if (n === 'white') return "#FFFFFF";
     if (n.includes('teal')) return "#008080";
-    if (n.includes('olive') || n.includes('aloe') || n.includes('alpine')) return "#556b2f";
     if (n.includes('green')) return "#2d4d43";
     if (n.includes('blue')) return "#1e3a8a";
-    if (n.includes('navy')) return "#000080";
     if (n.includes('pink') || n.includes('rose')) return "#db2777";
     if (n.includes('red')) return "#991b1b";
     if (n.includes('grey') || n.includes('gray')) return "#4b5563";
@@ -61,7 +57,7 @@ const Catalogo = () => {
                 const res = await axios.get(`${baseURL}/productos?page=${pagina}&limit=20&search=${busqueda}`);
                 setProductos(res.data.productos || []);
                 setTotalPaginas(res.data.pagination?.pages || 1);
-            } catch (e) { console.error("Error cargando productos:", e); }
+            } catch (e) { console.error(e); }
             finally { setCargando(false); }
         };
         cargarData();
@@ -71,14 +67,10 @@ const Catalogo = () => {
 
     const handleAgregar = (p) => {
         const talla = tallasSeleccionadas[p._id];
-        // Captura el color activo para cambiar la imagen y guardarlo en la bolsa
         const colorActivo = colorVisual[p._id] || (p.colors_available && p.colors_available[0]);
         const imagenSeleccionada = p.variants?.find(v => v.color === colorActivo)?.image || getPrimaryImage(p);
 
-        if (!talla) { 
-            alert("Por favor selecciona una talla."); 
-            return; 
-        }
+        if (!talla) { alert("Por favor selecciona una talla."); return; }
 
         addToCart({ 
             ...p, 
@@ -92,14 +84,14 @@ const Catalogo = () => {
 
     const handleFinalizarCompra = async () => {
         if (!user) {
-            alert("Debes iniciar sesión con tu cuenta de cliente para realizar una compra.");
+            alert("Debes iniciar sesión para realizar una compra.");
             return;
         }
         if (cart.length === 0) return;
 
         try {
             const token = localStorage.getItem('token');
-            // Mapeo dinámico de nombre y apellido real para evitar nombres genéricos
+            // Se juntan los campos de nombre y apellido para el registro de venta
             const nombreCompleto = `${user.nombre || ''} ${user.apellido || ''}`.trim();
 
             const ordenData = {
@@ -123,8 +115,8 @@ const Catalogo = () => {
             clearCart();
             setIsCartOpen(false);
         } catch (error) {
-            console.error("Error en la compra:", error);
-            alert("Hubo un error al procesar tu pedido.");
+            console.error("Error al procesar compra:", error);
+            alert("Error al procesar la compra en el servidor.");
         }
     };
 
@@ -172,7 +164,6 @@ const Catalogo = () => {
                                         <img src={imagenAMostrar} alt="p" className="p-img" />
                                     </div>
                                     <div className="info-frame">
-                                        <div className="cat-badge">{prod.product_type}</div>
                                         <h3>{prod.title}</h3>
                                         <p className="p-price">${(prod.precioMXN || prod.price).toLocaleString()} MXN</p>
                                         <div className="swatch-row-carrusel">
@@ -206,12 +197,11 @@ const Catalogo = () => {
                     <div className="cart-modal-panel" onClick={e => e.stopPropagation()}>
                         <div className="cart-modal-top">
                             <h2>TU BOLSA</h2>
-                            <span onClick={() => setIsCartOpen(false)} className="close-cart-x" style={{cursor:'pointer'}}>&times;</span>
+                            <span onClick={() => setIsCartOpen(false)} className="close-cart-x">&times;</span>
                         </div>
                         <div className="cart-modal-list">
                             {cart.map((item, i) => (
                                 <div key={i} className="cart-modal-row">
-                                    {/* Estilo forzado para imagen pequeña con bordes redondeados */}
                                     <div style={{ width: '70px', height: '90px', borderRadius: '8px', overflow: 'hidden', flexShrink: 0, border: '1px solid #333' }}>
                                         <img src={item.selectedImage} alt="item" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                     </div>
