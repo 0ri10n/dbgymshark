@@ -90,7 +90,6 @@ const Catalogo = () => {
 
         try {
             const token = localStorage.getItem('token');
-            // Concatenación de nombre y apellido real del usuario logueado
             const nombreCompleto = `${user.nombre || ''} ${user.apellido || ''}`.trim();
 
             const ordenData = {
@@ -118,7 +117,7 @@ const Catalogo = () => {
             setIsCartOpen(false);
         } catch (error) {
             console.error("Error al procesar compra:", error);
-            alert("Error 500: Fallo en el servidor. Revisa los logs del backend.");
+            alert("Error 500: Fallo en el servidor. Es necesario revisar el controlador de ventas en el backend.");
         }
     };
 
@@ -134,6 +133,11 @@ const Catalogo = () => {
                     <div className="user-icon" onClick={logout} style={{cursor:'pointer'}}><i className="far fa-user"></i></div>
                 </div>
             </header>
+
+            {/* IMAGEN PRINCIPAL RESTAURADA */}
+            <div className="hero-banner-full">
+                <img src="/hero-banner-client.jpg" alt="MAKIA Performance" />
+            </div>
 
             <div className="store-layout-container">
                 <aside className="sidebar-filter-box">
