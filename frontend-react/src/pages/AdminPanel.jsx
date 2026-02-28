@@ -211,14 +211,24 @@ const AdminPanel = () => {
                                     </td>
                                 </tr>
                             ))}
-                            {vistaActiva === 'ventas' && listaVentas.map(v => (
-                                <tr key={v._id}>
-                                    <td>#{v.numeroOrden || v._id.substring(0,8)}</td>
-                                    <td>{v.usuario?.nombre || 'Anónimo'}</td>
-                                    <td>{new Date(v.fecha || v.createdAt).toLocaleDateString()}</td>
-                                    <td>${v.total?.toFixed(2)}</td><td className="center"><span className="role-badge">{v.estado || 'Pagado'}</span></td>
-                                </tr>
-                            ))}
+                            {vistaActiva === 'ventas' && listaVentas.map(v => {
+                                // Validación de fecha para evitar "Fecha Inválida"
+                                const fechaRaw = v.fecha || v.createdAt;
+                                const fechaObjeto = fechaRaw ? new Date(fechaRaw) : null;
+                                const fechaFormateada = (fechaObjeto && !isNaN(fechaObjeto.getTime())) 
+                                    ? fechaObjeto.toLocaleDateString() 
+                                    : "Sin fecha";
+
+                                return (
+                                    <tr key={v._id}>
+                                        <td>#{v.numeroOrden || v._id.substring(0,8)}</td>
+                                        <td>{v.usuario?.nombre || 'Anónimo'}</td>
+                                        <td>{fechaFormateada}</td>
+                                        <td>${v.total?.toFixed(2)}</td>
+                                        <td className="center"><span className="role-badge">{v.estado || 'Pagado'}</span></td>
+                                    </tr>
+                                );
+                            })}
                         </tbody>
                     </table>
                 </div>
@@ -247,7 +257,6 @@ const AdminPanel = () => {
                                         <div className="color-header-row">
                                             <div className="field-group color-input-fixed"><label>Color</label><input type="text" list="lista-colores" value={group.color} onChange={e => setFormData({...formData, variants: formData.variants.map(v => v.color === group.color ? {...v, color: e.target.value} : v)})} /></div>
                                             <div className="field-group url-input-expanded"><label>URL Imagen Color</label><input type="text" value={group.image} onChange={e => updateColorImage(group.color, e.target.value)} /></div>
-                                            {/* RECUADRO DE PREVISUALIZACIÓN RESTAURADO */}
                                             <div className="mini-preview-box">
                                                 {group.image ? <img src={group.image} alt="Preview" /> : <span className="preview-placeholder">URL</span>}
                                             </div>
@@ -261,7 +270,6 @@ const AdminPanel = () => {
                                                         <div className="field-group"><label>Stock</label><input type="number" value={item.inventory_quantity} onChange={e => { const nv = [...formData.variants]; nv[item.originalIndex].inventory_quantity = Number(e.target.value); setFormData({...formData, variants: nv}); }} /></div>
                                                         <div className="field-group sku-field"><label>SKU Variante</label><input type="text" value={item.sku || ""} onChange={e => { const nv = [...formData.variants]; nv[item.originalIndex].sku = e.target.value; setFormData({...formData, variants: nv}); }} /></div>
                                                     </div>
-                                                    {/* TACHE ROJO CENTRADO */}
                                                     <button type="button" className="btn-x-red" onClick={() => setFormData({...formData, variants: formData.variants.filter((_, i) => i !== item.originalIndex)})}>✕</button>
                                                 </div>
                                             ))}
