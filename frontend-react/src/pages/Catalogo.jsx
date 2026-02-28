@@ -113,8 +113,16 @@ const Catalogo = () => {
     };
 
     const productosFiltrados = productos.filter(p => {
-        const cumpleCat = !catFiltro || p.product_type === catFiltro;
-        const cumplePrecio = (p.precioMXN || p.price) <= rangoPrecio;
+        // 1. Filtro de Categoría (Ignorando mayúsculas y espacios fantasma)
+        const tipoProductoDB = p.product_type ? String(p.product_type).trim().toLowerCase() : "";
+        const categoriaSeleccionada = catFiltro ? String(catFiltro).trim().toLowerCase() : "";
+        
+        const cumpleCat = !catFiltro || tipoProductoDB === categoriaSeleccionada;
+
+        // 2. Filtro de Precio (Forzando a que sea matemática real)
+        const precioReal = Number(p.precioMXN || p.price || 0);
+        const cumplePrecio = precioReal <= rangoPrecio;
+
         return cumpleCat && cumplePrecio;
     });
 
