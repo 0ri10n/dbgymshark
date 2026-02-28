@@ -43,7 +43,7 @@ const AdminPanel = () => {
 
     const baseURL = import.meta.env.VITE_API_URL || 'https://dbgymshark-ddk1.onrender.com/api';
 
-    // --- EXTRACCIÓN DE OPCIONES ÚNICAS PARA DESPLEGABLES ---
+    // --- EXTRACCIÓN DE OPCIONES ÚNICAS PARA DATALISTS ---
     const categoriasExistentes = useMemo(() => 
         [...new Set(productos.map(p => p.product_type))].filter(Boolean), 
     [productos]);
@@ -168,7 +168,7 @@ const AdminPanel = () => {
 
     return (
         <div className="admin-container">
-            {/* Listas de autocompletado (DataLists) */}
+            {/* Listas de autocompletado */}
             <datalist id="lista-categorias">
                 {categoriasExistentes.map(cat => <option key={cat} value={cat} />)}
             </datalist>
@@ -183,6 +183,8 @@ const AdminPanel = () => {
                 <img src="/logo-makia-pages.png" alt="Logo" className="brand-logo-img" />
                 <div className="admin-user-panel">
                     <div className="user-welcome-info">
+                        {/* Texto de bienvenida solicitado */}
+                        <span className="welcome-text">¡Nos alegra verte de nuevo!</span>
                         <span className="user-name-blue-header">{user?.nombre || 'Administrador'}</span>
                     </div>
                     <button onClick={logout} className="admin-logout-btn">Cerrar Sesión</button>
@@ -263,7 +265,6 @@ const AdminPanel = () => {
                         <form onSubmit={handleGuardar} className="admin-form-vertical">
                             <div className="form-grid-2-cols">
                                 <div className="field-group"><label>Título</label><input type="text" required value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} /></div>
-                                {/* Campo Categoría con Datalist */}
                                 <div className="field-group"><label>Categoría</label><input type="text" list="lista-categorias" value={formData.product_type} onChange={e => setFormData({...formData, product_type: e.target.value})} /></div>
                                 <div className="field-group"><label>SKU Base</label><input type="text" value={formData.sku} onChange={e => setFormData({...formData, sku: e.target.value})} /></div>
                                 <div className="field-group"><label>Precio Base</label><input type="number" value={formData.price} onChange={e => setFormData({...formData, price: Number(e.target.value)})} /></div>
@@ -276,7 +277,6 @@ const AdminPanel = () => {
                                 {variantsByColor.map((group, idx) => (
                                     <div key={idx} className="color-group-card">
                                         <div className="color-header-row">
-                                            {/* Campo Color con Datalist */}
                                             <div className="field-group color-input-fixed"><label>Color</label><input type="text" list="lista-colores" value={group.color} onChange={e => setFormData({...formData, variants: formData.variants.map(v => v.color === group.color ? {...v, color: e.target.value} : v)})} /></div>
                                             <div className="field-group url-input-expanded"><label>URL Imagen Color</label><input type="text" value={group.image} onChange={e => updateColorImage(group.color, e.target.value)} /></div>
                                             <div className="mini-preview-container">{group.image ? <img src={group.image} alt="p" className="form-mini-preview" /> : <div className="form-mini-preview-placeholder">URL</div>}</div>
@@ -284,7 +284,6 @@ const AdminPanel = () => {
                                         <div className="sizes-grid">
                                             {group.items.map(item => (
                                                 <div key={item.originalIndex} className="size-row">
-                                                    {/* Campo Talla con Datalist */}
                                                     <div className="field-group"><label>Talla</label><input type="text" list="lista-tallas" value={item.size} onChange={e => { const nv = [...formData.variants]; nv[item.originalIndex].size = e.target.value; setFormData({...formData, variants: nv}); }} /></div>
                                                     <div className="field-group"><label>Precio</label><input type="number" value={item.price} onChange={e => { const nv = [...formData.variants]; nv[item.originalIndex].price = Number(e.target.value); setFormData({...formData, variants: nv}); }} /></div>
                                                     <div className="field-group"><label>Stock</label><input type="number" value={item.inventory_quantity} onChange={e => { const nv = [...formData.variants]; nv[item.originalIndex].inventory_quantity = Number(e.target.value); setFormData({...formData, variants: nv}); }} /></div>
