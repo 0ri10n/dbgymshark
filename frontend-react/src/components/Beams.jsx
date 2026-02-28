@@ -182,9 +182,15 @@ const Beams = ({
           '#include <begin_vertex>': `transformed.z += getPos(transformed.xyz);`,
           '#include <beginnormal_vertex>': `objectNormal = getNormal(position.xyz);`
         },
-        fragment: {
-          '#include <dithering_fragment>': ``
-        },
+        header: `
+            varying vec2 vUv;
+            uniform float time;
+            uniform float uSpeed;`,
+                    vertexHeader: `
+            float getPos(vec3 pos) {
+                // Usamos un seno simple en lugar de cnoise para liberar la CPU
+                return sin(pos.y * 0.5 + time * uSpeed) * 0.5;
+            }`,
         material: { fog: true },
         uniforms: {
           diffuse: new THREE.Color(...hexToNormalizedRGB('#000000')),
@@ -201,7 +207,9 @@ const Beams = ({
     <CanvasWrapper>
       <group rotation={[0, 0, degToRad(rotation)]}>
         <PlaneNoise ref={meshRef} material={beamMaterial} count={beamNumber} width={beamWidth} height={beamHeight} />
+        <DirLight color={lightColor} position={[0, 3, 10]} />
       </group>
+      <ambientLight intensity={1} />
       <color attach="background" args={['#000000']} />
       <PerspectiveCamera makeDefault position={[0, 0, 20]} fov={30} />
     </CanvasWrapper>
