@@ -107,7 +107,6 @@ const Catalogo = () => {
     return (
         <div className="client-view">
             <header className="client-header-makia">
-                {/* Logo unificado con el estilo de AdminPanel */}
                 <img src="/logo-makia-pages.png" alt="Makia Logo" className="brand-logo-img" />
                 
                 <div className="header-right-icons">
@@ -160,8 +159,8 @@ const Catalogo = () => {
                 </aside>
 
                 <main className="shop-main-content">
-                    {/* Buscador unificado con AdminPanel */}
-                    <div className="search-bar-makia-client">
+                    {/* Buscador Restaurado con Diseño de Caja Blanca */}
+                    <div className="white-search-box">
                         <i className="fas fa-search"></i>
                         <input 
                             type="text" 
