@@ -61,18 +61,24 @@ const Catalogo = () => {
 
     const baseURL = import.meta.env.VITE_API_URL || 'https://dbgymshark-ddk1.onrender.com/api';
 
+    // 1. Cargar datos UNA SOLA VEZ (traemos un lote grande para que React trabaje)
     useEffect(() => {
         const cargarData = async () => {
             setCargando(true);
             try {
-                const res = await axios.get(`${baseURL}/productos?page=${pagina}&limit=20&search=${busqueda}`);
+                // Pedimos un límite muy alto para traer todo el catálogo a la memoria de React
+                const res = await axios.get(`${baseURL}/productos?limit=5000`);
                 setProductos(res.data.productos || []);
-                setTotalPaginas(res.data.pagination?.pages || 1);
             } catch (e) { console.error(e); }
             finally { setCargando(false); }
         };
         cargarData();
-    }, [pagina, busqueda, baseURL]);
+    }, [baseURL]); 
+
+    // 2. NUEVO: Si cambias de categoría, precio o buscas algo, ¡regresamos a la página 1!
+    useEffect(() => {
+        setPagina(1);
+    }, [catFiltro, rangoPrecio, busqueda]);
 
     const granTotal = cart.reduce((acc, item) => acc + ((item.precioMXN || item.price) * item.quantity), 0);
 
