@@ -5,7 +5,7 @@ import { CartContext } from '../context/CartContext';
 import PaginationControls from '../components/PaginationControls';
 import './Catalogo.css';
 
-// Lista completa de categorías solicitada
+// Lista completa de categorías
 const CATEGORIAS_LIMPIAS = [
     'Accessories', 'Bags', 'Baselayers', 'Bodysuits', 'Bottles', 'Bottoms',
     'Crop Tops', 'Dresses', 'Footwear', 'Gift Cards', 'Headwear', 'Hoodies',
@@ -20,24 +20,8 @@ const getColorHex = (name = "") => {
     const n = name.toLowerCase().trim();
     if (n === 'black') return "#111111";
     if (n === 'white') return "#FFFFFF";
-    if (n.includes('teal')) return "#008080";
-    if (n.includes('olive') || n.includes('aloe') || n.includes('alpine')) return "#556b2f";
-    if (n.includes('green')) return "#2d4d43";
-    if (n.includes('sage')) return "#b2ac88";
-    if (n.includes('navy')) return "#000080";
-    if (n.includes('aqua') || n.includes('aegean')) return "#00ffff";
     if (n.includes('blue')) return "#1e3a8a";
-    if (n.includes('lilac')) return "#b666d2";
-    if (n.includes('burgundy') || n.includes('maroon') || n.includes('berry')) return "#800020";
-    if (n.includes('pink') || n.includes('rose') || n.includes('dolly')) return "#db2777";
-    if (n.includes('red') || n.includes('carmine')) return "#991b1b";
-    if (n.includes('purple') || n.includes('violet')) return "#6b21a8";
-    if (n.includes('orange') || n.includes('apricot')) return "#f97316";
-    if (n.includes('yellow')) return "#facc15";
-    if (n.includes('brown') || n.includes('truffle') || n.includes('baked')) return "#5C4033";
-    if (n.includes('beige') || n.includes('sand') || n.includes('ecru')) return "#d6d3d1";
-    if (n.includes('grey') || n.includes('gray') || n.includes('asphalt') || n.includes('charcoal')) return "#4b5563";
-    if (n.includes('/')) return getColorHex(n.split('/')[0]);
+    if (n.includes('grey') || n.includes('gray')) return "#4b5563";
     return "#374151"; 
 };
 
@@ -101,15 +85,18 @@ const Catalogo = () => {
 
     const handleFinalizarCompra = async () => {
         if (!user) {
-            alert("Debes iniciar sesión con tu cuenta de cliente para realizar una compra.");
+            alert("Debes iniciar sesión con tu cuenta para realizar la compra.");
             return;
         }
         if (cart.length === 0) return;
 
         try {
             const token = localStorage.getItem('token');
+            // Corrección de nombre y apellido para evitar undefined
+            const nombreCompleto = `${user.nombre || ''} ${user.apellido || ''}`.trim() || "Cliente Makia";
+
             const ordenData = {
-                nombreCliente: `${user.nombre} ${user.apellido || ''}`,
+                nombreCliente: nombreCompleto,
                 productos: cart.map(item => ({
                     nombre: item.title,
                     talla: item.selectedSize,
@@ -128,21 +115,14 @@ const Catalogo = () => {
                 }
             });
             
-            alert("¡Compra finalizada con éxito! Tu pedido ha sido registrado.");
+            alert("¡Compra finalizada con éxito!");
             clearCart();
             setIsCartOpen(false);
         } catch (error) {
             console.error("Error al procesar compra:", error);
-            alert("Hubo un error al procesar tu pedido. Intenta de nuevo.");
+            alert("Hubo un error al guardar tu pedido.");
         }
     };
-
-    const productosAMostrar = productos.filter(p => {
-        const precioActual = p.precioMXN || p.price; 
-        const matchCat = !catFiltro || p.product_type === catFiltro;
-        const matchPrecio = precioActual <= precioMax;
-        return matchCat && matchPrecio;
-    });
 
     return (
         <div className="client-view">
@@ -182,7 +162,7 @@ const Catalogo = () => {
                     </div>
 
                     <div className="fixed-grid-3">
-                        {!cargando && productosAMostrar.map((prod) => {
+                        {!cargando && productos.filter(p => !catFiltro || p.product_type === catFiltro).map((prod) => {
                             const colorActivo = colorVisual[prod._id] || prod.colors_available?.[0];
                             const imgFinal = prod.variants?.find(v => v.color === colorActivo)?.image || getPrimaryImage(prod);
 
@@ -195,7 +175,7 @@ const Catalogo = () => {
                                         <p className="p-price">${(prod.precioMXN || prod.price).toLocaleString()} MXN</p>
                                         <div className="swatch-row-carrusel">
                                             {prod.colors_available?.map(col => (
-                                                <button key={col} className={`swatch-circle ${colorActivo === col ? 'active' : ''}`} style={{ backgroundColor: getColorHex(col) }} onClick={() => setColorVisual(prev => ({ ...prev, [prod._id]: col }))} />
+                                                <button key={col} className="swatch-circle" style={{ backgroundColor: getColorHex(col) }} onClick={() => setColorVisual(prev => ({ ...prev, [prod._id]: col }))} />
                                             ))}
                                         </div>
                                         <div className="card-footer">
@@ -224,7 +204,12 @@ const Catalogo = () => {
                         <div className="cart-modal-list">
                             {cart.map((item, i) => (
                                 <div key={i} className="cart-modal-row">
-                                    <img src={item.selectedImage} alt="item" className="cart-item-mini-img" />
+                                    {/* Imagen pequeña forzada con estilo inline para evitar desajustes visuales */}
+                                    <img 
+                                        src={item.selectedImage} 
+                                        alt="item" 
+                                        style={{ width: '65px', height: '85px', objectFit: 'cover', borderRadius: '8px', flexShrink: 0, border: '1px solid #222' }} 
+                                    />
                                     <div className="cart-item-info">
                                         <p className="cart-item-title">{item.title}</p>
                                         <div className="cart-item-controls-row">
