@@ -19,19 +19,16 @@ const AdminPanel = () => {
     const [busquedaVen, setBusquedaVen] = useState("");
 
     // --- ESTADOS DE DATOS Y PAGINACIÓN ---
-    // Productos
     const [productos, setProductos] = useState([]);
     const [pagProductos, setPagProductos] = useState(1);
     const [totalPagProductos, setTotalPagProductos] = useState(1);
     const [totalProductosCount, setTotalProductosCount] = useState(0); 
 
-    // Usuarios
     const [listaUsuarios, setListaUsuarios] = useState([]);
     const [pagUsuarios, setPagUsuarios] = useState(1);
     const [totalPagUsuarios, setTotalPagUsuarios] = useState(1);
     const [totalUsuariosCount, setTotalUsuariosCount] = useState(0);
 
-    // Ventas
     const [listaVentas, setListaVentas] = useState([]);
     const [pagVentas, setPagVentas] = useState(1);
     const [totalPagVentas, setTotalPagVentas] = useState(1);
@@ -44,12 +41,10 @@ const AdminPanel = () => {
 
     const [modalUsuarioAbierto, setModalUsuarioAbierto] = useState(false);
     const [editandoUsuarioId, setEditandoUsuarioId] = useState(null);
-    const [formDataUsuario, setFormDataUsuario] = useState({ nombre: '', apellido: '', email: '', rol: 'cliente', direccion: '' });
+    const [formDataUsuario, setFormDataUsuario] = useState({ nombre: '', apellido: '', email: '', rol: 'cliente', password: '', direccion: '' });
 
-    // URL BASE DEL SERVIDOR
     const baseURL = import.meta.env.VITE_API_URL || 'https://dbgymshark-ddk1.onrender.com/api';
 
-    // Función "Llave Maestra" para enviar ambos formatos de Token y evitar el 401
     const getAuthHeaders = () => {
         const token = localStorage.getItem('token') || '';
         return {
@@ -58,7 +53,7 @@ const AdminPanel = () => {
         };
     };
 
-    // --- CARGA DE PRODUCTOS ---
+    // --- CARGA DE DATOS ---
     const cargarProductos = async () => {
         setCargando(true);
         try {
@@ -67,57 +62,44 @@ const AdminPanel = () => {
             if (res.data) {
                 const dataArr = res.data.productos || res.data || [];
                 setProductos(Array.isArray(dataArr) ? dataArr : []);
-                
-                setTotalPagProductos(res.data.pagination?.pages || res.data.paginasTotales || 1);
-                setTotalProductosCount(res.data.pagination?.total || res.data.totalCount || res.data.total || (Array.isArray(dataArr) ? dataArr.length : 0)); 
+                setTotalPagProductos(res.data.pagination?.pages || 1);
+                setTotalProductosCount(res.data.pagination?.total || 0); 
             }
-        } catch (error) { console.error("Error al cargar productos:", error); }
+        } catch (error) { console.error("Error productos:", error); }
         finally { setCargando(false); }
     };
 
-    // --- CARGA DE USUARIOS Y VENTAS ---
     const cargarDatosExtra = async (vista) => {
         const paginaActual = vista === 'usuarios' ? pagUsuarios : pagVentas;
         const busquedaActual = vista === 'usuarios' ? busquedaUsr : busquedaVen;
-        
         try {
             const config = { headers: getAuthHeaders() }; 
             const res = await axios.get(`${baseURL}/admin/panel/${vista}?page=${paginaActual}&limit=${itemsPorPagina}&search=${busquedaActual}`, config);
-            
             if (vista === 'usuarios') {
                 const arr = res.data.usuarios || res.data || [];
-                setListaUsuarios(Array.isArray(arr) ? arr : []);
-                setTotalPagUsuarios(res.data.pagination?.pages || res.data.paginasTotales || 1);
-                setTotalUsuariosCount(res.data.pagination?.total || res.data.totalCount || res.data.total || (Array.isArray(arr) ? arr.length : 0));
+                setListaUsuarios(arr);
+                setTotalPagUsuarios(res.data.pagination?.pages || 1);
+                setTotalUsuariosCount(res.data.pagination?.total || 0);
             }
             if (vista === 'ventas') {
                 const arr = res.data.ventas || res.data || [];
-                setListaVentas(Array.isArray(arr) ? arr : []);
-                setTotalPagVentas(res.data.pagination?.pages || res.data.paginasTotales || 1);
-                setTotalVentasCount(res.data.pagination?.total || res.data.totalCount || res.data.total || (Array.isArray(arr) ? arr.length : 0));
+                setListaVentas(arr);
+                setTotalPagVentas(res.data.pagination?.pages || 1);
+                setTotalVentasCount(res.data.pagination?.total || 0);
             }
         } catch (error) { console.error(`Error en ${vista}:`, error); }
     };
 
-    // Efectos sincronizados con la búsqueda independiente de cada tabla
     useEffect(() => { cargarProductos(); }, [pagProductos, busquedaProd]);
     useEffect(() => { cargarDatosExtra('usuarios'); }, [pagUsuarios, busquedaUsr]);
     useEffect(() => { cargarDatosExtra('ventas'); }, [pagVentas, busquedaVen]);
 
-    // --- LÓGICA DE DATOS EXISTENTES PARA SUGERENCIAS ---
-    const categoriasExistentes = useMemo(() => [...new Set(productos.map(p => p.product_type).filter(Boolean))], [productos]);
-    const coloresExistentes = useMemo(() => {
-        const colores = [];
-        productos.forEach(p => p.variants?.forEach(v => { if(v.color) colores.push(v.color) }));
-        return [...new Set(colores)];
-    }, [productos]);
-    const tallasExistentes = useMemo(() => {
-        const tallas = [];
-        productos.forEach(p => p.variants?.forEach(v => { if(v.size) tallas.push(v.size) }));
-        return [...new Set(tallas)];
-    }, [productos]);
+    const formatFecha = (fechaRaw) => {
+        if (!fechaRaw) return "N/A";
+        const d = fechaRaw.$date ? new Date(fechaRaw.$date) : new Date(fechaRaw);
+        return isNaN(d.getTime()) ? "Fecha Inválida" : d.toLocaleDateString();
+    };
 
-    // --- LÓGICA DE VARIANTES AGRUPADAS ---
     const variantsByColor = useMemo(() => {
         const grouped = {};
         formData.variants.forEach((v, index) => {
@@ -132,20 +114,13 @@ const AdminPanel = () => {
         const existingVariant = formData.variants.find(v => v.color === colorName);
         const newSize = { 
             color: colorName, size: '', price: existingVariant?.price || 0, 
-            inventory_quantity: 0, image: existingVariant?.image || "" 
+            inventory_quantity: 0, sku: '', image: existingVariant?.image || "" 
         };
         setFormData({ ...formData, variants: [...formData.variants, newSize] });
     };
 
     const addEmptyColorGroup = () => {
-        setFormData({ ...formData, variants: [...formData.variants, { color: '', size: '', price: 0, inventory_quantity: 0, image: "" }] });
-    };
-
-    // --- ACCIONES DE PRODUCTOS ---
-    const abrirModalEditar = (prod) => {
-        setEditandoId(prod._id);
-        setFormData({ ...prod });
-        setModalAbierto(true);
+        setFormData({ ...formData, variants: [...formData.variants, { color: '', size: '', price: 0, inventory_quantity: 0, sku: '', image: "" }] });
     };
 
     const handleGuardar = async (e) => {
@@ -157,113 +132,64 @@ const AdminPanel = () => {
             setModalAbierto(false);
             cargarProductos();
             alert("Guardado con éxito");
-        } catch (error) { alert("Error al guardar cambios"); }
-    };
-
-    const handleEliminar = async (id) => {
-        if (!window.confirm("¿Eliminar este producto permanentemente?")) return;
-        try {
-            const config = { headers: getAuthHeaders() };
-            await axios.delete(`${baseURL}/productos/${id}`, config);
-            cargarProductos();
-        } catch (error) { alert("Error al eliminar"); }
-    };
-
-    // --- ACCIONES DE USUARIOS ---
-    const abrirModalEditarUsuario = (u) => {
-        setEditandoUsuarioId(u._id);
-        setFormDataUsuario({
-            nombre: u.nombre || '', 
-            apellido: u.apellido || '', 
-            email: u.email || '',
-            rol: u.rol || 'cliente', 
-            direccion: u.direccion || ''
-        });
-        setModalUsuarioAbierto(true);
+        } catch (error) { alert("Error: Cada variante debe tener un SKU válido."); }
     };
 
     const handleGuardarUsuario = async (e) => {
         e.preventDefault();
         try {
-            const config = { headers: getAuthHeaders() };
-            const datosAEnviar = { ...formDataUsuario };
-
-            await axios.put(`${baseURL}/usuarios/${editandoUsuarioId}`, datosAEnviar, config);
-            
+            const { nombre, apellido, email, rol, direccion } = formDataUsuario;
+            await axios.put(`${baseURL}/admin/panel/usuarios/${editandoUsuarioId}`, { nombre, apellido, email, rol, direccion }, { headers: getAuthHeaders() });
             setModalUsuarioAbierto(false);
             cargarDatosExtra('usuarios'); 
-            alert("Usuario actualizado con éxito");
-        } catch (error) { 
-            console.error("Error al actualizar usuario:", error);
-            alert("Error al actualizar usuario. Revisa la consola."); 
-        }
+            alert("Usuario actualizado");
+        } catch (error) { alert("Error al actualizar usuario"); }
     };
 
-    const handleEliminarUsuario = async (id) => {
-        if (!window.confirm("¿Eliminar este usuario permanentemente?")) return;
+    const handleEliminar = async (id) => {
+        if (!window.confirm("¿Eliminar este registro?")) return;
         try {
             const config = { headers: getAuthHeaders() };
-            await axios.delete(`${baseURL}/usuarios/${id}`, config);
-            cargarDatosExtra('usuarios');
-        } catch (error) { 
-            console.error("Error al eliminar usuario:", error);
-            alert("Error al eliminar el usuario."); 
-        }
+            const endpoint = vistaActiva === 'productos' ? `productos/${id}` : `admin/panel/usuarios/${id}`;
+            await axios.delete(`${baseURL}/${endpoint}`, config);
+            vistaActiva === 'productos' ? cargarProductos() : cargarDatosExtra('usuarios');
+        } catch (error) { alert("Error al eliminar"); }
     };
 
     return (
         <div className="admin-container">
             <header className="admin-header">
-                <img src="/logo-makia-pages.png" alt="Makia Logo" className="brand-logo-img" />
+                <img src="/logo-makia-pages.png" alt="Logo" className="brand-logo-img" />
                 <div className="admin-user-panel">
                     <div className="user-welcome-info">
-                        <span className="welcome-text">¡Nos alegra verte de nuevo!</span>
                         <span className="user-name-blue-header">{user?.nombre || 'Administrador'}</span>
                     </div>
                     <button onClick={logout} className="admin-logout-btn">Cerrar Sesión</button>
                 </div>
             </header>
-
-            <hr className="header-divider" />
-            <h2 className="panel-subtitle">Panel de Administración</h2>
+            <div className="header-divider-sutil"></div>
 
             <main className="admin-main">
                 <section className="admin-stats">
                     <div className={`admin-stat-card ${vistaActiva === 'productos' ? 'active-prod' : ''}`} onClick={() => setVistaActiva('productos')}>
-                        <div className="stat-info"><h3>Productos</h3><p>Total en Base de Datos</p></div>
-                        <span className="stat-count">{totalProductosCount}</span>
+                        <h3>Productos</h3><span className="stat-count">{totalProductosCount}</span>
                     </div>
                     <div className={`admin-stat-card ${vistaActiva === 'ventas' ? 'active-ventas' : ''}`} onClick={() => setVistaActiva('ventas')}>
-                        <div className="stat-info"><h3>Ventas</h3><p>Historial</p></div>
-                        <span className="stat-count">{totalVentasCount}</span>
+                        <h3>Ventas</h3><span className="stat-count">{totalVentasCount}</span>
                     </div>
                     <div className={`admin-stat-card ${vistaActiva === 'usuarios' ? 'active-user' : ''}`} onClick={() => setVistaActiva('usuarios')}>
-                        <div className="stat-info"><h3>Usuarios</h3><p>Usuarios activos</p></div>
-                        <span className="stat-count">{totalUsuariosCount}</span>
+                        <h3>Usuarios</h3><span className="stat-count">{totalUsuariosCount}</span>
                     </div>
                 </section>
 
                 <div className="admin-controls-row">
-                    <div className="search-bar-makia" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <i className="fas fa-search" style={{ color: '#000', fontSize: '18px' }}></i>
-                        <input 
-                            type="text" 
-                            placeholder={
-                                vistaActiva === 'productos' ? 'Buscar por título o tipo...' : 
-                                vistaActiva === 'usuarios' ? 'Buscar por nombre o rol...' : 
-                                'Buscar por ID, cliente o estado...'
-                            } 
-                            value={vistaActiva === 'productos' ? busquedaProd : vistaActiva === 'usuarios' ? busquedaUsr : busquedaVen} 
-                            onChange={(e) => { 
-                                const valor = e.target.value;
-                                if (vistaActiva === 'productos') { setBusquedaProd(valor); setPagProductos(1); }
-                                else if (vistaActiva === 'usuarios') { setBusquedaUsr(valor); setPagUsuarios(1); }
-                                else if (vistaActiva === 'ventas') { setBusquedaVen(valor); setPagVentas(1); }
-                            }} 
-                        />
+                    <div className="search-bar-makia">
+                        <i className="fas fa-search"></i>
+                        <input type="text" placeholder="Buscar..." value={vistaActiva === 'productos' ? busquedaProd : vistaActiva === 'usuarios' ? busquedaUsr : busquedaVen} 
+                            onChange={(e) => vistaActiva === 'productos' ? setBusquedaProd(e.target.value) : vistaActiva === 'usuarios' ? setBusquedaUsr(e.target.value) : setBusquedaVen(e.target.value)} />
                     </div>
                     {vistaActiva === 'productos' && (
-                        <button className="admin-add-btn" onClick={() => { setEditandoId(null); setFormData({title:'', product_type:'', variants:[]}); setModalAbierto(true); }}>
+                        <button className="admin-add-btn" onClick={() => { setEditandoId(null); setFormData({title:'', product_type:'', vendor:'Gymshark', sku:'', price:0, inventory_quantity:0, variants:[]}); setModalAbierto(true); }}>
                             + Nuevo Producto
                         </button>
                     )}
@@ -272,158 +198,92 @@ const AdminPanel = () => {
                 <div className="admin-table-wrapper">
                     <table className="admin-table-fixed">
                         <thead>
-                            {vistaActiva === 'productos' && (
-                                <tr><th>Imagen</th><th className="col-title">Título</th><th>Tipo</th><th className="center">Acciones</th></tr>
-                            )}
-                            {vistaActiva === 'usuarios' && (
-                                <tr><th>Nombre Completo</th><th>Email</th><th>Dirección</th><th>Rol</th><th className="center">Acciones</th></tr>
-                            )}
-                            {vistaActiva === 'ventas' && (
-                                <tr><th>ID Venta</th><th>Cliente</th><th>Dirección</th><th>Fecha</th><th>Total</th><th className="center">Estado</th></tr>
-                            )}
+                            {vistaActiva === 'productos' && <tr><th>Imagen</th><th className="col-title">Título</th><th>Categoría</th><th className="center">Acciones</th></tr>}
+                            {vistaActiva === 'usuarios' && <tr><th>Nombre</th><th>Email</th><th>Rol</th><th className="center">Acciones</th></tr>}
+                            {vistaActiva === 'ventas' && <tr><th>Número de Orden</th><th>Cliente</th><th>Fecha</th><th>Total</th><th className="center">Estado</th></tr>}
                         </thead>
                         <tbody>
                             {vistaActiva === 'productos' && productos.map(p => (
                                 <tr key={p._id}>
                                     <td className="center"><img src={p.variants?.[0]?.image || p.image_principal} className="table-thumb" alt="p" /></td>
-                                    <td className="col-title center">{p.title}</td>
-                                    <td className="center">{p.product_type}</td>
+                                    <td>{p.title}</td><td>{p.product_type}</td>
                                     <td className="col-actions center">
-                                        <button className="btn-table btn-edit" onClick={() => abrirModalEditar(p)}>Editar</button>
+                                        <button className="btn-table btn-edit" onClick={() => { setEditandoId(p._id); setFormData({...p}); setModalAbierto(true); }}>Editar</button>
                                         <button className="btn-table btn-delete" onClick={() => handleEliminar(p._id)}>Eliminar</button>
                                     </td>
                                 </tr>
                             ))}
-                            
                             {vistaActiva === 'usuarios' && listaUsuarios.map(u => (
                                 <tr key={u._id}>
-                                    <td className="center">{u.nombre} {u.apellido}</td>
-                                    <td className="center">{u.email}</td>
-                                    <td className="center">{u.direccion || 'N/A'}</td>
-                                    <td className="center"><span className="role-badge">{u.rol}</span></td>
+                                    <td>{u.nombre} {u.apellido}</td><td>{u.email}</td><td><span className="role-badge">{u.rol}</span></td>
                                     <td className="col-actions center">
-                                        <button className="btn-table btn-edit" onClick={() => abrirModalEditarUsuario(u)}>Editar</button>
-                                        <button className="btn-table btn-delete" onClick={() => handleEliminarUsuario(u._id)}>Eliminar</button>
+                                        <button className="btn-table btn-edit" onClick={() => { setEditandoUsuarioId(u._id); setFormDataUsuario({...u}); setModalUsuarioAbierto(true); }}>Editar</button>
+                                        <button className="btn-table btn-delete" onClick={() => handleEliminar(u._id)}>Eliminar</button>
                                     </td>
                                 </tr>
                             ))}
-                            
                             {vistaActiva === 'ventas' && listaVentas.map(v => (
                                 <tr key={v._id}>
-                                    <td className="center">{v._id.substring(0,8)}...</td>
-                                    <td className="center">{v.usuario?.nombre || 'Anon'}</td>
-                                    <td className="center">{v.direccion || 'N/A'}</td>
-                                    <td className="center">{new Date(v.fecha).toLocaleDateString()}</td>
-                                    <td className="center">${v.total?.toFixed(2)}</td>
-                                    <td className="center"><span className="role-badge">{v.estado || 'Pagado'}</span></td>
+                                    <td className="center">#{v.numeroOrden || v.order_number || v._id.substring(0,8)}</td>
+                                    <td className="center">{v.usuario?.nombre ? `${v.usuario.nombre} ${v.usuario.apellido || ''}` : 'Anon'}</td>
+                                    <td className="center">{formatFecha(v.fecha)}</td>
+                                    <td className="center">${v.total?.toFixed(2)}</td><td className="center"><span className="role-badge">{v.estado || 'Pagado'}</span></td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
                 </div>
-
-                {vistaActiva === 'productos' && <PaginationControls page={pagProductos} totalPages={totalPagProductos} onPageChange={setPagProductos} className="admin-pagination-theme" />}
-                {vistaActiva === 'usuarios' && <PaginationControls page={pagUsuarios} totalPages={totalPagUsuarios} onPageChange={setPagUsuarios} className="admin-pagination-theme" />}
-                {vistaActiva === 'ventas' && <PaginationControls page={pagVentas} totalPages={totalPagVentas} onPageChange={setPagVentas} className="admin-pagination-theme" />}
+                <PaginationControls page={vistaActiva === 'productos' ? pagProductos : vistaActiva === 'usuarios' ? pagUsuarios : pagVentas} totalPages={vistaActiva === 'productos' ? totalPagProductos : vistaActiva === 'usuarios' ? totalPagUsuarios : totalPagVentas} onPageChange={vistaActiva === 'productos' ? setPagProductos : vistaActiva === 'usuarios' ? setPagUsuarios : setPagVentas} />
             </main>
 
-            {/* MODAL PRODUCTO */}
             {modalAbierto && (
                 <div className="modal-overlay">
                     <div className="modal-content modal-xl">
-                        <h2>{editandoId ? 'Editar Producto' : 'Nuevo Producto'}</h2>
+                        <h2>{editandoId ? 'Editar' : 'Nuevo'} Producto</h2>
                         <form onSubmit={handleGuardar} className="admin-form-vertical">
-                            <div className="field-group">
-                                <label>Nombre del Producto</label>
-                                <input type="text" required value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} />
+                            <div className="form-grid-2-cols">
+                                <div className="field-group"><label>Título</label><input type="text" required value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} /></div>
+                                <div className="field-group"><label>Categoría</label><input type="text" value={formData.product_type} onChange={e => setFormData({...formData, product_type: e.target.value})} /></div>
                             </div>
-
-                            <div className="field-group">
-                                <label>Categoría</label>
-                                <input list="db-cats" type="text" placeholder="Selecciona o escribe..." value={formData.product_type} onChange={e => setFormData({...formData, product_type: e.target.value})} />
-                                <datalist id="db-cats">{categoriasExistentes.map(c => <option key={c} value={c} />)}</datalist>
-                            </div>
-                            
                             <div className="variants-section">
-                                <div className="section-header-variants">
-                                    <h3>Variantes por Color</h3>
-                                    <button type="button" className="btn-makia-save" onClick={addEmptyColorGroup}>+ Añadir Color</button>
-                                </div>
+                                <div className="section-header-variants"><h3>Variantes</h3><button type="button" className="btn-makia-save" onClick={addEmptyColorGroup}>+ Color</button></div>
                                 {variantsByColor.map((group, idx) => (
                                     <div key={idx} className="color-group-card">
                                         <div className="color-header-row">
-                                            <div className="field-group color-input-fixed">
-                                                <label>Color</label>
-                                                <input list="db-cols" type="text" value={group.color} onChange={(e) => {
-                                                    const updated = formData.variants.map(v => v.color === group.color ? { ...v, color: e.target.value } : v);
-                                                    setFormData({ ...formData, variants: updated });
-                                                }} />
-                                                <datalist id="db-cols">{coloresExistentes.map(c => <option key={c} value={c} />)}</datalist>
-                                            </div>
-                                            <div className="field-group url-input-expanded">
-                                                <label>URL Foto del Color</label>
-                                                <input type="text" value={group.image} onChange={(e) => {
-                                                    const updated = formData.variants.map(v => v.color === group.color ? { ...v, image: e.target.value } : v);
-                                                    setFormData({ ...formData, variants: updated });
-                                                }} />
-                                            </div>
-                                            <div className="mini-preview-container">
-                                                {group.image ? <img src={group.image} alt="p" className="form-mini-preview" /> : <div className="form-mini-preview-placeholder">URL</div>}
-                                            </div>
+                                            <div className="field-group color-input-fixed"><label>Color</label><input type="text" value={group.color} onChange={e => setFormData({...formData, variants: formData.variants.map(v => v.color === group.color ? {...v, color: e.target.value} : v)})} /></div>
+                                            <div className="field-group url-input-expanded"><label>URL Imagen Color</label><input type="text" value={group.image} onChange={e => setFormData({...formData, variants: formData.variants.map(v => v.color === group.color ? {...v, image: e.target.value} : v)})} /></div>
+                                            <div className="mini-preview-container">{group.image ? <img src={group.image} alt="p" className="form-mini-preview" /> : <div className="form-mini-preview-placeholder">URL</div>}</div>
                                         </div>
                                         <div className="sizes-grid">
-                                            {group.items.map((item) => (
+                                            {group.items.map(item => (
                                                 <div key={item.originalIndex} className="size-row">
-                                                    <div className="field-group">
-                                                        <label>Talla</label>
-                                                        <input list="db-tallas" type="text" value={item.size} onChange={e => { 
-                                                            const nv = [...formData.variants]; 
-                                                            nv[item.originalIndex].size = e.target.value; 
-                                                            setFormData({...formData, variants: nv}); 
-                                                        }} />
-                                                    </div>
+                                                    <div className="field-group"><label>Talla</label><input type="text" value={item.size} onChange={e => { const nv = [...formData.variants]; nv[item.originalIndex].size = e.target.value; setFormData({...formData, variants: nv}); }} /></div>
                                                     <div className="field-group"><label>Precio</label><input type="number" value={item.price} onChange={e => { const nv = [...formData.variants]; nv[item.originalIndex].price = Number(e.target.value); setFormData({...formData, variants: nv}); }} /></div>
                                                     <div className="field-group"><label>Stock</label><input type="number" value={item.inventory_quantity} onChange={e => { const nv = [...formData.variants]; nv[item.originalIndex].inventory_quantity = Number(e.target.value); setFormData({...formData, variants: nv}); }} /></div>
+                                                    <div className="field-group"><label>SKU Variante</label><input type="text" value={item.sku || ""} onChange={e => { const nv = [...formData.variants]; nv[item.originalIndex].sku = e.target.value; setFormData({...formData, variants: nv}); }} /></div>
                                                     <button type="button" className="btn-x" onClick={() => setFormData({...formData, variants: formData.variants.filter((_, i) => i !== item.originalIndex)})}>✕</button>
                                                 </div>
                                             ))}
-                                            <button type="button" className="btn-add-size" onClick={() => addSizeToColor(group.color)}>+ Añadir otra talla en este color</button>
+                                            <button type="button" className="btn-add-size" onClick={() => addSizeToColor(group.color)}>+ Talla</button>
                                         </div>
                                     </div>
                                 ))}
                             </div>
-                            <datalist id="db-tallas">{tallasExistentes.map(t => <option key={t} value={t} />)}</datalist>
-                            <div className="modal-footer">
-                                <button type="button" className="btn-makia-cancel" onClick={() => setModalAbierto(false)}>Cancelar</button>
-                                <button type="submit" className="btn-makia-save">Guardar Cambios</button>
-                            </div>
+                            <div className="modal-footer"><button type="button" className="btn-makia-cancel" onClick={() => setModalAbierto(false)}>Cancelar</button><button type="submit" className="btn-makia-save">Guardar Cambios</button></div>
                         </form>
                     </div>
                 </div>
             )}
 
-            {/* MODAL USUARIOS */}
             {modalUsuarioAbierto && (
                 <div className="modal-overlay">
-                    <div className="modal-content" style={{ maxWidth: '600px' }}>
+                    <div className="modal-content" style={{maxWidth:'500px'}}>
                         <h2>Editar Usuario</h2>
                         <form onSubmit={handleGuardarUsuario} className="admin-form-vertical">
-                            <div className="field-group">
-                                <label>Nombre</label>
-                                <input type="text" required value={formDataUsuario.nombre} onChange={e => setFormDataUsuario({...formDataUsuario, nombre: e.target.value})} />
-                            </div>
-                            <div className="field-group">
-                                <label>Apellido</label>
-                                <input type="text" value={formDataUsuario.apellido} onChange={e => setFormDataUsuario({...formDataUsuario, apellido: e.target.value})} />
-                            </div>
-                            <div className="field-group">
-                                <label>Email</label>
-                                <input type="email" required value={formDataUsuario.email} onChange={e => setFormDataUsuario({...formDataUsuario, email: e.target.value})} />
-                            </div>
-                            <div className="field-group">
-                                <label>Dirección</label>
-                                <input type="text" value={formDataUsuario.direccion} onChange={e => setFormDataUsuario({...formDataUsuario, direccion: e.target.value})} />
-                            </div>
+                            <div className="field-group"><label>Nombre</label><input type="text" value={formDataUsuario.nombre} onChange={e => setFormDataUsuario({...formDataUsuario, nombre: e.target.value})} /></div>
+                            <div className="field-group"><label>Apellido</label><input type="text" value={formDataUsuario.apellido} onChange={e => setFormDataUsuario({...formDataUsuario, apellido: e.target.value})} /></div>
+                            <div className="field-group"><label>Email</label><input type="email" value={formDataUsuario.email} onChange={e => setFormDataUsuario({...formDataUsuario, email: e.target.value})} /></div>
+                            <div className="field-group"><label>Dirección</label><input type="text" value={formDataUsuario.direccion} onChange={e => setFormDataUsuario({...formDataUsuario, direccion: e.target.value})} /></div>
                             <div className="field-group">
                                 <label>Rol</label>
                                 <select value={formDataUsuario.rol} onChange={e => setFormDataUsuario({...formDataUsuario, rol: e.target.value})}>
@@ -431,11 +291,7 @@ const AdminPanel = () => {
                                     <option value="admin">Administrador</option>
                                 </select>
                             </div>
-                            
-                            <div className="modal-footer">
-                                <button type="button" className="btn-makia-cancel" onClick={() => setModalUsuarioAbierto(false)}>Cancelar</button>
-                                <button type="submit" className="btn-makia-save">Guardar Cambios</button>
-                            </div>
+                            <div className="modal-footer"><button type="button" className="btn-makia-cancel" onClick={() => setModalUsuarioAbierto(false)}>Cerrar</button><button type="submit" className="btn-makia-save">Actualizar</button></div>
                         </form>
                     </div>
                 </div>

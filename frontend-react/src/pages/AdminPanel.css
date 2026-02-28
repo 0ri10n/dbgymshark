@@ -1,16 +1,14 @@
 /* =========================================
-   ESTILOS MAKIA - ADMIN PANEL FINAL COMPLETO
+   ESTILOS MAKIA - ADMIN PANEL FINAL
    ========================================= */
 :root {
     --makia-black: #000000;
     --makia-surface: #111111;
-    --makia-blue: #4da3ff;        /* AZUL VIBRANTE MAKIA */
+    --makia-blue: #4da3ff;
     --makia-border: #222222;
     --makia-text: #ffffff;
     --makia-muted: #888888;
-    --makia-danger: #ff4d4d;      /* ROJO ELIMINAR */
-    --makia-purple: #8b5cf6;
-    --radius: 12px;
+    --makia-danger: #ff4d4d;
     --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -23,7 +21,7 @@
     font-family: 'Poppins', sans-serif;
 }
 
-/* HEADER Y LOGO */
+/* HEADER Y LÍNEA DIVISORIA SUTIL BAJO LOGO */
 .admin-header {
     display: flex;
     justify-content: space-between;
@@ -32,7 +30,7 @@
 }
 
 .brand-logo-img {
-    height: 25px; /* Tamaño controlado para el nuevo logo */
+    height: 25px;
     width: auto;
     object-fit: contain;
 }
@@ -41,30 +39,12 @@
     display: flex;
     align-items: center;
     gap: 20px;
-    background: #0a0a0a;
-    padding: 12px 24px;
-    border-radius: 15px;
-    border: 1px solid var(--makia-border);
 }
 
-.user-welcome-info {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    gap: 4px;
-}
-
-.welcome-text { 
-    font-size: 0.75rem; 
-    color: var(--makia-muted); 
-}
-
-.user-name-blue-header { 
-    font-weight: 800; 
-    color: var(--makia-blue); 
-    font-size: 1.05rem; 
-    line-height: 1.1;
+.user-name-blue-header {
+    font-weight: 800;
+    color: var(--makia-blue);
+    font-size: 1.05rem;
 }
 
 .admin-logout-btn {
@@ -75,18 +55,14 @@
     border-radius: 10px;
     cursor: pointer;
     font-weight: 700;
-    transition: var(--transition);
 }
 
-.admin-logout-btn:hover {
-    background: var(--makia-danger);
-    border-color: var(--makia-danger);
-}
-
-.header-divider {
-    border: 0;
-    border-top: 1px solid var(--makia-border);
-    margin: 0 0 1.5rem 0;
+/* Línea sutil recuperada */
+.header-divider-sutil {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.05);
+    width: 100%;
+    margin-bottom: 2.5rem;
 }
 
 .panel-subtitle {
@@ -95,80 +71,7 @@
     margin-bottom: 2.5rem;
 }
 
-/* TARJETAS DE ESTADÍSTICAS */
-.admin-stats {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 20px;
-    margin-bottom: 3.5rem;
-}
-
-.admin-stat-card {
-    background: var(--makia-surface);
-    border: 1px solid var(--makia-border);
-    padding: 2rem;
-    border-radius: 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    cursor: pointer;
-    transition: var(--transition);
-}
-
-.stat-count {
-    font-size: 2.5rem;
-    font-weight: 800;
-}
-
-.active-prod { border-color: var(--makia-blue) !important; box-shadow: 0 0 20px rgba(77, 163, 255, 0.2); }
-.active-ventas { border-color: #10b981 !important; box-shadow: 0 0 20px rgba(16, 185, 129, 0.2); }
-.active-user { border-color: var(--makia-purple) !important; box-shadow: 0 0 20px rgba(139, 92, 246, 0.2); }
-
-/* CONTROLES Y BUSCADOR (LUPA ACTUALIZADA) */
-.admin-controls-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 2.5rem;
-}
-
-.search-bar-makia {
-    background: #ffffff;
-    border-radius: 50px;
-    padding: 8px 22px;
-    width: 380px;
-    display: flex;
-    align-items: center;
-    gap: 10px; /* Separación entre la lupa y el input */
-}
-
-.search-bar-makia i {
-    color: #000;
-    font-size: 18px; /* Lupa de FontAwesome recuperada y ajustada */
-}
-
-.search-bar-makia input {
-    border: none;
-    background: transparent;
-    color: #000;
-    width: 100%;
-    outline: none;
-    font-family: inherit;
-    font-size: 0.95rem;
-}
-
-.admin-add-btn {
-    background: var(--makia-blue);
-    color: #fff;
-    padding: 14px 28px;
-    border-radius: 12px;
-    font-weight: 800;
-    border: none;
-    cursor: pointer;
-    text-transform: uppercase;
-}
-
-/* TABLAS */
+/* TABLAS CON LÍNEAS DIVISORIAS POR FILA */
 .admin-table-wrapper {
     background: var(--makia-surface);
     border: 1px solid var(--makia-border);
@@ -180,7 +83,6 @@
 .admin-table-fixed {
     width: 100%;
     border-collapse: collapse;
-    table-layout: fixed;
 }
 
 .admin-table-fixed th {
@@ -188,20 +90,18 @@
     padding: 1.5rem;
     color: var(--makia-muted);
     text-transform: uppercase;
-    text-align: center; 
     font-size: 0.8rem;
-    letter-spacing: 1.5px;
+    text-align: center;
+    border-bottom: 1px solid var(--makia-border);
 }
 
 .admin-table-fixed td {
     padding: 1.5rem;
-    border-bottom: 1px solid #1a1a1a;
+    /* Línea divisoria casi imperceptible por fila */
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
     vertical-align: middle;
-    text-align: center; 
-    color: var(--makia-text);
+    text-align: center;
 }
-
-.col-title { width: 30%; }
 
 .table-thumb {
     width: 55px;
@@ -210,13 +110,7 @@
     border-radius: 10px;
 }
 
-.btn-table {
-    border: none; padding: 9px 18px; border-radius: 8px; font-weight: 800; cursor: pointer; margin: 0 5px; text-transform: uppercase; font-size: 0.7rem;
-}
-.btn-edit { background: #fff; color: #000; }
-.btn-delete { background: var(--makia-danger); color: #fff; }
-
-/* MODALES Y FORMULARIO */
+/* MODALES Y FORMULARIOS (ESPACIADO CORREGIDO) */
 .modal-overlay {
     position: fixed;
     inset: 0;
@@ -231,7 +125,7 @@
 .modal-content {
     background: #050505;
     width: 95%;
-    max-width: 900px;
+    max-width: 950px;
     max-height: 90vh;
     padding: 3rem;
     border-radius: 25px;
@@ -239,12 +133,45 @@
     overflow-y: auto;
 }
 
-.admin-form-vertical { display: flex; flex-direction: column; gap: 1.5rem; }
-.field-group { display: flex; flex-direction: column; gap: 8px; }
-.field-group label { font-size: 0.85rem; font-weight: 700; color: var(--makia-muted); text-transform: uppercase; }
-.field-group input, .field-group select { background: #111; border: 1px solid var(--makia-border); color: #fff; padding: 12px; border-radius: 10px; outline: none; }
+.form-grid-2-cols {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px; /* Mayor espacio para evitar amontonamiento */
+    margin-bottom: 20px;
+}
 
-/* VARIANTES Y COLORES */
+.field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.field-group label {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--makia-muted);
+    text-transform: uppercase;
+}
+
+.field-group input, .field-group select {
+    background: #111;
+    border: 1px solid var(--makia-border);
+    color: #fff;
+    padding: 14px;
+    border-radius: 10px;
+    outline: none;
+}
+
+/* VARIANTES Y PREVISUALIZACIÓN */
+.color-group-card {
+    background: #0a0a0a;
+    border: 1px solid var(--makia-border);
+    border-left: 6px solid var(--makia-blue);
+    padding: 2.5rem;
+    border-radius: 18px;
+    margin-bottom: 2rem;
+}
+
 .color-header-row { 
     display: flex; 
     gap: 20px; 
@@ -252,109 +179,48 @@
     margin-bottom: 35px;
 }
 
-.color-input-fixed { width: 220px; }
-.url-input-expanded { flex: 1; }
-
 .mini-preview-container { 
     display: flex; 
     align-items: center; 
     justify-content: center; 
-    padding-bottom: 2px;
-    width: 70px;
+    width: 65px;
+    height: 65px;
+    border-radius: 10px;
+    border: 1px solid var(--makia-border);
+    overflow: hidden;
+    background: #000;
 }
 
 .form-mini-preview {
-    width: 55px;
-    height: 55px;
-    border-radius: 10px;
+    width: 100%;
+    height: 100%;
     object-fit: cover;
-    border: 1px solid var(--makia-border);
-    background: #080808;
 }
 
-.form-mini-preview-placeholder {
-    width: 55px;
-    height: 55px;
-    border-radius: 10px;
-    border: 1px dashed #444;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.6rem;
-    color: #555;
-}
-
-.section-header-variants {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin: 2rem 0;
-}
-
-.color-group-card {
-    background: #0a0a0a;
-    border: 1px solid var(--makia-border);
-    border-left: 6px solid var(--makia-blue);
-    padding: 2rem;
-    border-radius: 18px;
-    margin-bottom: 2rem;
-}
-
-.sizes-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 15px;
-    padding-top: 25px; 
-    border-top: 1px solid #222;
-}
-
-/* FILAS DE TALLAS Y EL TACHE */
+/* FILA DE TALLAS (CORRECCIÓN SKU QUE SE SALÍA) */
 .size-row {
-    display: flex;
+    display: grid;
+    /* Ajuste de columnas para que el SKU tenga espacio suficiente y no se desborde */
+    grid-template-columns: 1.2fr 0.8fr 0.8fr 1.5fr auto; 
     gap: 15px;
     background: #0f0f0f;
-    padding: 15px 70px 15px 15px;
+    padding: 15px;
     border-radius: 10px;
-    align-items: flex-end;
-    position: relative;
+    align-items: end;
     margin-bottom: 12px;
 }
 
 .btn-x {
-    position: absolute;
-    right: 25px;
-    top: 50%;
-    transform: translateY(-20%);
     background: none;
     color: var(--makia-danger);
     border: none;
     cursor: pointer;
-    font-size: 1.6rem;
+    font-size: 1.5rem;
     font-weight: bold;
-    transition: 0.2s;
+    padding-bottom: 5px;
 }
 
-.btn-x:hover { color: #ff0000; transform: translateY(-20%) scale(1.2); }
-
-.btn-add-size {
-    background: transparent;
-    border: 1px solid #333;
-    color: var(--makia-blue);
-    padding: 12px;
-    width: 100%;
-    border-radius: 8px;
-    font-weight: 700;
-    cursor: pointer;
-    margin-top: 15px;
-    transition: all 0.2s ease;
-}
-
-.btn-add-size:hover {
-    background: #151515;
-    border-color: var(--makia-blue);
-}
-
-/* BOTONES FINALES MODAL */
+/* BOTONES */
 .btn-makia-save {
     background: var(--makia-blue);
     color: #fff;
@@ -377,20 +243,11 @@
     text-transform: uppercase;
 }
 
-.modal-footer {
-    display: flex;
-    justify-content: flex-end;
-    gap: 1.5rem;
-    margin-top: 2.5rem;
-    border-top: 1px solid var(--makia-border);
-    padding-top: 1.5rem;
-}
-
 .role-badge {
     padding: 4px 10px;
     border-radius: 6px;
-    background: #222;
-    color: var(--makia-purple);
+    background: rgba(77, 163, 255, 0.1);
+    color: var(--makia-blue);
     font-size: 0.7rem;
     font-weight: bold;
     text-transform: uppercase;
