@@ -6,7 +6,7 @@ import PaginationControls from '../components/PaginationControls';
 import Login from './Login';
 import './Catalogo.css';
 
-// Lista completa de categorías
+// Lista completa de categorías solicitada
 const CATEGORIAS_LIMPIAS = [
     'Accessories', 'Bags', 'Baselayers', 'Bodysuits', 'Bottles', 'Bottoms',
     'Crop Tops', 'Dresses', 'Footwear', 'Gift Cards', 'Headwear', 'Hoodies',
@@ -81,7 +81,6 @@ const Catalogo = () => {
         cargarData();
     }, [pagina, busqueda]);
 
-    // Filtrado basado directamente en lo que responda tu API (precioMXN)
     const productosAMostrar = productos.filter(p => {
         const precioActual = p.precioMXN || p.price; 
         const matchCat = !catFiltro || p.product_type === catFiltro;
@@ -99,6 +98,7 @@ const Catalogo = () => {
             return;
         }
 
+        // Se guarda el color y la imagen específica para la previsualización
         addToCart({ 
             ...p, 
             selectedSize: talla, 
@@ -128,43 +128,45 @@ const Catalogo = () => {
 
             <div className="store-layout-container">
                 <aside className="sidebar-filter-box">
-                    <div className="sidebar-top-row">
-                        <h2 className="sidebar-h2">Filtros</h2>
-                        <button className="clear-filters-btn" onClick={() => {setCatFiltro(null); setBusqueda(''); setPrecioMax(3500);}}>Limpiar</button>
-                    </div>
-                    
-                    <div className="filter-group">
-                        <div className="cat-header-clickable" onClick={() => setCatDesplegado(!catDesplegado)}>
-                            <h3 className="sidebar-h3" style={{margin:0}}>Categorías</h3>
-                            <i className={`fas fa-chevron-${catDesplegado ? 'up' : 'down'}`} style={{color: 'var(--text-muted)'}}></i>
+                    <div className="sidebar-sticky-wrapper">
+                        <div className="sidebar-top-row">
+                            <h2 className="sidebar-h2">Filtros</h2>
+                            <button className="clear-filters-btn" onClick={() => {setCatFiltro(null); setBusqueda(''); setPrecioMax(3500);}}>Limpiar</button>
                         </div>
                         
-                        {catDesplegado && (
-                            <div className="cat-dropdown-list">
-                                {CATEGORIAS_LIMPIAS.map(cat => (
-                                    <div 
-                                        key={cat} 
-                                        className={`sub-item ${catFiltro === cat ? 'active' : ''}`} 
-                                        onClick={() => setCatFiltro(catFiltro === cat ? null : cat)}
-                                    >
-                                        {cat}
-                                    </div>
-                                ))}
+                        <div className="filter-group">
+                            <div className="cat-header-clickable" onClick={() => setCatDesplegado(!catDesplegado)}>
+                                <h3 className="sidebar-h3" style={{margin:0}}>Categorías</h3>
+                                <i className={`fas fa-chevron-${catDesplegado ? 'up' : 'down'}`} style={{color: 'var(--text-muted)'}}></i>
                             </div>
-                        )}
-                    </div>
+                            
+                            {catDesplegado && (
+                                <div className="cat-dropdown-list">
+                                    {CATEGORIAS_LIMPIAS.map(cat => (
+                                        <div 
+                                            key={cat} 
+                                            className={`sub-item ${catFiltro === cat ? 'active' : ''}`} 
+                                            onClick={() => setCatFiltro(catFiltro === cat ? null : cat)}
+                                        >
+                                            {cat}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
 
-                    <div className="filter-group" style={{marginTop: '25px'}}>
-                        <h3 className="sidebar-h3">Presupuesto: ${precioMax}</h3>
-                        <input 
-                            type="range" 
-                            min="0" 
-                            max="3500" 
-                            step="100" 
-                            value={precioMax} 
-                            onChange={(e) => setPrecioMax(Number(e.target.value))} 
-                            className="price-slider" 
-                        />
+                        <div className="filter-group" style={{marginTop: '25px'}}>
+                            <h3 className="sidebar-h3">Presupuesto: ${precioMax}</h3>
+                            <input 
+                                type="range" 
+                                min="0" 
+                                max="3500" 
+                                step="100" 
+                                value={precioMax} 
+                                onChange={(e) => setPrecioMax(Number(e.target.value))} 
+                                className="price-slider" 
+                            />
+                        </div>
                     </div>
                 </aside>
 
@@ -173,7 +175,7 @@ const Catalogo = () => {
                         <i className="fas fa-search"></i>
                         <input 
                             type="text" 
-                            placeholder="Que estas buscando hoy?" 
+                            placeholder="¿Qué estás buscando hoy?" 
                             value={busqueda} 
                             onChange={(e) => {setBusqueda(e.target.value); setPagina(1);}} 
                         />
@@ -233,6 +235,7 @@ const Catalogo = () => {
                         <div className="cart-modal-list">
                             {cart.map((item, i) => (
                                 <div key={i} className="cart-modal-row">
+                                    {/* Previsualización de imagen pequeña en el carrito */}
                                     <img src={item.selectedImage} alt={item.title} className="cart-item-mini-img" />
                                     <div className="cart-item-info">
                                         <p className="cart-item-title">{item.title}</p>
