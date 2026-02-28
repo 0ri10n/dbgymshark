@@ -1,6 +1,7 @@
 const path = require('path');
 const fs = require('fs');
 const dotenv = require('dotenv');
+const errorHandler = require('./middleware/errorHandler');
 
 // Load base env first
 const rootEnvPath = path.resolve(__dirname, '../.env');
@@ -66,6 +67,8 @@ if (shouldServeReact) {
         res.status(503).send('Frontend React no compilado. Ejecuta: npm run build:frontend');
     });
 }
+
+app.use(errorHandler);
 
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
