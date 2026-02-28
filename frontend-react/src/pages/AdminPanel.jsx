@@ -302,24 +302,43 @@ const AdminPanel = () => {
                             <div className="form-grid-2-cols">
                                 <div className="field-group">
                                     <label>Título del Producto</label>
-                                    <input type="text" required value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} />
+                                    <input 
+                                        type="text" 
+                                        required 
+                                        placeholder="Ej. Vital Seamless T-Shirt"
+                                        value={formData.title} 
+                                        onChange={e => setFormData({...formData, title: e.target.value})} 
+                                    />
                                 </div>
                                 <div className="field-group">
                                     <label>Categoría</label>
-                                    <input type="text" list="lista-categorias" value={formData.product_type} onChange={e => setFormData({...formData, product_type: e.target.value})} />
+                                    {/* SELECCIONABLE: Conectado a lista-categorias */}
+                                    <input 
+                                        type="text" 
+                                        list="lista-categorias" 
+                                        placeholder="Selecciona o escribe..."
+                                        value={formData.product_type} 
+                                        onChange={e => setFormData({...formData, product_type: e.target.value})} 
+                                    />
                                 </div>
-                                {/* ¡SKU, Precio y URL Base eliminados por orden del jefe! */}
-                                </div>
+                            </div>
+
                             <div className="variants-section">
-                                <div className="section-header-variants"><h3>Variantes</h3><button type="button" className="btn-makia-save" onClick={addEmptyColorGroup}>+ Color</button></div>
+                                <div className="section-header-variants">
+                                    <h3>Configuración de Variantes</h3>
+                                    <button type="button" className="btn-makia-save" onClick={addEmptyColorGroup}>+ Agregar Color</button>
+                                </div>
+
                                 {variantsByColor.map((group, idx) => (
                                     <div key={idx} className="color-group-card">
                                         <div className="color-header-row">
                                             <div className="field-group color-input-fixed">
                                                 <label>Color</label>
+                                                {/* SELECCIONABLE: Conectado a lista-colores */}
                                                 <input 
                                                     type="text" 
                                                     list="lista-colores" 
+                                                    placeholder="Ej. Black"
                                                     value={group.color} 
                                                     onChange={e => {
                                                         const nuevoValor = e.target.value;
@@ -331,34 +350,94 @@ const AdminPanel = () => {
                                                     }} 
                                                 />
                                             </div>
-                                            <div className="field-group url-input-expanded"><label>URL Imagen Color</label><input type="text" value={group.image} onChange={e => updateColorImage(group.color, e.target.value)} /></div>
+                                            <div className="field-group url-input-expanded">
+                                                <label>URL Imagen del Color</label>
+                                                <input 
+                                                    type="text" 
+                                                    placeholder="https://..."
+                                                    value={group.image} 
+                                                    onChange={e => updateColorImage(group.color, e.target.value)} 
+                                                />
+                                            </div>
                                             <div className="mini-preview-box">
                                                 {group.image ? <img src={group.image} alt="Preview" /> : <span className="preview-placeholder">URL</span>}
                                             </div>
                                         </div>
+
                                         <div className="sizes-grid">
                                             {group.items.map(item => (
                                                 <div key={item.originalIndex} className="size-row-container">
                                                     <div className="size-row-inputs">
-                                                        <div className="field-group"><label>Talla</label><input type="text" list="lista-tallas" value={item.size} onChange={e => { const nv = [...formData.variants]; nv[item.originalIndex].size = e.target.value; setFormData({...formData, variants: nv}); }} /></div>
-                                                        <div className="field-group"><label>Precio</label><input type="number" value={item.price} onChange={e => { const nv = [...formData.variants]; nv[item.originalIndex].price = Number(e.target.value); setFormData({...formData, variants: nv}); }} /></div>
-                                                        <div className="field-group"><label>Stock</label><input type="number" value={item.inventory_quantity} onChange={e => { const nv = [...formData.variants]; nv[item.originalIndex].inventory_quantity = Number(e.target.value); setFormData({...formData, variants: nv}); }} /></div>
-                                                        <div className="field-group sku-field"><label>SKU Variante</label><input type="text" value={item.sku || ""} onChange={e => { const nv = [...formData.variants]; nv[item.originalIndex].sku = e.target.value; setFormData({...formData, variants: nv}); }} /></div>
+                                                        <div className="field-group">
+                                                            <label>Talla</label>
+                                                            {/* SELECCIONABLE: Conectado a lista-tallas */}
+                                                            <input 
+                                                                type="text" 
+                                                                list="lista-tallas" 
+                                                                placeholder="Ej. M"
+                                                                value={item.size} 
+                                                                onChange={e => { 
+                                                                    const nv = [...formData.variants]; 
+                                                                    nv[item.originalIndex].size = e.target.value; 
+                                                                    setFormData({...formData, variants: nv}); 
+                                                                }} 
+                                                            />
+                                                        </div>
+                                                        <div className="field-group">
+                                                            <label>Precio (MXN)</label>
+                                                            <input 
+                                                                type="number" 
+                                                                value={item.price} 
+                                                                onChange={e => { 
+                                                                    const nv = [...formData.variants]; 
+                                                                    nv[item.originalIndex].price = Number(e.target.value); 
+                                                                    setFormData({...formData, variants: nv}); 
+                                                                }} 
+                                                            />
+                                                        </div>
+                                                        <div className="field-group">
+                                                            <label>Stock</label>
+                                                            <input 
+                                                                type="number" 
+                                                                value={item.inventory_quantity} 
+                                                                onChange={e => { 
+                                                                    const nv = [...formData.variants]; 
+                                                                    nv[item.originalIndex].inventory_quantity = Number(e.target.value); 
+                                                                    setFormData({...formData, variants: nv}); 
+                                                                }} 
+                                                            />
+                                                        </div>
+                                                        <div className="field-group sku-field">
+                                                            <label>SKU (Opcional)</label>
+                                                            <input 
+                                                                type="text" 
+                                                                placeholder="Auto-generado si vacío"
+                                                                value={item.sku || ""} 
+                                                                onChange={e => { 
+                                                                    const nv = [...formData.variants]; 
+                                                                    nv[item.originalIndex].sku = e.target.value; 
+                                                                    setFormData({...formData, variants: nv}); 
+                                                                }} 
+                                                            />
+                                                        </div>
                                                     </div>
-                                                    <button type="button" className="btn-x-red" onClick={() => setFormData({...formData, variants: formData.variants.filter((_, i) => i !== item.originalIndex)})}>✕</button>
+                                                    <button type="button" className="btn-x-red" title="Eliminar talla" onClick={() => setFormData({...formData, variants: formData.variants.filter((_, i) => i !== item.originalIndex)})}>✕</button>
                                                 </div>
                                             ))}
-                                            <button type="button" className="btn-add-size" onClick={() => addSizeToColor(group.color)}>+ Talla</button>
+                                            <button type="button" className="btn-add-size" onClick={() => addSizeToColor(group.color)}>+ Agregar Talla</button>
                                         </div>
                                     </div>
                                 ))}
                             </div>
-                            <div className="modal-footer"><button type="button" className="btn-makia-cancel" onClick={() => setModalAbierto(false)}>Cancelar</button><button type="submit" className="btn-makia-save">Guardar Cambios</button></div>
+                            <div className="modal-footer">
+                                <button type="button" className="btn-makia-cancel" onClick={() => setModalAbierto(false)}>Cancelar</button>
+                                <button type="submit" className="btn-makia-save">Guardar Cambios</button>
+                            </div>
                         </form>
                     </div>
                 </div>
             )}
-
+            
             {/* MODAL USUARIOS */}
             {modalUsuarioAbierto && (
                 <div className="modal-overlay">
