@@ -96,7 +96,7 @@ const AdminPanel = () => {
 
     const variantsByColor = useMemo(() => {
         const grouped = {};
-        formData.variants.forEach((v, index) => {
+        (formData.variants || []).forEach((v, index) => {
             const colorKey = v.color || "Sin Color";
             if (!grouped[colorKey]) grouped[colorKey] = { color: v.color, image: v.image || '', items: [] };
             grouped[colorKey].items.push({ ...v, originalIndex: index });
@@ -192,16 +192,20 @@ const AdminPanel = () => {
                             {vistaActiva === 'ventas' && <tr><th>Orden</th><th>Cliente</th><th>Fecha</th><th>Total</th><th className="center">Estado</th></tr>}
                         </thead>
                         <tbody>
-                            {vistaActiva === 'productos' && productos.map(p => (
-                                <tr key={p._id}>
-                                    <td className="center"><img src={p.variants?.[0]?.image || p.image_principal} className="table-thumb" alt="p" /></td>
-                                    <td>{p.title}</td><td>{p.product_type}</td>
-                                    <td className="col-actions center">
-                                        <button className="btn-table btn-edit" onClick={() => { setEditandoId(p._id); setFormData({...p}); setModalAbierto(true); }}>Editar</button>
-                                        <button className="btn-table btn-delete" onClick={() => { if(window.confirm("¿Eliminar?")) axios.delete(`${baseURL}/productos/${p._id}`, {headers:getAuthHeaders()}).then(cargarProductos) }}>Eliminar</button>
-                                    </td>
-                                </tr>
-                            ))}
+                            {vistaActiva === 'productos' && productos.map(p => {
+                                // Lógica de imagen: Primero image_principal, luego image_src (limpiando comas), luego variante
+                                const imgURL = p.image_principal || (p.image_src?.split(',')[0]) || p.variants?.[0]?.image || "/placeholder.png";
+                                return (
+                                    <tr key={p._id}>
+                                        <td className="center"><img src={imgURL} className="table-thumb" alt="p" /></td>
+                                        <td>{p.title}</td><td>{p.product_type}</td>
+                                        <td className="col-actions center">
+                                            <button className="btn-table btn-edit" onClick={() => { setEditandoId(p._id); setFormData({...p}); setModalAbierto(true); }}>Editar</button>
+                                            <button className="btn-table btn-delete" onClick={() => { if(window.confirm("¿Eliminar?")) axios.delete(`${baseURL}/productos/${p._id}`, {headers:getAuthHeaders()}).then(cargarProductos) }}>Eliminar</button>
+                                        </td>
+                                    </tr>
+                                );
+                            })}
                             {vistaActiva === 'usuarios' && listaUsuarios.map(u => (
                                 <tr key={u._id}>
                                     <td>{u.nombre} {u.apellido}</td><td>{u.email}</td><td className="center"><span className="role-badge">{u.rol}</span></td>
@@ -212,17 +216,12 @@ const AdminPanel = () => {
                                 </tr>
                             ))}
                             {vistaActiva === 'ventas' && listaVentas.map(v => {
-                                // SOLUCIÓN: Usamos fechaPedido según tu documento de Mongo
-                                // Si es un objeto de Mongo con $date, lo extraemos.
                                 const rawDate = v.fechaPedido?.$date || v.fechaPedido || v.createdAt;
                                 const dateObj = rawDate ? new Date(rawDate) : null;
-                                const displayDate = (dateObj && !isNaN(dateObj.getTime())) 
-                                    ? dateObj.toLocaleDateString() 
-                                    : "Sin fecha";
-
+                                const displayDate = (dateObj && !isNaN(dateObj.getTime())) ? dateObj.toLocaleDateString() : "Sin fecha";
                                 return (
                                     <tr key={v._id}>
-                                        <td>#{v.numeroOrden || v._id.substring(0,8)}</td>
+                                        <td>#{v.numeroOrden || (v._id?.$oid || v._id).substring(0,8)}</td>
                                         <td>{v.nombreCliente || v.usuario?.nombre || 'Anónimo'}</td>
                                         <td>{displayDate}</td>
                                         <td>${v.total?.toFixed(2)}</td>
@@ -250,13 +249,15 @@ const AdminPanel = () => {
                                 <div className="field-group"><label>Categoría</label><input type="text" list="lista-categorias" value={formData.product_type} onChange={e => setFormData({...formData, product_type: e.target.value})} /></div>
                                 <div className="field-group"><label>SKU Base</label><input type="text" value={formData.sku} onChange={e => setFormData({...formData, sku: e.target.value})} /></div>
                                 <div className="field-group"><label>Precio Base</label><input type="number" value={formData.price} onChange={e => setFormData({...formData, price: Number(e.target.value)})} /></div>
+                                {/* Campo opcional para imagen principal directa */}
+                                <div className="field-group url-input-expanded"><label>URL Imagen Principal</label><input type="text" value={formData.image_principal || ""} onChange={e => setFormData({...formData, image_principal: e.target.value})} /></div>
                             </div>
                             <div className="variants-section">
                                 <div className="section-header-variants"><h3>Variantes</h3><button type="button" className="btn-makia-save" onClick={addEmptyColorGroup}>+ Color</button></div>
                                 {variantsByColor.map((group, idx) => (
                                     <div key={idx} className="color-group-card">
                                         <div className="color-header-row">
-                                            <div className="field-group color-input-fixed"><label>Color</label><input type="text" list="lista-colores" value={group.color} onChange={e => setFormData({...formData, variants: formData.variants.map(v => v.color === group.color ? {...v, color: e.target.value} : v)})} /></div>
+                                            <div className="field-group color-input-fixed"><label>Color</label><input type="text" list="lista-colores" value={group.color} onChange={e => setFormData({...formData, variants: (formData.variants || []).map(v => v.color === group.color ? {...v, color: e.target.value} : v)})} /></div>
                                             <div className="field-group url-input-expanded"><label>URL Imagen Color</label><input type="text" value={group.image} onChange={e => updateColorImage(group.color, e.target.value)} /></div>
                                             <div className="mini-preview-box">
                                                 {group.image ? <img src={group.image} alt="Preview" /> : <span className="preview-placeholder">URL</span>}
