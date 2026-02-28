@@ -43,7 +43,12 @@ const Catalogo = () => {
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [pagina, setPagina] = useState(1);
     const [totalPaginas, setTotalPaginas] = useState(1);
+    
+    // ESTADOS DE FILTROS
     const [catFiltro, setCatFiltro] = useState(null);
+    const [filtrosAbiertos, setFiltrosAbiertos] = useState(true); // Control de la flechita
+    const [rangoPrecio, setRangoPrecio] = useState(5000); // Rango de precio
+    
     const [tallasSeleccionadas, setTallasSeleccionadas] = useState({});
     const [colorVisual, setColorVisual] = useState({});
 
@@ -82,15 +87,11 @@ const Catalogo = () => {
     };
 
     const handleFinalizarCompra = async () => {
-        if (!user) {
-            alert("Debes iniciar sesión para realizar una compra.");
-            return;
-        }
+        if (!user) { alert("Debes iniciar sesión para realizar una compra."); return; }
         if (cart.length === 0) return;
 
         try {
             const token = localStorage.getItem('token');
-            // Juntar nombre y apellido para el envío
             const nombreCompleto = `${user.nombre || ''} ${user.apellido || ''}`.trim();
 
             const ordenData = {
@@ -102,15 +103,11 @@ const Catalogo = () => {
                     precio: Number(item.precioMXN || item.price),
                     cantidad: Number(item.quantity)
                 })),
-                total: Number(granTotal.toFixed(2)),
-                fechaPedido: new Date()
+                total: Number(granTotal.toFixed(2))
             };
 
             await axios.post(`${baseURL}/admin/panel/ventas`, ordenData, {
-                headers: { 
-                    'x-auth-token': token,
-                    'Authorization': `Bearer ${token}` 
-                }
+                headers: { 'x-auth-token': token }
             });
             
             alert("¡Compra finalizada con éxito!");
@@ -121,6 +118,13 @@ const Catalogo = () => {
             alert("Error 500: Fallo en el servidor al guardar la venta.");
         }
     };
+
+    // Lógica de filtrado por categoría y precio en el frontend
+    const productosFiltrados = productos.filter(p => {
+        const cumpleCat = !catFiltro || p.product_type === catFiltro;
+        const cumplePrecio = (p.precioMXN || p.price) <= rangoPrecio;
+        return cumpleCat && cumplePrecio;
+    });
 
     return (
         <div className="client-view">
@@ -142,13 +146,38 @@ const Catalogo = () => {
             <div className="store-layout-container">
                 <aside className="sidebar-filter-box">
                     <div className="sidebar-sticky-wrapper">
-                        <h2 className="sidebar-h2">Filtros</h2>
-                        <div className="cat-dropdown-list">
-                            {CATEGORIAS_LIMPIAS.map(cat => (
-                                <div key={cat} className={`sub-item ${catFiltro === cat ? 'active' : ''}`} onClick={() => setCatFiltro(cat)}>
-                                    {cat}
-                                </div>
-                            ))}
+                        {/* ACORDEÓN DE CATEGORÍAS CON FLECHITA */}
+                        <div className="filter-header-row" onClick={() => setFiltrosAbiertos(!filtrosAbiertos)}>
+                            <h2 className="sidebar-h2">Categorías</h2>
+                            <i className={`fas fa-chevron-${filtrosAbiertos ? 'up' : 'down'} accordion-arrow`}></i>
+                        </div>
+                        
+                        {filtrosAbiertos && (
+                            <div className="cat-dropdown-list animate-fade">
+                                {CATEGORIAS_LIMPIAS.map(cat => (
+                                    <div key={cat} className={`sub-item ${catFiltro === cat ? 'active' : ''}`} onClick={() => setCatFiltro(cat)}>
+                                        {cat}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* RANGO DE PRECIOS */}
+                        <div className="price-filter-wrapper">
+                            <h2 className="sidebar-h2">Precio máx: ${rangoPrecio}</h2>
+                            <input 
+                                type="range" 
+                                min="0" 
+                                max="5000" 
+                                step="100"
+                                value={rangoPrecio} 
+                                onChange={(e) => setRangoPrecio(Number(e.target.value))}
+                                className="makia-range-slider"
+                            />
+                            <div className="range-labels">
+                                <span>$0</span>
+                                <span>$5,000+</span>
+                            </div>
                         </div>
                     </div>
                 </aside>
@@ -160,7 +189,7 @@ const Catalogo = () => {
                     </div>
 
                     <div className="fixed-grid-3">
-                        {!cargando && productos.filter(p => !catFiltro || p.product_type === catFiltro).map((prod) => {
+                        {!cargando && productosFiltrados.map((prod) => {
                             const colorActivo = colorVisual[prod._id] || (prod.colors_available && prod.colors_available[0]);
                             const imagenAMostrar = prod.variants?.find(v => v.color === colorActivo)?.image || getPrimaryImage(prod);
 
@@ -208,12 +237,12 @@ const Catalogo = () => {
                         <div className="cart-modal-list">
                             {cart.map((item, i) => (
                                 <div key={i} className="cart-modal-row">
-                                    {/* CONTENEDOR CON TAMAÑO FIJO PARA LA IMAGEN */}
                                     <div className="cart-img-fixed-box">
                                         <img src={item.selectedImage} alt="item" className="cart-item-mini-img" />
                                     </div>
                                     <div className="cart-item-info">
                                         <p className="cart-item-title">{item.title}</p>
+                                        <p className="cart-item-meta">Color: {item.selectedColor}</p>
                                         <div className="cart-item-controls-row">
                                             <select 
                                                 className="cart-mini-select"
