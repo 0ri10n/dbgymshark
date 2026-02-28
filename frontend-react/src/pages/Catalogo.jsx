@@ -118,19 +118,30 @@ const Catalogo = () => {
         }
     };
 
+    // --- 1. PRIMERO FILTRAMOS TODO ---
     const productosFiltrados = productos.filter(p => {
-        // 1. Filtro de Categoría (Ignorando mayúsculas y espacios fantasma)
         const tipoProductoDB = p.product_type ? String(p.product_type).trim().toLowerCase() : "";
         const categoriaSeleccionada = catFiltro ? String(catFiltro).trim().toLowerCase() : "";
-        
         const cumpleCat = !catFiltro || tipoProductoDB === categoriaSeleccionada;
-
-        // 2. Filtro de Precio (Forzando a que sea matemática real)
+        
         const precioReal = Number(p.precioMXN || p.price || 0);
         const cumplePrecio = precioReal <= rangoPrecio;
 
-        return cumpleCat && cumplePrecio;
+        // Como trajimos todo a React, hacemos la búsqueda por texto aquí también (súper rápido)
+        const cumpleBusqueda = busqueda ? (p.title || "").toLowerCase().includes(busqueda.toLowerCase()) : true;
+
+        return cumpleCat && cumplePrecio && cumpleBusqueda;
     });
+
+    // --- 2. LUEGO CALCULAMOS LAS PÁGINAS REALES ---
+    const ITEMS_POR_PAGINA = 20;
+    const totalPaginasReales = Math.ceil(productosFiltrados.length / ITEMS_POR_PAGINA) || 1;
+
+    // --- 3. REBANAMOS SOLO LOS 20 QUE VAN EN PANTALLA ---
+    const productosPaginados = productosFiltrados.slice(
+        (pagina - 1) * ITEMS_POR_PAGINA,
+        pagina * ITEMS_POR_PAGINA
+    );
 
     return (
         <div className="client-view">
@@ -215,7 +226,7 @@ const Catalogo = () => {
                     </div>
 
                     <div className="fixed-grid-3">
-                        {!cargando && productosFiltrados.map((prod) => {
+                        {!cargando && productosPaginados.map((prod) => {
                             const colorActivo = colorVisual[prod._id] || (prod.colors_available && prod.colors_available[0]);
                             const imagenAMostrar = prod.variants?.find(v => v.color === colorActivo)?.image || getPrimaryImage(prod);
                             return (
@@ -246,7 +257,7 @@ const Catalogo = () => {
                             );
                         })}
                     </div>
-                    <PaginationControls page={pagina} totalPages={totalPaginas} onPageChange={setPagina} />
+                    <PaginationControls page={pagina} totalPages={totalPaginasReales onPageChange={setPagina} />
                 </main>
             </div>
 
