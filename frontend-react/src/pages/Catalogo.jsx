@@ -8,7 +8,7 @@ import './Catalogo.css';
 
 const TIPO_CAMBIO_USD_MXN = 17.00;
 
-// Lista oficial tras la limpieza de la base de datos
+// Lista de categorías para el sidebar
 const CATEGORIAS_LIMPIAS = [
     'Accessories', 'Bags', 'Baselayers', 'Bodysuits', 'Bottles', 'Bottoms',
     'Crop Tops', 'Dresses', 'Footwear', 'Gift Cards', 'Headwear', 'Hoodies',
@@ -19,12 +19,11 @@ const CATEGORIAS_LIMPIAS = [
     'Tanks', 'Tops', 'Uncategorized', 'Underwear', 'Vests'
 ];
 
-// Función Inteligente para mapear +1100 colores a tonos visuales basados en palabras clave
+// Mapeo lógico de colores a Hexadecimal
 const getColorHex = (name = "") => {
     const n = name.toLowerCase().trim();
     if (n === 'black') return "#111111";
     if (n === 'white') return "#FFFFFF";
-    
     if (n.includes('teal')) return "#008080";
     if (n.includes('olive') || n.includes('aloe') || n.includes('alpine')) return "#556b2f";
     if (n.includes('green')) return "#2d4d43";
@@ -42,7 +41,6 @@ const getColorHex = (name = "") => {
     if (n.includes('brown') || n.includes('truffle') || n.includes('baked')) return "#5C4033";
     if (n.includes('beige') || n.includes('sand') || n.includes('ecru')) return "#d6d3d1";
     if (n.includes('grey') || n.includes('gray') || n.includes('asphalt') || n.includes('charcoal')) return "#4b5563";
-    
     if (n.includes('/')) return getColorHex(n.split('/')[0]);
     return "#374151"; 
 };
@@ -55,7 +53,7 @@ const getPrimaryImage = (p = {}) => {
 
 const Catalogo = () => {
     const { user, logout } = useAuth();
-    const { cart, addToCart, removeFromCart, updateCartItem, clearCart } = useContext(CartContext);
+    const { cart, addToCart, removeFromCart, updateCartItem } = useContext(CartContext);
     
     const [productos, setProductos] = useState([]);
     const [busqueda, setBusqueda] = useState('');
@@ -112,10 +110,8 @@ const Catalogo = () => {
     return (
         <div className="client-view">
             <header className="client-header-makia">
-                {/* Logo corregido con contenedor para evitar superposición */}
-                <div className="logo-container-makia">
-                    <img src="/logo-makia-pages.png" alt="Makia Logo" className="brand-logo-img-catalogo" />
-                </div>
+                {/* Logo alineado a la izquierda con tamaño controlado por CSS */}
+                <img src="/logo-makia-pages.png" alt="Makia Logo" className="brand-logo-img-catalogo" />
                 
                 <div className="header-right-icons">
                     <div className="cart-wrapper" onClick={() => setIsCartOpen(true)}>
@@ -169,7 +165,7 @@ const Catalogo = () => {
                         <i className="fas fa-search"></i>
                         <input 
                             type="text" 
-                            placeholder="Busca por título o categoría..." 
+                            placeholder="Que estas buscando hoy?" 
                             value={busqueda} 
                             onChange={(e) => {setBusqueda(e.target.value); setPagina(1);}} 
                         />
@@ -216,6 +212,7 @@ const Catalogo = () => {
                 </main>
             </div>
 
+            {/* Modal del Carrito */}
             {isCartOpen && (
                 <div className="cart-modal-overlay" onClick={() => setIsCartOpen(false)}>
                     <div className="cart-modal-panel" onClick={e => e.stopPropagation()}>
@@ -244,20 +241,8 @@ const Catalogo = () => {
                                 </div>
                             ))}
                         </div>
-                        <button className="btn-checkout-makia" onClick={() => alert("Función de compra registrada")}>FINALIZAR COMPRA</button>
+                        <button className="btn-checkout-makia" onClick={() => alert("Compra finalizada")}>FINALIZAR COMPRA</button>
                     </div>
-                </div>
-            )}
-            
-            {showLoginModal && (
-                <div className="login-modal-overlay" style={{ position: 'fixed', inset: 0, zIndex: 9999 }}>
-                    <Login />
-                    <button 
-                        onClick={() => setShowLoginModal(false)}
-                        style={{ position: 'absolute', top: '20px', right: '30px', background: 'none', border: 'none', color: '#fff', fontSize: '30px', cursor: 'pointer', zIndex: 10000 }}
-                    >
-                        &times;
-                    </button>
                 </div>
             )}
         </div>
