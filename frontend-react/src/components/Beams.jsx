@@ -280,9 +280,10 @@ const MergedPlanes = forwardRef(({ material, width, count, height }, ref) => {
     () => createStackedPlanesBufferGeometry(count, width, height, 0, 6),
     [count, width, height]
   );
-  useFrame((_, delta) => {
-    // Bajamos el incremento para que la CPU respire
-    mesh.current.material.uniforms.time.value += 0.05 * delta;
+  useFrame((state, delta) => {
+    if (mesh.current) {
+      mesh.current.material.uniforms.time.value += delta * 0.2;
+    }
   });
   return <mesh ref={mesh} geometry={geometry} material={material} />;
 });
