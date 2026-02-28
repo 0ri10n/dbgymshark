@@ -30,9 +30,9 @@
 
 .brand-title {
     margin: 0;
-    font-size: clamp(4rem, 18vw, 12rem);
+    font-size: clamp(5rem, 22vw, 16rem);
     letter-spacing: clamp(6px, 2.3vw, 16px);
-    color: rgba(255, 255, 255, 0.16);
+    color: rgba(255, 255, 255, 0.6);
 }
 
 .brand-subtitle {
