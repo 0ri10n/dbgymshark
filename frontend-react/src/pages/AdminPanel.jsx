@@ -121,6 +121,18 @@ const AdminPanel = () => {
         });
     };
 
+// --- GENERADOR DE SKU PROFESIONAL Y PERMANENTE ---
+    const generarSKU = (categoria, titulo) => {
+        const marca = "MAK"; // Prefijo de tu marca (Makia)
+        // Tomamos las primeras 3 letras de la categoría (Ej: "Accessories" -> "ACC")
+        const cat = (categoria || "GEN").substring(0, 3).toUpperCase();
+        // Tomamos un fragmento de la fecha para hacerlo único
+        const idUnico = Date.now().toString().slice(-5); 
+        
+        // Resultado: MAK-ACC-45912
+        return `${marca}-${cat}-${idUnico}`;
+    };
+
     const handleGuardar = async (e) => {
         e.preventDefault();
         try {
