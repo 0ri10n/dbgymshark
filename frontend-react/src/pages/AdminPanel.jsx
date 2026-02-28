@@ -41,6 +41,10 @@ const AdminPanel = () => {
         sku: '', price: 0, inventory_quantity: 0, variants: [] 
     });
 
+    const [modalUsuarioAbierto, setModalUsuarioAbierto] = useState(false);
+    const [editandoUsuarioId, setEditandoUsuarioId] = useState(null);
+    const [formDataUsuario, setFormDataUsuario] = useState({ nombre: '', apellido: '', email: '', rol: 'cliente', direccion: '' });
+
     const baseURL = import.meta.env.VITE_API_URL || 'https://dbgymshark-ddk1.onrender.com/api';
 
     const getAuthHeaders = () => {
@@ -48,7 +52,7 @@ const AdminPanel = () => {
         return { 'x-auth-token': token, 'Authorization': `Bearer ${token}` };
     };
 
-    // --- CARGA DE PRODUCTOS ---
+    // --- CARGA DE DATOS ---
     const cargarProductos = async () => {
         try {
             const res = await axios.get(`${baseURL}/productos?page=${pagProductos}&limit=${itemsPorPagina}&search=${busquedaProd}`, { headers: getAuthHeaders() });
@@ -60,7 +64,6 @@ const AdminPanel = () => {
         } catch (error) { console.error("Error productos:", error); }
     };
 
-    // --- CARGA DE USUARIOS Y VENTAS (Contadores y Buscadores Vinculados) ---
     const cargarDatosExtra = async (vista) => {
         const pagina = vista === 'usuarios' ? pagUsuarios : pagVentas;
         const search = vista === 'usuarios' ? busquedaUsr : busquedaVen;
@@ -82,7 +85,7 @@ const AdminPanel = () => {
     useEffect(() => { cargarDatosExtra('usuarios'); }, [pagUsuarios, busquedaUsr]);
     useEffect(() => { cargarDatosExtra('ventas'); }, [pagVentas, busquedaVen]);
 
-    // --- EXTRACCIÓN DE OPCIONES PARA DATALISTS ---
+    // --- DATALISTS Y VARIANTES ---
     const categoriasExistentes = useMemo(() => [...new Set(productos.map(p => p.product_type))].filter(Boolean), [productos]);
     const coloresExistentes = useMemo(() => [...new Set(productos.flatMap(p => p.colors_available || []))].filter(Boolean), [productos]);
     const tallasExistentes = useMemo(() => [...new Set(productos.flatMap(p => p.sizes_available || []))].filter(Boolean), [productos]);
@@ -116,15 +119,20 @@ const AdminPanel = () => {
             const payload = { ...formData, handle: formData.title.toLowerCase().replace(/ /g, '-') };
             if (editandoId) await axios.put(`${baseURL}/productos/${editandoId}`, payload, { headers: getAuthHeaders() });
             else await axios.post(`${baseURL}/productos`, payload, { headers: getAuthHeaders() });
-            setModalAbierto(false); 
-            cargarProductos();
-            alert("Guardado con éxito");
-        } catch (error) { alert("Error al guardar producto."); }
+            setModalAbierto(false); cargarProductos(); alert("Producto Guardado");
+        } catch (error) { alert("Error al guardar producto"); }
+    };
+
+    const handleGuardarUsuario = async (e) => {
+        e.preventDefault();
+        try {
+            await axios.put(`${baseURL}/admin/panel/usuarios/${editandoUsuarioId}`, formDataUsuario, { headers: getAuthHeaders() });
+            setModalUsuarioAbierto(false); cargarDatosExtra('usuarios'); alert("Usuario Actualizado");
+        } catch (error) { alert("Error al actualizar usuario"); }
     };
 
     return (
         <div className="admin-container">
-            {/* Listas de autocompletado */}
             <datalist id="lista-categorias">{categoriasExistentes.map(cat => <option key={cat} value={cat} />)}</datalist>
             <datalist id="lista-colores">{coloresExistentes.map(col => <option key={col} value={col} />)}</datalist>
             <datalist id="lista-tallas">{tallasExistentes.map(talla => <option key={talla} value={talla} />)}</datalist>
@@ -187,10 +195,21 @@ const AdminPanel = () => {
                                 </tr>
                             ))}
                             {vistaActiva === 'usuarios' && listaUsuarios.map(u => (
-                                <tr key={u._id}><td>{u.nombre} {u.apellido}</td><td>{u.email}</td><td className="center"><span className="role-badge">{u.rol}</span></td><td className="center">---</td></tr>
+                                <tr key={u._id}>
+                                    <td>{u.nombre} {u.apellido}</td><td>{u.email}</td><td className="center"><span className="role-badge">{u.rol}</span></td>
+                                    <td className="col-actions center">
+                                        <button className="btn-table btn-edit" onClick={() => { setEditandoUsuarioId(u._id); setFormDataUsuario({...u}); setModalUsuarioAbierto(true); }}>Editar</button>
+                                        <button className="btn-table btn-delete" onClick={() => { if(window.confirm("¿Eliminar usuario?")) axios.delete(`${baseURL}/admin/panel/usuarios/${u._id}`, {headers:getAuthHeaders()}).then(() => cargarDatosExtra('usuarios')) }}>Eliminar</button>
+                                    </td>
+                                </tr>
                             ))}
                             {vistaActiva === 'ventas' && listaVentas.map(v => (
-                                <tr key={v._id}><td>#{v.numeroOrden || v._id.substring(0,8)}</td><td>{v.usuario?.nombre || 'Anónimo'}</td><td>{new Date(v.fecha).toLocaleDateString()}</td><td>${v.total?.toFixed(2)}</td><td className="center"><span className="role-badge">{v.estado || 'Pagado'}</span></td></tr>
+                                <tr key={v._id}>
+                                    <td>#{v.numeroOrden || v._id.substring(0,8)}</td>
+                                    <td>{v.usuario?.nombre || 'Anónimo'}</td>
+                                    <td>{new Date(v.fecha).toLocaleDateString()}</td>
+                                    <td>${v.total?.toFixed(2)}</td><td className="center"><span className="role-badge">{v.estado || 'Pagado'}</span></td>
+                                </tr>
                             ))}
                         </tbody>
                     </table>
@@ -201,6 +220,7 @@ const AdminPanel = () => {
                     onPageChange={vistaActiva === 'productos' ? setPagProductos : vistaActiva === 'usuarios' ? setPagUsuarios : setPagVentas} />
             </main>
 
+            {/* MODAL PRODUCTOS */}
             {modalAbierto && (
                 <div className="modal-overlay">
                     <div className="modal-content modal-xl">
@@ -239,6 +259,29 @@ const AdminPanel = () => {
                                 ))}
                             </div>
                             <div className="modal-footer"><button type="button" className="btn-makia-cancel" onClick={() => setModalAbierto(false)}>Cancelar</button><button type="submit" className="btn-makia-save">Guardar Cambios</button></div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* MODAL USUARIOS */}
+            {modalUsuarioAbierto && (
+                <div className="modal-overlay">
+                    <div className="modal-content">
+                        <h2>Editar Usuario</h2>
+                        <form onSubmit={handleGuardarUsuario} className="admin-form-vertical">
+                            <div className="form-grid-2-cols">
+                                <div className="field-group"><label>Nombre</label><input type="text" value={formDataUsuario.nombre} onChange={e => setFormDataUsuario({...formDataUsuario, nombre: e.target.value})} /></div>
+                                <div className="field-group"><label>Apellido</label><input type="text" value={formDataUsuario.apellido} onChange={e => setFormDataUsuario({...formDataUsuario, apellido: e.target.value})} /></div>
+                                <div className="field-group"><label>Email</label><input type="email" value={formDataUsuario.email} onChange={e => setFormDataUsuario({...formDataUsuario, email: e.target.value})} /></div>
+                                <div className="field-group"><label>Rol</label>
+                                    <select value={formDataUsuario.rol} onChange={e => setFormDataUsuario({...formDataUsuario, rol: e.target.value})}>
+                                        <option value="cliente">Cliente</option>
+                                        <option value="admin">Administrador</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div className="modal-footer"><button type="button" className="btn-makia-cancel" onClick={() => setModalUsuarioAbierto(false)}>Cancelar</button><button type="submit" className="btn-makia-save">Actualizar Usuario</button></div>
                         </form>
                     </div>
                 </div>
