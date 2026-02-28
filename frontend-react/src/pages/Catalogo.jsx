@@ -257,7 +257,7 @@ const Catalogo = () => {
                             );
                         })}
                     </div>
-                    <PaginationControls page={pagina} totalPages={totalPaginasReales onPageChange={setPagina} />
+                    <PaginationControls page={pagina} totalPages={totalPaginasReales} onPageChange={setPagina} />
                 </main>
             </div>
 
