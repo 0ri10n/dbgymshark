@@ -90,6 +90,7 @@ const Catalogo = () => {
 
         try {
             const token = localStorage.getItem('token');
+            // Juntar nombre y apellido para el envío
             const nombreCompleto = `${user.nombre || ''} ${user.apellido || ''}`.trim();
 
             const ordenData = {
@@ -117,7 +118,7 @@ const Catalogo = () => {
             setIsCartOpen(false);
         } catch (error) {
             console.error("Error al procesar compra:", error);
-            alert("Error 500: Fallo en el servidor. Es necesario revisar el controlador de ventas en el backend.");
+            alert("Error 500: Fallo en el servidor al guardar la venta.");
         }
     };
 
@@ -134,7 +135,6 @@ const Catalogo = () => {
                 </div>
             </header>
 
-            {/* IMAGEN PRINCIPAL RESTAURADA */}
             <div className="hero-banner-full">
                 <img src="/hero-banner-client.jpg" alt="MAKIA Performance" />
             </div>
@@ -208,7 +208,8 @@ const Catalogo = () => {
                         <div className="cart-modal-list">
                             {cart.map((item, i) => (
                                 <div key={i} className="cart-modal-row">
-                                    <div className="cart-img-container">
+                                    {/* CONTENEDOR CON TAMAÑO FIJO PARA LA IMAGEN */}
+                                    <div className="cart-img-fixed-box">
                                         <img src={item.selectedImage} alt="item" className="cart-item-mini-img" />
                                     </div>
                                     <div className="cart-item-info">
