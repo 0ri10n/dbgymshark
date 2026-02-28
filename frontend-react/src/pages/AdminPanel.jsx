@@ -140,21 +140,25 @@ const AdminPanel = () => {
             const coloresExtraidos = [...new Set(formData.variants.map(v => v.color))].filter(Boolean);
             const tallasExtraidas = [...new Set(formData.variants.map(v => v.size))].filter(Boolean);
 
-            const skuDefinitivo = formData.sku && formData.sku.trim() !== '' 
-                ? formData.sku 
-                : generarSKU(formData.product_type, formData.title);
-
-            // 2. Armamos el paquete asegurando que todos los campos del catálogo se enteren del cambio
+            const variantesProcesadas = formData.variants.map((variante, index) => {
+                const skuVariante = variante.sku && variante.sku.trim() !== '' 
+                    ? variante.sku 
+                    // Si está vacío, le generamos uno único: MAK-ACC-12345-V1, MAK-ACC-12345-V2, etc.
+                    : `${generarSKU(formData.product_type, formData.title)}-V${index + 1}`;
+                
+                return {
+                    ...variante,
+                    sku: skuVariante,
+                    price: Number(variante.price) || Number(formData.price) || 0 // Aseguramos que nunca falte el precio
+                };
+            });
+            
             const payload = { 
                 ...formData, 
                 handle: formData.title.toLowerCase().replace(/ /g, '-'),
-                sku: skuDefinitivo,
                 variants: formData.variants,
-                // ¡Aquí está la clave! Actualizamos las listas maestras
                 colors_available: coloresExtraidos,
-                sizes_available: tallasExtraidas,
-                // Sincronizamos ambos precios para evitar bugs de visualización
-                precioMXN: formData.price 
+                sizes_available: tallasExtraidas
             };
             
             if (editandoId) {
