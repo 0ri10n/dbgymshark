@@ -38,7 +38,7 @@ const AdminPanel = () => {
     const [editandoId, setEditandoId] = useState(null);
     const [formData, setFormData] = useState({ 
         title: '', product_type: '', vendor: 'Gymshark | Be a visionary.', 
-        sku: '', price: 0, inventory_quantity: 0, variants: [] 
+        sku: '', price: 0, inventory_quantity: 0, variants: [], image_principal: ''
     });
 
     const [modalUsuarioAbierto, setModalUsuarioAbierto] = useState(false);
@@ -113,18 +113,36 @@ const AdminPanel = () => {
         setFormData({ ...formData, variants: [...formData.variants, { color: '', size: '', price: formData.price || 0, inventory_quantity: 0, sku: '', image: "" }] });
     };
 
+    // CORRECCIÓN: Asegura que todas las variantes del mismo color reciban la URL
     const updateColorImage = (colorName, newUrl) => {
-        setFormData({ ...formData, variants: formData.variants.map(v => v.color === colorName ? { ...v, image: newUrl } : v) });
+        setFormData({ 
+            ...formData, 
+            variants: formData.variants.map(v => v.color === colorName ? { ...v, image: newUrl } : v) 
+        });
     };
 
     const handleGuardar = async (e) => {
         e.preventDefault();
         try {
-            const payload = { ...formData, handle: formData.title.toLowerCase().replace(/ /g, '-') };
-            if (editandoId) await axios.put(`${baseURL}/productos/${editandoId}`, payload, { headers: getAuthHeaders() });
-            else await axios.post(`${baseURL}/productos`, payload, { headers: getAuthHeaders() });
-            setModalAbierto(false); cargarProductos(); alert("Guardado");
-        } catch (error) { alert("Error al guardar"); }
+            // Aseguramos que el payload lleve la estructura correcta de variantes e imagen_principal
+            const payload = { 
+                ...formData, 
+                handle: formData.title.toLowerCase().replace(/ /g, '-'),
+                variants: formData.variants // Confirmamos el envío del array actualizado
+            };
+            
+            if (editandoId) {
+                await axios.put(`${baseURL}/productos/${editandoId}`, payload, { headers: getAuthHeaders() });
+            } else {
+                await axios.post(`${baseURL}/productos`, payload, { headers: getAuthHeaders() });
+            }
+            setModalAbierto(false); 
+            cargarProductos(); 
+            alert("Guardado correctamente");
+        } catch (error) { 
+            console.error("Error al guardar:", error);
+            alert("Error al guardar"); 
+        }
     };
 
     const handleGuardarUsuario = async (e) => {
@@ -178,7 +196,7 @@ const AdminPanel = () => {
                             }} />
                     </div>
                     {vistaActiva === 'productos' && (
-                        <button className="admin-add-btn" onClick={() => { setEditandoId(null); setFormData({title:'', product_type:'', vendor:'Gymshark', sku:'', price:0, inventory_quantity:0, variants:[]}); setModalAbierto(true); }}>
+                        <button className="admin-add-btn" onClick={() => { setEditandoId(null); setFormData({title:'', product_type:'', vendor:'Gymshark', sku:'', price:0, inventory_quantity:0, variants:[], image_principal:''}); setModalAbierto(true); }}>
                             + NUEVO PRODUCTO
                         </button>
                     )}
@@ -193,7 +211,6 @@ const AdminPanel = () => {
                         </thead>
                         <tbody>
                             {vistaActiva === 'productos' && productos.map(p => {
-                                // Lógica de imagen: Primero image_principal, luego image_src (limpiando comas), luego variante
                                 const imgURL = p.image_principal || (p.image_src?.split(',')[0]) || p.variants?.[0]?.image || "/placeholder.png";
                                 return (
                                     <tr key={p._id}>
@@ -249,7 +266,6 @@ const AdminPanel = () => {
                                 <div className="field-group"><label>Categoría</label><input type="text" list="lista-categorias" value={formData.product_type} onChange={e => setFormData({...formData, product_type: e.target.value})} /></div>
                                 <div className="field-group"><label>SKU Base</label><input type="text" value={formData.sku} onChange={e => setFormData({...formData, sku: e.target.value})} /></div>
                                 <div className="field-group"><label>Precio Base</label><input type="number" value={formData.price} onChange={e => setFormData({...formData, price: Number(e.target.value)})} /></div>
-                                {/* Campo opcional para imagen principal directa */}
                                 <div className="field-group url-input-expanded"><label>URL Imagen Principal</label><input type="text" value={formData.image_principal || ""} onChange={e => setFormData({...formData, image_principal: e.target.value})} /></div>
                             </div>
                             <div className="variants-section">
