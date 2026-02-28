@@ -5,6 +5,7 @@ import { CartContext } from '../context/CartContext';
 import PaginationControls from '../components/PaginationControls';
 import './Catalogo.css';
 
+// 1. LISTA DE CATEGORÍAS COMPLETA
 const CATEGORIAS_LIMPIAS = [
     'Accessories', 'Bags', 'Baselayers', 'Bodysuits', 'Bottles', 'Bottoms',
     'Crop Tops', 'Dresses', 'Footwear', 'Gift Cards', 'Headwear', 'Hoodies',
@@ -15,15 +16,17 @@ const CATEGORIAS_LIMPIAS = [
     'Tanks', 'Tops', 'Uncategorized', 'Underwear', 'Vests'
 ];
 
+// 2. PALETA DE COLORES MAKIA
 const getColorHex = (name = "") => {
     const n = name.toLowerCase().trim();
     if (n === 'black') return "#111111";
     if (n === 'white') return "#FFFFFF";
     if (n.includes('blue')) return "#1e3a8a";
     if (n.includes('red')) return "#991b1b";
-    if (n.includes('pink')) return "#db2777";
-    if (n.includes('green')) return "#2d4d43";
+    if (n.includes('pink') || n.includes('rose')) return "#db2777";
+    if (n.includes('green') || n.includes('aloe')) return "#2d4d43";
     if (n.includes('teal')) return "#008080";
+    if (n.includes('grey') || n.includes('gray')) return "#4b5563";
     return "#374151"; 
 };
 
@@ -44,10 +47,10 @@ const Catalogo = () => {
     const [pagina, setPagina] = useState(1);
     const [totalPaginas, setTotalPaginas] = useState(1);
     
-    // ESTADOS DE FILTROS
+    // 3. ESTADOS DE FILTROS (FLECHA Y PRECIO)
     const [catFiltro, setCatFiltro] = useState(null);
-    const [filtrosAbiertos, setFiltrosAbiertos] = useState(true); // Control de la flechita
-    const [rangoPrecio, setRangoPrecio] = useState(5000); // Rango de precio
+    const [filtrosAbiertos, setFiltrosAbiertos] = useState(true); 
+    const [rangoPrecio, setRangoPrecio] = useState(5000); 
     
     const [tallasSeleccionadas, setTallasSeleccionadas] = useState({});
     const [colorVisual, setColorVisual] = useState({});
@@ -86,20 +89,22 @@ const Catalogo = () => {
         setIsCartOpen(true); 
     };
 
+    // 4. FUNCIÓN DE COMPRA (SOLUCIONA ERROR 500)
     const handleFinalizarCompra = async () => {
-        if (!user) { alert("Debes iniciar sesión para realizar una compra."); return; }
         if (cart.length === 0) return;
-
         try {
             const token = localStorage.getItem('token');
-            const nombreCompleto = `${user.nombre || ''} ${user.apellido || ''}`.trim();
+            // Generación automática del nombre para evitar campos vacíos
+            const nombreFinal = (user?.nombre && user?.apellido) 
+                ? `${user.nombre} ${user.apellido}` 
+                : "Cliente Registrado";
 
             const ordenData = {
-                nombreCliente: nombreCompleto,
+                nombreCliente: nombreFinal,
                 productos: cart.map(item => ({
                     nombre: item.title,
-                    talla: item.selectedSize,
-                    color: item.selectedColor,
+                    talla: item.selectedSize || "N/A",
+                    color: item.selectedColor || "N/A",
                     precio: Number(item.precioMXN || item.price),
                     cantidad: Number(item.quantity)
                 })),
@@ -110,16 +115,16 @@ const Catalogo = () => {
                 headers: { 'x-auth-token': token }
             });
             
-            alert("¡Compra finalizada con éxito!");
+            alert("¡Compra exitosa!");
             clearCart();
             setIsCartOpen(false);
         } catch (error) {
             console.error("Error al procesar compra:", error);
-            alert("Error 500: Fallo en el servidor al guardar la venta.");
+            alert("Error en el servidor al guardar la venta.");
         }
     };
 
-    // Lógica de filtrado por categoría y precio en el frontend
+    // 5. LÓGICA DE FILTRADO
     const productosFiltrados = productos.filter(p => {
         const cumpleCat = !catFiltro || p.product_type === catFiltro;
         const cumplePrecio = (p.precioMXN || p.price) <= rangoPrecio;
@@ -140,20 +145,20 @@ const Catalogo = () => {
             </header>
 
             <div className="hero-banner-full">
-                <img src="/hero-banner-client.jpg" alt="MAKIA Performance" />
+                <img src="/hero-banner-client.jpg" alt="MAKIA" />
             </div>
 
             <div className="store-layout-container">
                 <aside className="sidebar-filter-box">
                     <div className="sidebar-sticky-wrapper">
-                        {/* ACORDEÓN DE CATEGORÍAS CON FLECHITA */}
-                        <div className="filter-header-row" onClick={() => setFiltrosAbiertos(!filtrosAbiertos)}>
+                        {/* FLECHITA Y DESPLIEGUE */}
+                        <div className="filter-accordion-header" onClick={() => setFiltrosAbiertos(!filtrosAbiertos)} style={{cursor:'pointer', display:'flex', justifyContent:'space-between', alignItems:'center'}}>
                             <h2 className="sidebar-h2">Categorías</h2>
-                            <i className={`fas fa-chevron-${filtrosAbiertos ? 'up' : 'down'} accordion-arrow`}></i>
+                            <i className={`fas fa-chevron-${filtrosAbiertos ? 'up' : 'down'}`} style={{color: 'var(--makia-accent)'}}></i>
                         </div>
                         
                         {filtrosAbiertos && (
-                            <div className="cat-dropdown-list animate-fade">
+                            <div className="cat-dropdown-list" style={{maxHeight:'400px', overflowY:'auto', paddingRight:'10px'}}>
                                 {CATEGORIAS_LIMPIAS.map(cat => (
                                     <div key={cat} className={`sub-item ${catFiltro === cat ? 'active' : ''}`} onClick={() => setCatFiltro(cat)}>
                                         {cat}
@@ -163,7 +168,7 @@ const Catalogo = () => {
                         )}
 
                         {/* RANGO DE PRECIOS */}
-                        <div className="price-filter-wrapper">
+                        <div className="price-filter-section" style={{marginTop:'30px'}}>
                             <h2 className="sidebar-h2">Precio máx: ${rangoPrecio}</h2>
                             <input 
                                 type="range" 
@@ -173,10 +178,10 @@ const Catalogo = () => {
                                 value={rangoPrecio} 
                                 onChange={(e) => setRangoPrecio(Number(e.target.value))}
                                 className="makia-range-slider"
+                                style={{width:'100%', accentColor:'var(--makia-accent)'}}
                             />
-                            <div className="range-labels">
-                                <span>$0</span>
-                                <span>$5,000+</span>
+                            <div style={{display:'flex', justifyContent:'space-between', fontSize:'12px', color:'#555', marginTop:'8px'}}>
+                                <span>$0</span><span>$5,000+</span>
                             </div>
                         </div>
                     </div>
@@ -227,6 +232,7 @@ const Catalogo = () => {
                 </main>
             </div>
 
+            {/* BOLSA / CARRITO */}
             {isCartOpen && (
                 <div className="cart-modal-overlay" onClick={() => setIsCartOpen(false)}>
                     <div className="cart-modal-panel" onClick={e => e.stopPropagation()}>
@@ -237,18 +243,13 @@ const Catalogo = () => {
                         <div className="cart-modal-list">
                             {cart.map((item, i) => (
                                 <div key={i} className="cart-modal-row">
-                                    <div className="cart-img-fixed-box">
-                                        <img src={item.selectedImage} alt="item" className="cart-item-mini-img" />
+                                    <div style={{ width: '70px', height: '90px', borderRadius: '8px', overflow: 'hidden', flexShrink: 0, border: '1px solid #222' }}>
+                                        <img src={item.selectedImage} alt="item" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                     </div>
                                     <div className="cart-item-info">
                                         <p className="cart-item-title">{item.title}</p>
-                                        <p className="cart-item-meta">Color: {item.selectedColor}</p>
                                         <div className="cart-item-controls-row">
-                                            <select 
-                                                className="cart-mini-select"
-                                                value={item.selectedSize}
-                                                onChange={(e) => updateCartItem(i, { ...item, selectedSize: e.target.value })}
-                                            >
+                                            <select className="cart-mini-select" value={item.selectedSize} onChange={(e) => updateCartItem(i, { ...item, selectedSize: e.target.value })}>
                                                 {item.sizes_available?.map(s => <option key={s} value={s}>{s}</option>)}
                                             </select>
                                             <div className="qty-stepper">
@@ -266,10 +267,7 @@ const Catalogo = () => {
                             ))}
                         </div>
                         <div className="cart-footer-totals">
-                            <div className="total-row">
-                                <span>TOTAL:</span>
-                                <span className="total-amount">${granTotal.toLocaleString()} MXN</span>
-                            </div>
+                            <div className="total-row"><span>TOTAL:</span><span className="total-amount">${granTotal.toLocaleString()} MXN</span></div>
                             <button className="btn-checkout-makia" onClick={handleFinalizarCompra}>FINALIZAR COMPRA</button>
                         </div>
                     </div>
