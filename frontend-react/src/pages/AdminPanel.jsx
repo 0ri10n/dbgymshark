@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react'; // IMPORTACIÓN CRÍTICA
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import PaginationControls from '../components/PaginationControls';
@@ -10,10 +10,9 @@ const AdminPanel = () => {
     // --- ESTADOS DE VISTA Y CARGA ---
     const [vistaActiva, setVistaActiva] = useState('productos');
     const [cargando, setCargando] = useState(false);
-
     const itemsPorPagina = 10;
 
-    // --- ESTADOS DE BÚSQUEDA INDEPENDIENTES ---
+    // --- ESTADOS DE BÚSQUEDA ---
     const [busquedaProd, setBusquedaProd] = useState("");
     const [busquedaUsr, setBusquedaUsr] = useState("");
     const [busquedaVen, setBusquedaVen] = useState("");
@@ -37,31 +36,29 @@ const AdminPanel = () => {
     // --- ESTADOS DE MODALES ---
     const [modalAbierto, setModalAbierto] = useState(false);
     const [editandoId, setEditandoId] = useState(null);
-    const [formData, setFormData] = useState({ title: '', product_type: '', vendor: '', variants: [] });
+    const [formData, setFormData] = useState({ 
+        title: '', product_type: '', vendor: 'Gymshark | Be a visionary.', 
+        sku: '', price: 0, inventory_quantity: 0, variants: [] 
+    });
 
     const [modalUsuarioAbierto, setModalUsuarioAbierto] = useState(false);
     const [editandoUsuarioId, setEditandoUsuarioId] = useState(null);
-    const [formDataUsuario, setFormDataUsuario] = useState({ nombre: '', apellido: '', email: '', rol: 'cliente', password: '', direccion: '' });
+    const [formDataUsuario, setFormDataUsuario] = useState({ nombre: '', apellido: '', email: '', rol: 'cliente', direccion: '' });
 
     const baseURL = import.meta.env.VITE_API_URL || 'https://dbgymshark-ddk1.onrender.com/api';
 
     const getAuthHeaders = () => {
         const token = localStorage.getItem('token') || '';
-        return {
-            'x-auth-token': token,
-            'Authorization': `Bearer ${token}`
-        };
+        return { 'x-auth-token': token, 'Authorization': `Bearer ${token}` };
     };
 
     // --- CARGA DE DATOS ---
     const cargarProductos = async () => {
         setCargando(true);
         try {
-            const config = { headers: getAuthHeaders() };
-            const res = await axios.get(`${baseURL}/productos?page=${pagProductos}&limit=${itemsPorPagina}&search=${busquedaProd}`, config);
+            const res = await axios.get(`${baseURL}/productos?page=${pagProductos}&limit=${itemsPorPagina}&search=${busquedaProd}`, { headers: getAuthHeaders() });
             if (res.data) {
-                const dataArr = res.data.productos || res.data || [];
-                setProductos(Array.isArray(dataArr) ? dataArr : []);
+                setProductos(res.data.productos || []);
                 setTotalPagProductos(res.data.pagination?.pages || 1);
                 setTotalProductosCount(res.data.pagination?.total || 0); 
             }
@@ -73,17 +70,13 @@ const AdminPanel = () => {
         const paginaActual = vista === 'usuarios' ? pagUsuarios : pagVentas;
         const busquedaActual = vista === 'usuarios' ? busquedaUsr : busquedaVen;
         try {
-            const config = { headers: getAuthHeaders() }; 
-            const res = await axios.get(`${baseURL}/admin/panel/${vista}?page=${paginaActual}&limit=${itemsPorPagina}&search=${busquedaActual}`, config);
+            const res = await axios.get(`${baseURL}/admin/panel/${vista}?page=${paginaActual}&limit=${itemsPorPagina}&search=${busquedaActual}`, { headers: getAuthHeaders() });
             if (vista === 'usuarios') {
-                const arr = res.data.usuarios || res.data || [];
-                setListaUsuarios(arr);
+                setListaUsuarios(res.data.usuarios || []);
                 setTotalPagUsuarios(res.data.pagination?.pages || 1);
                 setTotalUsuariosCount(res.data.pagination?.total || 0);
-            }
-            if (vista === 'ventas') {
-                const arr = res.data.ventas || res.data || [];
-                setListaVentas(arr);
+            } else {
+                setListaVentas(res.data.ventas || []);
                 setTotalPagVentas(res.data.pagination?.pages || 1);
                 setTotalVentasCount(res.data.pagination?.total || 0);
             }
@@ -93,12 +86,6 @@ const AdminPanel = () => {
     useEffect(() => { cargarProductos(); }, [pagProductos, busquedaProd]);
     useEffect(() => { cargarDatosExtra('usuarios'); }, [pagUsuarios, busquedaUsr]);
     useEffect(() => { cargarDatosExtra('ventas'); }, [pagVentas, busquedaVen]);
-
-    const formatFecha = (fechaRaw) => {
-        if (!fechaRaw) return "N/A";
-        const d = fechaRaw.$date ? new Date(fechaRaw.$date) : new Date(fechaRaw);
-        return isNaN(d.getTime()) ? "Fecha Inválida" : d.toLocaleDateString();
-    };
 
     const variantsByColor = useMemo(() => {
         const grouped = {};
@@ -111,28 +98,48 @@ const AdminPanel = () => {
     }, [formData.variants]);
 
     const addSizeToColor = (colorName) => {
-        const existingVariant = formData.variants.find(v => v.color === colorName);
+        const currentImage = formData.variants.find(v => v.color === colorName)?.image || "";
         const newSize = { 
-            color: colorName, size: '', price: existingVariant?.price || 0, 
-            inventory_quantity: 0, sku: '', image: existingVariant?.image || "" 
+            color: colorName, size: '', price: formData.price || 0, 
+            inventory_quantity: 0, sku: '', image: currentImage 
         };
         setFormData({ ...formData, variants: [...formData.variants, newSize] });
     };
 
     const addEmptyColorGroup = () => {
-        setFormData({ ...formData, variants: [...formData.variants, { color: '', size: '', price: 0, inventory_quantity: 0, sku: '', image: "" }] });
+        setFormData({ ...formData, variants: [...formData.variants, { color: '', size: '', price: formData.price || 0, inventory_quantity: 0, sku: '', image: "" }] });
     };
 
     const handleGuardar = async (e) => {
         e.preventDefault();
         try {
-            const config = { headers: getAuthHeaders() }; 
-            if (editandoId) await axios.put(`${baseURL}/productos/${editandoId}`, formData, config);
-            else await axios.post(`${baseURL}/productos`, formData, config);
+            const prices = formData.variants.map(v => v.price);
+            const allImages = [...new Set(formData.variants.map(v => v.image))].filter(img => img).join(', ');
+            const allColors = [...new Set(formData.variants.map(v => v.color))].filter(c => c);
+            const allSizes = [...new Set(formData.variants.map(v => v.size))].filter(s => s);
+
+            const payload = {
+                ...formData,
+                image_src: allImages,
+                image_principal: formData.variants[0]?.image || "",
+                colors_available: allColors,
+                sizes_available: allSizes,
+                price_range: { 
+                    min: prices.length > 0 ? Math.min(...prices) : formData.price,
+                    max: prices.length > 0 ? Math.max(...prices) : formData.price
+                },
+                handle: formData.title.toLowerCase().replace(/ /g, '-')
+            };
+
+            if (editandoId) await axios.put(`${baseURL}/productos/${editandoId}`, payload, { headers: getAuthHeaders() });
+            else await axios.post(`${baseURL}/productos`, payload, { headers: getAuthHeaders() });
+            
             setModalAbierto(false);
             cargarProductos();
             alert("Guardado con éxito");
-        } catch (error) { alert("Error: Cada variante debe tener un SKU válido."); }
+        } catch (error) {
+            alert(error.response?.data?.msg || "Error 400: SKU requerido en cada variante.");
+        }
     };
 
     const handleGuardarUsuario = async (e) => {
@@ -146,14 +153,10 @@ const AdminPanel = () => {
         } catch (error) { alert("Error al actualizar usuario"); }
     };
 
-    const handleEliminar = async (id) => {
-        if (!window.confirm("¿Eliminar este registro?")) return;
-        try {
-            const config = { headers: getAuthHeaders() };
-            const endpoint = vistaActiva === 'productos' ? `productos/${id}` : `admin/panel/usuarios/${id}`;
-            await axios.delete(`${baseURL}/${endpoint}`, config);
-            vistaActiva === 'productos' ? cargarProductos() : cargarDatosExtra('usuarios');
-        } catch (error) { alert("Error al eliminar"); }
+    const formatFecha = (fechaRaw) => {
+        if (!fechaRaw) return "N/A";
+        const d = fechaRaw.$date ? new Date(fechaRaw.$date) : new Date(fechaRaw);
+        return isNaN(d.getTime()) ? "Fecha Inválida" : d.toLocaleDateString();
     };
 
     return (
@@ -189,7 +192,7 @@ const AdminPanel = () => {
                             onChange={(e) => vistaActiva === 'productos' ? setBusquedaProd(e.target.value) : vistaActiva === 'usuarios' ? setBusquedaUsr(e.target.value) : setBusquedaVen(e.target.value)} />
                     </div>
                     {vistaActiva === 'productos' && (
-                        <button className="admin-add-btn" onClick={() => { setEditandoId(null); setFormData({title:'', product_type:'', vendor:'Gymshark', sku:'', price:0, inventory_quantity:0, variants:[]}); setModalAbierto(true); }}>
+                        <button className="admin-add-btn" onClick={() => { setEditandoId(null); setFormData({title:'', product_type:'', vendor:'Gymshark | Be a visionary.', sku:'', price:0, inventory_quantity:0, variants:[]}); setModalAbierto(true); }}>
                             + Nuevo Producto
                         </button>
                     )}
@@ -198,8 +201,8 @@ const AdminPanel = () => {
                 <div className="admin-table-wrapper">
                     <table className="admin-table-fixed">
                         <thead>
-                            {vistaActiva === 'productos' && <tr><th>Imagen</th><th className="col-title">Título</th><th>Categoría</th><th className="center">Acciones</th></tr>}
-                            {vistaActiva === 'usuarios' && <tr><th>Nombre</th><th>Email</th><th>Rol</th><th className="center">Acciones</th></tr>}
+                            {vistaActiva === 'productos' && <tr><th>Imagen</th><th className="col-title">Título</th><th>Tipo</th><th className="center">Acciones</th></tr>}
+                            {vistaActiva === 'usuarios' && <tr><th>Nombre Completo</th><th>Email</th><th>Rol</th><th className="center">Acciones</th></tr>}
                             {vistaActiva === 'ventas' && <tr><th>Número de Orden</th><th>Cliente</th><th>Fecha</th><th>Total</th><th className="center">Estado</th></tr>}
                         </thead>
                         <tbody>
@@ -209,7 +212,7 @@ const AdminPanel = () => {
                                     <td>{p.title}</td><td>{p.product_type}</td>
                                     <td className="col-actions center">
                                         <button className="btn-table btn-edit" onClick={() => { setEditandoId(p._id); setFormData({...p}); setModalAbierto(true); }}>Editar</button>
-                                        <button className="btn-table btn-delete" onClick={() => handleEliminar(p._id)}>Eliminar</button>
+                                        <button className="btn-table btn-delete" onClick={() => { if(window.confirm("¿Eliminar?")) axios.delete(`${baseURL}/productos/${p._id}`, {headers:getAuthHeaders()}).then(cargarProductos) }}>Eliminar</button>
                                     </td>
                                 </tr>
                             ))}
@@ -218,7 +221,6 @@ const AdminPanel = () => {
                                     <td>{u.nombre} {u.apellido}</td><td>{u.email}</td><td><span className="role-badge">{u.rol}</span></td>
                                     <td className="col-actions center">
                                         <button className="btn-table btn-edit" onClick={() => { setEditandoUsuarioId(u._id); setFormDataUsuario({...u}); setModalUsuarioAbierto(true); }}>Editar</button>
-                                        <button className="btn-table btn-delete" onClick={() => handleEliminar(u._id)}>Eliminar</button>
                                     </td>
                                 </tr>
                             ))}
@@ -244,6 +246,8 @@ const AdminPanel = () => {
                             <div className="form-grid-2-cols">
                                 <div className="field-group"><label>Título</label><input type="text" required value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} /></div>
                                 <div className="field-group"><label>Categoría</label><input type="text" value={formData.product_type} onChange={e => setFormData({...formData, product_type: e.target.value})} /></div>
+                                <div className="field-group"><label>SKU Base</label><input type="text" value={formData.sku} onChange={e => setFormData({...formData, sku: e.target.value})} /></div>
+                                <div className="field-group"><label>Precio Base</label><input type="number" value={formData.price} onChange={e => setFormData({...formData, price: Number(e.target.value)})} /></div>
                             </div>
                             <div className="variants-section">
                                 <div className="section-header-variants"><h3>Variantes</h3><button type="button" className="btn-makia-save" onClick={addEmptyColorGroup}>+ Color</button></div>
@@ -270,28 +274,6 @@ const AdminPanel = () => {
                                 ))}
                             </div>
                             <div className="modal-footer"><button type="button" className="btn-makia-cancel" onClick={() => setModalAbierto(false)}>Cancelar</button><button type="submit" className="btn-makia-save">Guardar Cambios</button></div>
-                        </form>
-                    </div>
-                </div>
-            )}
-
-            {modalUsuarioAbierto && (
-                <div className="modal-overlay">
-                    <div className="modal-content" style={{maxWidth:'500px'}}>
-                        <h2>Editar Usuario</h2>
-                        <form onSubmit={handleGuardarUsuario} className="admin-form-vertical">
-                            <div className="field-group"><label>Nombre</label><input type="text" value={formDataUsuario.nombre} onChange={e => setFormDataUsuario({...formDataUsuario, nombre: e.target.value})} /></div>
-                            <div className="field-group"><label>Apellido</label><input type="text" value={formDataUsuario.apellido} onChange={e => setFormDataUsuario({...formDataUsuario, apellido: e.target.value})} /></div>
-                            <div className="field-group"><label>Email</label><input type="email" value={formDataUsuario.email} onChange={e => setFormDataUsuario({...formDataUsuario, email: e.target.value})} /></div>
-                            <div className="field-group"><label>Dirección</label><input type="text" value={formDataUsuario.direccion} onChange={e => setFormDataUsuario({...formDataUsuario, direccion: e.target.value})} /></div>
-                            <div className="field-group">
-                                <label>Rol</label>
-                                <select value={formDataUsuario.rol} onChange={e => setFormDataUsuario({...formDataUsuario, rol: e.target.value})}>
-                                    <option value="cliente">Cliente</option>
-                                    <option value="admin">Administrador</option>
-                                </select>
-                            </div>
-                            <div className="modal-footer"><button type="button" className="btn-makia-cancel" onClick={() => setModalUsuarioAbierto(false)}>Cerrar</button><button type="submit" className="btn-makia-save">Actualizar</button></div>
                         </form>
                     </div>
                 </div>
