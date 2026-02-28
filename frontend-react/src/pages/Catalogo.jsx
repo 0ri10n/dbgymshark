@@ -76,7 +76,6 @@ const Catalogo = () => {
             setCargando(true);
             try {
                 const baseURL = import.meta.env.VITE_API_URL || 'https://dbgymshark-ddk1.onrender.com/api';
-                // El buscador ahora envía la query al backend para que funcione igual que la tabla de productos
                 const res = await axios.get(`${baseURL}/productos?page=${pagina}&limit=20&search=${busqueda}`);
                 if (res.data.productos) {
                     setProductos(res.data.productos);
@@ -113,7 +112,11 @@ const Catalogo = () => {
     return (
         <div className="client-view">
             <header className="client-header-makia">
-                <img src="/logo-makia-pages.png" alt="Makia Logo" className="brand-logo-img-catalogo" />
+                {/* Logo corregido con contenedor para evitar superposición */}
+                <div className="logo-container-makia">
+                    <img src="/logo-makia-pages.png" alt="Makia Logo" className="brand-logo-img-catalogo" />
+                </div>
+                
                 <div className="header-right-icons">
                     <div className="cart-wrapper" onClick={() => setIsCartOpen(true)}>
                         <i className="fas fa-shopping-bag"></i>
