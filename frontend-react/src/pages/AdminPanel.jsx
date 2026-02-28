@@ -7,17 +7,15 @@ import './AdminPanel.css';
 const AdminPanel = () => {
     const { user, logout } = useAuth();
     
-    // --- ESTADOS DE VISTA Y CARGA ---
+    // --- ESTADOS ---
     const [vistaActiva, setVistaActiva] = useState('productos');
     const [cargando, setCargando] = useState(false);
     const itemsPorPagina = 10;
 
-    // --- ESTADOS DE BÚSQUEDA ---
     const [busquedaProd, setBusquedaProd] = useState("");
     const [busquedaUsr, setBusquedaUsr] = useState("");
     const [busquedaVen, setBusquedaVen] = useState("");
 
-    // --- ESTADOS DE DATOS Y PAGINACIÓN ---
     const [productos, setProductos] = useState([]);
     const [pagProductos, setPagProductos] = useState(1);
     const [totalPagProductos, setTotalPagProductos] = useState(1);
@@ -33,15 +31,13 @@ const AdminPanel = () => {
     const [totalPagVentas, setTotalPagVentas] = useState(1);
     const [totalVentasCount, setTotalVentasCount] = useState(0);
 
-    // --- ESTADOS DE MODALES ---
     const [modalAbierto, setModalAbierto] = useState(false);
     const [editandoId, setEditandoId] = useState(null);
+    
+    // MOLDE LIMPIO
     const [formData, setFormData] = useState({ 
-        title: '', 
-        product_type: '', 
-        vendor: 'Gymshark | Be a visionary.', 
-        variants: [], 
-        image_principal: '' 
+        title: '', product_type: '', vendor: 'Gymshark | Be a visionary.', 
+        variants: [], image_principal: '' 
     });
 
     const [modalUsuarioAbierto, setModalUsuarioAbierto] = useState(false);
@@ -92,35 +88,49 @@ const AdminPanel = () => {
     useEffect(() => { cargarDatosExtra('usuarios'); }, [pagUsuarios, busquedaUsr]);
     useEffect(() => { cargarDatosExtra('ventas'); }, [pagVentas, busquedaVen]);
 
-    // --- DATALISTS (Filtros de autocompletado) ---
+    // --- DATALISTS ---
     const categoriasExistentes = useMemo(() => [...new Set(productos.map(p => p.product_type))].filter(Boolean), [productos]);
     const coloresExistentes = useMemo(() => [...new Set(productos.flatMap(p => p.colors_available || []))].filter(Boolean), [productos]);
     const tallasExistentes = useMemo(() => [...new Set(productos.flatMap(p => p.sizes_available || []))].filter(Boolean), [productos]);
 
-    // --- LÓGICA DE VARIANTES ---
-    const variantsByColor = useMemo(() => {
-        const grouped = {};
-        (formData.variants || []).forEach((v, index) => {
-            // Usamos el color real, o un fallback seguro para evitar colisiones
-            const colorKey = v.color || `Sin Color ${index}`; 
-            if (!grouped[colorKey]) grouped[colorKey] = { color: v.color, image: v.image || '', items: [] };
-            grouped[colorKey].items.push({ ...v, originalIndex: index });
+    // --- LÓGICA DE VARIANTES (REFACTORIZADA) ---
+    // Ya no agrupamos por color en un objeto complejo. Manejamos el array plano directamente.
+    
+    // Para renderizar, sí necesitamos saber qué colores existen para poner la cabecera de la "tarjeta"
+    const coloresAgrupadosParaVista = useMemo(() => {
+        const coloresUnicos = [...new Set(formData.variants.map(v => v.color))];
+        return coloresUnicos.map(colorName => {
+            // Buscamos todas las variantes que tengan este color
+            const variantesDeEsteColor = formData.variants
+                .map((v, index) => ({ ...v, originalIndex: index }))
+                .filter(v => v.color === colorName);
+            
+            // Tomamos la imagen de la primera variante de este color que tenga una imagen
+            const imagenDelColor = variantesDeEsteColor.find(v => v.image)?.image || '';
+            
+            return {
+                colorName: colorName,
+                image: imagenDelColor,
+                items: variantesDeEsteColor
+            };
         });
-        return Object.values(grouped);
     }, [formData.variants]);
 
     const addSizeToColor = (colorName) => {
         const currentImage = formData.variants.find(v => v.color === colorName)?.image || "";
-        setFormData({ ...formData, variants: [...formData.variants, { color: colorName, size: '', price: 0, inventory_quantity: 0, sku: '', image: currentImage }] });
+        // Agregamos una nueva variante plana al final del arreglo, copiando el color y la imagen
+        setFormData({ 
+            ...formData, 
+            variants: [...formData.variants, { color: colorName, size: '', price: 0, inventory_quantity: 0, sku: '', image: currentImage }] 
+        });
     };
 
     const addEmptyColorGroup = () => {
-        // Generamos un nombre único temporal para evitar que los colores se fusionen
-        let count = 1;
-        let newColor = `Nuevo Color ${count}`;
-        while (formData.variants.some(v => v.color === newColor)) {
-            count++;
-            newColor = `Nuevo Color ${count}`;
+        // Un string vacío literal para empezar. Si el usuario no escribe, se guardará como string vacío
+        // Para evitar colisiones visuales inmediatas, usamos un string con un espacio invisible si ya existe uno vacío
+        let newColor = "";
+        while(formData.variants.some(v => v.color === newColor)){
+             newColor += " ";
         }
         
         setFormData({ 
@@ -132,10 +142,18 @@ const AdminPanel = () => {
         });
     };
 
+    const updateColorName = (oldColorName, newColorName) => {
+         setFormData({
+            ...formData,
+            // Cambia el nombre del color en TODAS las variantes que tenían el nombre viejo
+            variants: formData.variants.map(v => v.color === oldColorName ? { ...v, color: newColorName } : v)
+        });
+    }
+
     const updateColorImage = (colorName, newUrl) => {
-        // Ahora sí, busca el nombre exacto y guarda la URL perfectamente
         setFormData({ 
             ...formData, 
+            // Guarda la URL en TODAS las variantes que tengan este color
             variants: formData.variants.map(v => v.color === colorName ? { ...v, image: newUrl } : v) 
         });
     };
@@ -147,7 +165,7 @@ const AdminPanel = () => {
         return `${marca}-${cat}-${idUnico}`;
     };
 
-    // --- GUARDAR PRODUCTO ---
+    // --- GUARDAR ---
     const handleGuardar = async (e) => {
         e.preventDefault();
         if (!formData.variants || formData.variants.length === 0) {
@@ -156,23 +174,25 @@ const AdminPanel = () => {
         }
 
         try {
-            const coloresExtraidos = [...new Set(formData.variants.map(v => v.color))].filter(Boolean);
-            const tallasExtraidas = [...new Set(formData.variants.map(v => v.size))].filter(Boolean);
+            // Limpiamos espacios invisibles usados para separar colores vacíos nuevos
+            const variantesLimpias = formData.variants.map(v => ({...v, color: v.color.trim()}));
 
-            const variantesProcesadas = formData.variants.map((v, i) => ({
+            const coloresExtraidos = [...new Set(variantesLimpias.map(v => v.color))].filter(Boolean);
+            const tallasExtraidas = [...new Set(variantesLimpias.map(v => v.size))].filter(Boolean);
+
+            const variantesProcesadas = variantesLimpias.map((v, i) => ({
                 ...v,
                 sku: (v.sku && v.sku.trim() !== '') ? v.sku.trim() : `${generarSKU(formData.product_type, formData.title)}-V${i + 1}`,
                 price: Number(v.price) || 0,
                 inventory_quantity: Number(v.inventory_quantity) || 0
             }));
 
-            // Extraemos la información del primer producto para la base de datos general
             const precioPrincipal = variantesProcesadas[0]?.price || 0;
             const imagenPrincipal = variantesProcesadas[0]?.image || '';
 
             const payload = { 
                 ...formData, 
-                handle: formData.title.toLowerCase().replace(/ /g, '-'),
+                handle: formData.title ? formData.title.toLowerCase().replace(/ /g, '-') : '',
                 variants: variantesProcesadas,
                 colors_available: coloresExtraidos,
                 sizes_available: tallasExtraidas,
@@ -180,6 +200,11 @@ const AdminPanel = () => {
                 price: precioPrincipal,
                 image_principal: imagenPrincipal 
             };
+
+            delete payload._id;
+            delete payload.__v;
+            delete payload.createdAt;
+            delete payload.updatedAt;
             
             if (editandoId) {
                 await axios.put(`${baseURL}/productos/${editandoId}`, payload, { headers: getAuthHeaders() });
@@ -190,8 +215,8 @@ const AdminPanel = () => {
             cargarProductos(); 
             alert("¡Producto guardado con éxito!");
         } catch (error) { 
-            console.error("Error al guardar:", error.response?.data || error.message);
-            alert("Error al guardar: revisa los campos obligatorios."); 
+            console.error("Detalle del error:", error.response?.data || error);
+            alert(`Error al guardar: ${error.response?.data?.mensaje || error.response?.data?.msg || "Revisa la consola"}`); 
         }
     };
 
@@ -314,11 +339,11 @@ const AdminPanel = () => {
                             <div className="form-grid-2-cols">
                                 <div className="field-group">
                                     <label>Título del Producto</label>
-                                    <input type="text" required placeholder="Ej. Vital T-Shirt" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} />
+                                    <input type="text" required value={formData.title || ''} onChange={e => setFormData({...formData, title: e.target.value})} />
                                 </div>
                                 <div className="field-group">
                                     <label>Categoría</label>
-                                    <input type="text" list="lista-categorias" placeholder="Doble clic para ver lista..." value={formData.product_type} onChange={e => setFormData({...formData, product_type: e.target.value})} />
+                                    <input type="text" list="lista-categorias" value={formData.product_type || ''} onChange={e => setFormData({...formData, product_type: e.target.value})} />
                                 </div>
                             </div>
 
@@ -328,7 +353,7 @@ const AdminPanel = () => {
                                     <button type="button" className="btn-makia-save" onClick={addEmptyColorGroup}>+ Agregar Color</button>
                                 </div>
 
-                                {variantsByColor.map((group, idx) => (
+                                {coloresAgrupadosParaVista.map((group, idx) => (
                                     <div key={idx} className="color-group-card">
                                         <div className="color-header-row">
                                             <div className="field-group color-input-fixed">
@@ -336,16 +361,8 @@ const AdminPanel = () => {
                                                 <input 
                                                     type="text" 
                                                     list="lista-colores" 
-                                                    placeholder="Ej. Black"
-                                                    value={group.color} 
-                                                    onChange={e => {
-                                                        const nuevoValor = e.target.value;
-                                                        const nuevasVariants = [...formData.variants];
-                                                        group.items.forEach(item => {
-                                                            nuevasVariants[item.originalIndex].color = nuevoValor;
-                                                        });
-                                                        setFormData({...formData, variants: nuevasVariants});
-                                                    }} 
+                                                    value={group.colorName.trim() || ''} 
+                                                    onChange={e => updateColorName(group.colorName, e.target.value)} 
                                                 />
                                             </div>
                                             <div className="field-group url-input-expanded">
@@ -353,8 +370,8 @@ const AdminPanel = () => {
                                                 <input 
                                                     type="text" 
                                                     placeholder="Pegar URL aquí..."
-                                                    value={group.image} 
-                                                    onChange={e => updateColorImage(group.color, e.target.value)} 
+                                                    value={group.image || ''} 
+                                                    onChange={e => updateColorImage(group.colorName, e.target.value)} 
                                                 />
                                             </div>
                                             <div className="mini-preview-box">
@@ -371,8 +388,7 @@ const AdminPanel = () => {
                                                             <input 
                                                                 type="text" 
                                                                 list="lista-tallas" 
-                                                                placeholder="Ej. M"
-                                                                value={item.size} 
+                                                                value={item.size || ''} 
                                                                 onChange={e => { 
                                                                     const nv = [...formData.variants]; 
                                                                     nv[item.originalIndex].size = e.target.value; 
@@ -382,7 +398,7 @@ const AdminPanel = () => {
                                                         </div>
                                                         <div className="field-group">
                                                             <label>Precio (MXN)</label>
-                                                            <input type="number" value={item.price} onChange={e => { 
+                                                            <input type="number" value={item.price || 0} onChange={e => { 
                                                                 const nv = [...formData.variants]; 
                                                                 nv[item.originalIndex].price = Number(e.target.value); 
                                                                 setFormData({...formData, variants: nv}); 
@@ -390,7 +406,7 @@ const AdminPanel = () => {
                                                         </div>
                                                         <div className="field-group">
                                                             <label>Stock</label>
-                                                            <input type="number" value={item.inventory_quantity} onChange={e => { 
+                                                            <input type="number" value={item.inventory_quantity || 0} onChange={e => { 
                                                                 const nv = [...formData.variants]; 
                                                                 nv[item.originalIndex].inventory_quantity = Number(e.target.value); 
                                                                 setFormData({...formData, variants: nv}); 
@@ -408,7 +424,7 @@ const AdminPanel = () => {
                                                     <button type="button" className="btn-x-red" onClick={() => setFormData({...formData, variants: formData.variants.filter((_, i) => i !== item.originalIndex)})}>✕</button>
                                                 </div>
                                             ))}
-                                            <button type="button" className="btn-add-size" onClick={() => addSizeToColor(group.color)}>+ Agregar Talla</button>
+                                            <button type="button" className="btn-add-size" onClick={() => addSizeToColor(group.colorName)}>+ Agregar Talla</button>
                                         </div>
                                     </div>
                                 ))}
