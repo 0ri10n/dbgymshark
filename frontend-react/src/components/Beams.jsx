@@ -154,11 +154,12 @@ const Beams = ({
   const meshRef = useRef(null);
   const beamMaterial = useMemo(
     () =>
-      extendMaterial(THREE.MeshStandardMaterial, {
+      extendMaterial(THREE.MeshBasicMaterial, {
         header: `
-  varying vec2 vUv;
-  uniform float time;
-  uniform float uSpeed;`,
+          varying vec2 vUv;
+          uniform float time;
+          uniform float uSpeed;
+        `,
         vertexHeader: `
   float getPos(vec3 pos) {
     // Usamos un seno simple en lugar de cnoise para liberar la CPU
@@ -193,11 +194,14 @@ const Beams = ({
             }`,
         material: { fog: true },
         uniforms: {
-          diffuse: new THREE.Color(...hexToNormalizedRGB('#000000')),
+          diffuse: new THREE.Color(1, 1, 1), 
           time: { shared: true, mixed: true, linked: true, value: 0 },
-          uSpeed: { shared: true, mixed: true, linked: true, value: speed },
-          uNoiseIntensity: noiseIntensity,
-          uScale: scale
+          uSpeed: { shared: true, mixed: true, linked: true, value: speed * 0.5 }
+        },
+        material: { 
+          transparent: true, 
+          opacity: 0.8,
+          blending: THREE.AdditiveBlending 
         }
       }),
     [speed, noiseIntensity, scale]
@@ -206,11 +210,15 @@ const Beams = ({
   return (
     <CanvasWrapper>
       <group rotation={[0, 0, degToRad(rotation)]}>
-        <PlaneNoise ref={meshRef} material={beamMaterial} count={beamNumber} width={beamWidth} height={beamHeight} />
-        <DirLight color={lightColor} position={[0, 3, 10]} />
+        <PlaneNoise 
+          ref={meshRef} 
+          material={beamMaterial} 
+          count={beamNumber} 
+          width={beamWidth} 
+          height={beamHeight} 
+        />
       </group>
-      <ambientLight intensity={1} />
-      <color attach="background" args={['#000000']} />
+      <color attach="background" args={['#05070a']} /> 
       <PerspectiveCamera makeDefault position={[0, 0, 20]} fov={30} />
     </CanvasWrapper>
   );
