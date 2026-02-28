@@ -5,10 +5,14 @@ import { CartContext } from '../context/CartContext';
 import PaginationControls from '../components/PaginationControls';
 import './Catalogo.css';
 
-const CATEGORIAS_MENU = [
-    { id: 'womens', label: 'Womens' },
-    { id: 'mens', label: 'Mens' },
-    { id: 'accessories', label: 'Accessories' }
+const CATEGORIAS_LIMPIAS = [
+    'Accessories', 'Bags', 'Baselayers', 'Bodysuits', 'Bottles', 'Bottoms',
+    'Crop Tops', 'Dresses', 'Footwear', 'Gift Cards', 'Headwear', 'Hoodies',
+    'Jackets', 'Jackets & Outerwear', 'Joggers', 'Leggings', 'Long Sleeve Tops',
+    'Miscellaneous', 'One Pieces', 'Outerwear', 'Pants', 'Pullovers',
+    'Short Sleeve Tops', 'Shorts', 'Skorts', 'Sleeveless Tops', 'Socks',
+    'Sports Bras', 'Stringers', 'Sweaters', 'Swimwear', 'T-Shirts',
+    'Tanks', 'Tops', 'Uncategorized', 'Underwear', 'Vests'
 ];
 
 // PALETA DE COLORES MAKIA COMPLETA
@@ -49,6 +53,7 @@ const Catalogo = () => {
     const [totalPaginas, setTotalPaginas] = useState(1);
     
     const [catFiltro, setCatFiltro] = useState(null);
+    const [dropdownAbierto, setDropdownAbierto] = useState(false); // Control para el único botón
     const [rangoPrecio, setRangoPrecio] = useState(5000); 
     
     const [tallasSeleccionadas, setTallasSeleccionadas] = useState({});
@@ -108,7 +113,7 @@ const Catalogo = () => {
     };
 
     const productosFiltrados = productos.filter(p => {
-        const cumpleCat = !catFiltro || p.product_type?.toLowerCase().includes(catFiltro.toLowerCase());
+        const cumpleCat = !catFiltro || p.product_type === catFiltro;
         const cumplePrecio = (p.precioMXN || p.price) <= rangoPrecio;
         return cumpleCat && cumplePrecio;
     });
@@ -134,23 +139,38 @@ const Catalogo = () => {
                 <aside className="sidebar-filter-box">
                     <div className="sidebar-sticky-wrapper">
                         
-                        {/* SECCIÓN CATEGORÍAS TIPO IMAGEN */}
+                        {/* SECCIÓN CATEGORÍAS - UN SOLO BOTÓN */}
                         <h2 className="sidebar-section-title">CATEGORÍA</h2>
                         <div className="filter-group-stack">
-                            {CATEGORIAS_MENU.map((item) => (
-                                <div key={item.id} className="filter-item-accordion">
-                                    <button 
-                                        className={`accordion-header ${catFiltro === item.label ? 'active' : ''}`}
-                                        onClick={() => setCatFiltro(catFiltro === item.label ? null : item.label)}
-                                    >
-                                        <span>{item.label}</span>
-                                        <i className={`fas fa-chevron-down ${catFiltro === item.label ? 'rotate' : ''}`}></i>
-                                    </button>
-                                </div>
-                            ))}
+                            <div className="filter-item-accordion">
+                                <button 
+                                    className={`accordion-header ${dropdownAbierto ? 'active' : ''} ${catFiltro ? 'selected-glow' : ''}`}
+                                    onClick={() => setDropdownAbierto(!dropdownAbierto)}
+                                >
+                                    <span>{catFiltro || "Categories"}</span>
+                                    <i className={`fas fa-chevron-down ${dropdownAbierto ? 'rotate' : ''}`}></i>
+                                </button>
+                                
+                                {dropdownAbierto && (
+                                    <div className="category-scroll-menu">
+                                        {CATEGORIAS_LIMPIAS.map((cat) => (
+                                            <div 
+                                                key={cat} 
+                                                className={`category-option ${catFiltro === cat ? 'active-opt' : ''}`}
+                                                onClick={() => {
+                                                    setCatFiltro(cat);
+                                                    setDropdownAbierto(false);
+                                                }}
+                                            >
+                                                {cat}
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
                         </div>
 
-                        {/* SECCIÓN PRESUPUESTO TIPO IMAGEN */}
+                        {/* SECCIÓN PRESUPUESTO */}
                         <div className="price-filter-section-new">
                             <h2 className="sidebar-section-title">PRESUPUESTO: ${rangoPrecio}</h2>
                             <div className="slider-container">
