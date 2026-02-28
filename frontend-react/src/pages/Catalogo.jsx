@@ -5,7 +5,6 @@ import { CartContext } from '../context/CartContext';
 import PaginationControls from '../components/PaginationControls';
 import './Catalogo.css';
 
-// Lista completa de categorías
 const CATEGORIAS_LIMPIAS = [
     'Accessories', 'Bags', 'Baselayers', 'Bodysuits', 'Bottles', 'Bottoms',
     'Crop Tops', 'Dresses', 'Footwear', 'Gift Cards', 'Headwear', 'Hoodies',
@@ -22,12 +21,14 @@ const getColorHex = (name = "") => {
     if (n === 'white') return "#FFFFFF";
     if (n.includes('blue')) return "#1e3a8a";
     if (n.includes('grey') || n.includes('gray')) return "#4b5563";
+    if (n.includes('red')) return "#991b1b";
+    if (n.includes('pink')) return "#db2777";
+    if (n.includes('green')) return "#2d4d43";
     return "#374151"; 
 };
 
 const getPrimaryImage = (p = {}) => {
-    const img = p.image_principal || p.imagen || p.image_src || (p.variants && p.variants[0]?.image);
-    if (typeof img === 'string' && img.includes(',')) return img.split(',')[0].trim();
+    const img = p.image_principal || (p.variants && p.variants[0]?.image);
     return img || "/placeholder.jpg";
 };
 
@@ -43,7 +44,6 @@ const Catalogo = () => {
     const [totalPaginas, setTotalPaginas] = useState(1);
 
     const [catFiltro, setCatFiltro] = useState(null);
-    const [precioMax, setPrecioMax] = useState(3500);
     const [tallasSeleccionadas, setTallasSeleccionadas] = useState({});
     const [colorVisual, setColorVisual] = useState({});
 
@@ -54,11 +54,9 @@ const Catalogo = () => {
             setCargando(true);
             try {
                 const res = await axios.get(`${baseURL}/productos?page=${pagina}&limit=20&search=${busqueda}`);
-                if (res.data.productos) {
-                    setProductos(res.data.productos);
-                    setTotalPaginas(res.data.pagination?.pages || 1);
-                }
-            } catch (e) { console.error("Error MAKIA:", e); }
+                setProductos(res.data.productos || []);
+                setTotalPaginas(res.data.pagination?.pages || 1);
+            } catch (e) { console.error(e); }
             finally { setCargando(false); }
         };
         cargarData();
@@ -84,17 +82,17 @@ const Catalogo = () => {
     };
 
     const handleFinalizarCompra = async () => {
-        if (!user) {
-            alert("Debes iniciar sesión con tu cuenta para realizar la compra.");
-            return;
+        if (!user) { 
+            alert("Debes iniciar sesión para realizar la compra."); 
+            return; 
         }
         if (cart.length === 0) return;
 
         try {
             const token = localStorage.getItem('token');
-            // Corrección de nombre y apellido para evitar undefined
-            const nombreCompleto = `${user.nombre || ''} ${user.apellido || ''}`.trim() || "Cliente Makia";
-
+            // Corrección: Manda nombre y apellido reales concatenados
+            const nombreCompleto = `${user.nombre || ''} ${user.apellido || ''}`.trim();
+            
             const ordenData = {
                 nombreCliente: nombreCompleto,
                 productos: cart.map(item => ({
@@ -109,18 +107,15 @@ const Catalogo = () => {
             };
 
             await axios.post(`${baseURL}/admin/panel/ventas`, ordenData, {
-                headers: { 
-                    'x-auth-token': token,
-                    'Authorization': `Bearer ${token}` 
-                }
+                headers: { 'x-auth-token': token }
             });
             
             alert("¡Compra finalizada con éxito!");
             clearCart();
             setIsCartOpen(false);
-        } catch (error) {
-            console.error("Error al procesar compra:", error);
-            alert("Hubo un error al guardar tu pedido.");
+        } catch (error) { 
+            console.error(error);
+            alert("Error al procesar la compra."); 
         }
     };
 
@@ -133,12 +128,12 @@ const Catalogo = () => {
                         <i className="fas fa-shopping-bag"></i>
                         <span id="cartCount">{cart.length}</span>
                     </div>
-                    <div className="user-icon" onClick={logout} style={{cursor:'pointer'}}><i className="far fa-user"></i></div>
+                    <div className="user-icon" onClick={logout}><i className="far fa-user"></i></div>
                 </div>
             </header>
 
             <div className="hero-banner-full">
-                <img src="/hero-banner-client.jpg" alt="MAKIA Performance" />
+                <img src="/hero-banner-client.jpg" alt="MAKIA" />
             </div>
 
             <div className="store-layout-container">
@@ -175,7 +170,12 @@ const Catalogo = () => {
                                         <p className="p-price">${(prod.precioMXN || prod.price).toLocaleString()} MXN</p>
                                         <div className="swatch-row-carrusel">
                                             {prod.colors_available?.map(col => (
-                                                <button key={col} className="swatch-circle" style={{ backgroundColor: getColorHex(col) }} onClick={() => setColorVisual(prev => ({ ...prev, [prod._id]: col }))} />
+                                                <button 
+                                                    key={col} 
+                                                    className={`swatch-circle ${colorActivo === col ? 'active' : ''}`} 
+                                                    style={{ backgroundColor: getColorHex(col) }} 
+                                                    onClick={() => setColorVisual(prev => ({ ...prev, [prod._id]: col }))} 
+                                                />
                                             ))}
                                         </div>
                                         <div className="card-footer">
@@ -199,16 +199,16 @@ const Catalogo = () => {
                     <div className="cart-modal-panel" onClick={e => e.stopPropagation()}>
                         <div className="cart-modal-top">
                             <h2>TU BOLSA</h2>
-                            <span onClick={() => setIsCartOpen(false)} style={{cursor:'pointer', fontSize: '24px'}}>&times;</span>
+                            <span className="close-cart-x" onClick={() => setIsCartOpen(false)}>&times;</span>
                         </div>
                         <div className="cart-modal-list">
                             {cart.map((item, i) => (
                                 <div key={i} className="cart-modal-row">
-                                    {/* Imagen pequeña forzada con estilo inline para evitar desajustes visuales */}
                                     <img 
                                         src={item.selectedImage} 
                                         alt="item" 
-                                        style={{ width: '65px', height: '85px', objectFit: 'cover', borderRadius: '8px', flexShrink: 0, border: '1px solid #222' }} 
+                                        className="cart-item-mini-img" 
+                                        style={{ width: '70px', height: '90px', objectFit: 'cover', borderRadius: '8px' }}
                                     />
                                     <div className="cart-item-info">
                                         <p className="cart-item-title">{item.title}</p>
@@ -229,7 +229,7 @@ const Catalogo = () => {
                                     </div>
                                     <div className="cart-item-end">
                                         <p className="cart-item-price">${((item.precioMXN || item.price) * item.quantity).toLocaleString()}</p>
-                                        <button className="btn-remove-x" onClick={() => removeFromCart(i)}>&times;</button>
+                                        <button className="btn-remove-x-red" onClick={() => removeFromCart(i)}>&times;</button>
                                     </div>
                                 </div>
                             ))}
