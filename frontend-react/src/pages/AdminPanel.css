@@ -54,11 +54,11 @@
     gap: 4px;
 }
 
+/* Mensaje de bienvenida solicitado */
 .welcome-text { 
     font-size: 0.75rem; 
     color: var(--makia-muted); 
-    text-transform: uppercase;
-    letter-spacing: 1px;
+    text-transform: none; /* Asegura minúsculas según lo solicitado */
 }
 
 .user-name-blue-header { 
@@ -224,7 +224,7 @@
     margin-bottom: 25px;
 }
 
-/* PREVISUALIZACIÓN DE IMAGEN RESTAURADA */
+/* RECUADRO DE PREVISUALIZACIÓN RESTAURADO */
 .mini-preview-box {
     width: 55px;
     height: 55px;
@@ -235,6 +235,7 @@
     align-items: center;
     justify-content: center;
     overflow: hidden;
+    margin-left: 10px;
 }
 .mini-preview-box img { width: 100%; height: 100%; object-fit: cover; }
 .preview-placeholder { font-size: 0.55rem; color: var(--makia-muted); font-weight: bold; }
