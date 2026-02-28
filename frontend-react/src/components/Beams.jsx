@@ -154,7 +154,7 @@ const Beams = ({
   const meshRef = useRef(null);
   const beamMaterial = useMemo(
     () =>
-      extendMaterial(THREE.MeshBasicMaterial, {
+      extendMaterial(THREE.MeshStandardMaterial, {
         header: `
   varying vec2 vUv;
   uniform float time;
