@@ -11,34 +11,24 @@ const CATEGORIAS_LIMPIAS = [
     'Jackets', 'Leggings', 'Pants', 'Shorts', 'Socks', 'Sports Bras', 'T-Shirts', 'Tops'
 ];
 
-// PALETA DE COLORES TOTALMENTE EXPANDIDA
 const getColorHex = (name = "") => {
     const n = name.toLowerCase().trim();
-    // Escala de Grises y Negros
-    if (n === 'black' || n.includes('onyx') || n.includes('asphalt') || n.includes('charcoal')) return "#111111";
-    if (n === 'white' || n.includes('snow')) return "#FFFFFF";
-    if (n.includes('grey') || n.includes('gray') || n.includes('pebble') || n.includes('core')) return "#4b5563";
-    
-    // Azules y Verdes
-    if (n.includes('teal') || n.includes('aqua') || n.includes('aegean')) return "#008080";
-    if (n.includes('navy') || n.includes('evening blue')) return "#000080";
-    if (n.includes('blue') || n.includes('lakeside') || n.includes('sky')) return "#1e3a8a";
+    if (n === 'black' || n.includes('onyx') || n.includes('asphalt')) return "#111111";
+    if (n === 'white') return "#FFFFFF";
+    if (n.includes('teal') || n.includes('aqua')) return "#008080";
+    if (n.includes('navy')) return "#000080";
+    if (n.includes('blue')) return "#1e3a8a";
     if (n.includes('olive') || n.includes('aloe') || n.includes('alpine') || n.includes('green')) return "#2d4d43";
-    if (n.includes('sage') || n.includes('eucalyptus') || n.includes('mint')) return "#b2ac88";
-    
-    // Rojos, Rosas y Morados
-    if (n.includes('pink') || n.includes('rose') || n.includes('dolly') || n.includes('guava')) return "#db2777";
-    if (n.includes('red') || n.includes('carmine') || n.includes('cherry') || n.includes('burgundy')) return "#991b1b";
-    if (n.includes('purple') || n.includes('plum') || n.includes('orchid') || n.includes('violet')) return "#6b21a8";
-    if (n.includes('lilac') || n.includes('lavender')) return "#b666d2";
-    
-    // Colores Tierra y Cálidos
-    if (n.includes('brown') || n.includes('truffle') || n.includes('espresso') || n.includes('baked')) return "#3b2f2f";
-    if (n.includes('beige') || n.includes('sand') || n.includes('ecru') || n.includes('oat')) return "#d6d3d1";
-    if (n.includes('orange') || n.includes('apricot') || n.includes('peach') || n.includes('clay')) return "#f97316";
-    if (n.includes('yellow') || n.includes('lemon') || n.includes('gold')) return "#facc15";
-    
-    return "#374151"; // Color neutro para nombres no reconocidos
+    if (n.includes('sage')) return "#b2ac88";
+    if (n.includes('pink') || n.includes('rose') || n.includes('dolly')) return "#db2777";
+    if (n.includes('red')) return "#991b1b";
+    if (n.includes('purple') || n.includes('plum')) return "#6b21a8";
+    if (n.includes('orange')) return "#f97316";
+    if (n.includes('yellow')) return "#facc15";
+    if (n.includes('brown') || n.includes('espresso')) return "#3b2f2f";
+    if (n.includes('beige') || n.includes('sand')) return "#d6d3d1";
+    if (n.includes('grey') || n.includes('gray')) return "#4b5563";
+    return "#374151"; 
 };
 
 const getPrimaryImage = (p = {}) => {
@@ -58,7 +48,6 @@ const Catalogo = () => {
     const [pagina, setPagina] = useState(1);
     const [totalPaginas, setTotalPaginas] = useState(1);
     
-    // FILTROS
     const [catFiltro, setCatFiltro] = useState(null);
     const [dropdownAbierto, setDropdownAbierto] = useState(false); 
     const [rangoPrecio, setRangoPrecio] = useState(5000); 
@@ -84,7 +73,7 @@ const Catalogo = () => {
     const granTotal = cart.reduce((acc, item) => acc + ((item.precioMXN || item.price) * item.quantity), 0);
 
     const handleFinalizarCompra = async () => {
-        // RESTRICCIÓN DE SESIÓN
+        // SOLUCIÓN AL ERROR 500: Validación de sesión antes del envío
         if (!user) {
             alert("Debes iniciar sesión para realizar una compra.");
             return;
@@ -115,7 +104,7 @@ const Catalogo = () => {
             clearCart();
             setIsCartOpen(false);
         } catch (error) {
-            console.error("Error al comprar:", error);
+            console.error("Error al procesar compra:", error);
             alert("Error en el servidor al procesar la venta.");
         }
     };
@@ -145,14 +134,12 @@ const Catalogo = () => {
             <div className="store-layout-container">
                 <aside className="sidebar-filter-box">
                     <div className="sidebar-sticky-wrapper">
-                        {/* TÍTULO DE SECCIÓN */}
+                        {/* TÍTULO Y BOTÓN DE CATEGORÍA ESTILO SOLICITADO */}
                         <h2 className="sidebar-h2-main">Filtros</h2>
-
-                        {/* DROPDOWN DE CATEGORÍA */}
                         <div className="filter-dropdown-container">
-                            <button className="filter-dropdown-btn" onClick={() => setDropdownAbierto(!dropdownAbierto)}>
+                            <button className="filter-dropdown-btn-makia" onClick={() => setDropdownAbierto(!dropdownAbierto)}>
                                 <span>{catFiltro || "Categoría"}</span>
-                                <i className={`fas fa-chevron-${dropdownAbierto ? 'up' : 'down'}`}></i>
+                                <i className={`fas fa-chevron-down`}></i>
                             </button>
                             {dropdownAbierto && (
                                 <div className="filter-dropdown-menu">
@@ -165,11 +152,8 @@ const Catalogo = () => {
                             )}
                         </div>
 
-                        {catFiltro && (
-                            <button className="btn-clear-filter" onClick={() => setCatFiltro(null)}>Limpiar Filtro ✕</button>
-                        )}
+                        {catFiltro && <button className="btn-clear-filter" onClick={() => setCatFiltro(null)}>Limpiar ✕</button>}
 
-                        {/* RANGO DE PRECIO */}
                         <div className="price-filter-section">
                             <h2 className="sidebar-h2">Precio máx: ${rangoPrecio}</h2>
                             <input type="range" min="0" max="5000" step="100" value={rangoPrecio} onChange={(e) => setRangoPrecio(Number(e.target.value))} className="makia-range-slider" />
@@ -220,7 +204,6 @@ const Catalogo = () => {
                 </main>
             </div>
 
-            {/* BOLSA DE COMPRAS */}
             {isCartOpen && (
                 <div className="cart-modal-overlay" onClick={() => setIsCartOpen(false)}>
                     <div className="cart-modal-panel" onClick={e => e.stopPropagation()}>
