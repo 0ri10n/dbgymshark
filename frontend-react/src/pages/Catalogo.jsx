@@ -5,6 +5,7 @@ import { CartContext } from '../context/CartContext';
 import PaginationControls from '../components/PaginationControls';
 import './Catalogo.css';
 
+// Lista completa de categorías solicitada
 const CATEGORIAS_LIMPIAS = [
     'Accessories', 'Bags', 'Baselayers', 'Bodysuits', 'Bottles', 'Bottoms',
     'Crop Tops', 'Dresses', 'Footwear', 'Gift Cards', 'Headwear', 'Hoodies',
@@ -109,7 +110,6 @@ const Catalogo = () => {
 
     const handleFinalizarCompra = async () => {
         if (cart.length === 0) return;
-        
         try {
             const total = cart.reduce((acc, item) => acc + ((item.precioMXN || item.price) * item.quantity), 0);
             
@@ -123,16 +123,20 @@ const Catalogo = () => {
                     cantidad: item.quantity
                 })),
                 total: total,
-                fechaPedido: new Date().toISOString() // Manda la fecha correctamente a la BD
+                fechaPedido: new Date().toISOString()
             };
 
-            await axios.post(`${baseURL}/ventas`, ordenData);
-            alert("¡Compra realizada con éxito!");
+            const token = localStorage.getItem('token');
+            await axios.post(`${baseURL}/admin/panel/ventas`, ordenData, {
+                headers: { 'x-auth-token': token, 'Authorization': `Bearer ${token}` }
+            });
+            
+            alert("¡Compra finalizada correctamente!");
             clearCart();
             setIsCartOpen(false);
         } catch (error) {
             console.error("Error al procesar compra:", error);
-            alert("Hubo un error al procesar tu pedido.");
+            alert("Error al procesar la compra. Intente de nuevo.");
         }
     };
 
