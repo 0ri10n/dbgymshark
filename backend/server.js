@@ -2,6 +2,8 @@ const path = require('path');
 const fs = require('fs');
 const dotenv = require('dotenv');
 const errorHandler = require('./middleware/errorHandler');
+//const mongoSanitize = require('express-mongo-sanitize');
+const helmet = require('helmet');
 
 // Load base env first
 const rootEnvPath = path.resolve(__dirname, '../.env');
@@ -38,6 +40,26 @@ const app = express();
 connectDB();
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+
+// --- MIDDLEWARES DE SEGURIDAD  ---
+// 1. Protege las cabeceras HTTP
+app.use(helmet());
+// 2. Bloquea inyecciones NoSQL 
+//app.use(mongoSanitize());
+
+// --- ESCUDO ANTI-INYECCIONES NoSQL ---
+app.use((req, res, next) => {
+    if (req.body && Object.keys(req.body).length > 0) {
+        const dataString = JSON.stringify(req.body);
+        if (dataString.includes('"$') || dataString.includes('"$gt"')) {
+            console.log("🛡️ ALERTA QA: Intento de inyección NoSQL interceptado.");
+            return res.status(403).json({ exito: false, mensaje: "Ataque bloqueado." });
+        }
+    }
+    next();
+});
 
 // API routes
 const authRoutes = require('./routes/authRoutes');
