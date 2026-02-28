@@ -124,11 +124,20 @@ const AdminPanel = () => {
     const handleGuardar = async (e) => {
         e.preventDefault();
         try {
-            // Aseguramos que el payload lleve la estructura correcta de variantes e imagen_principal
+            // 1. MAGIA DE QA: Extraemos todos los colores y tallas únicos de las variantes actuales
+            const coloresExtraidos = [...new Set(formData.variants.map(v => v.color))].filter(Boolean);
+            const tallasExtraidas = [...new Set(formData.variants.map(v => v.size))].filter(Boolean);
+
+            // 2. Armamos el paquete asegurando que todos los campos del catálogo se enteren del cambio
             const payload = { 
                 ...formData, 
                 handle: formData.title.toLowerCase().replace(/ /g, '-'),
-                variants: formData.variants // Confirmamos el envío del array actualizado
+                variants: formData.variants,
+                // ¡Aquí está la clave! Actualizamos las listas maestras
+                colors_available: coloresExtraidos,
+                sizes_available: tallasExtraidas,
+                // Sincronizamos ambos precios para evitar bugs de visualización
+                precioMXN: formData.price 
             };
             
             if (editandoId) {
