@@ -41,6 +41,10 @@ const AdminPanel = () => {
         sku: '', price: 0, inventory_quantity: 0, variants: [] 
     });
 
+    const [modalUsuarioAbierto, setModalUsuarioAbierto] = useState(false);
+    const [editandoUsuarioId, setEditandoUsuarioId] = useState(null);
+    const [formDataUsuario, setFormDataUsuario] = useState({ nombre: '', apellido: '', email: '', rol: 'cliente', direccion: '' });
+
     const baseURL = import.meta.env.VITE_API_URL || 'https://dbgymshark-ddk1.onrender.com/api';
 
     const getAuthHeaders = () => ({ 
@@ -66,7 +70,7 @@ const AdminPanel = () => {
             setListaUsuarios(res.data.usuarios || []);
             setTotalUsuariosCount(res.data.pagination?.total || 0);
             setTotalPagUsuarios(res.data.pagination?.pages || 1);
-        } catch (e) { console.error("Error usuarios:", e); }
+        } catch (error) { console.error("Error usuarios:", error); }
     };
 
     const cargarVentas = async () => {
@@ -75,7 +79,7 @@ const AdminPanel = () => {
             setListaVentas(res.data.ventas || []);
             setTotalVentasCount(res.data.pagination?.total || 0);
             setTotalPagVentas(res.data.pagination?.pages || 1);
-        } catch (e) { console.error("Error ventas:", e); }
+        } catch (error) { console.error("Error ventas:", error); }
     };
 
     useEffect(() => { cargarProductos(); }, [pagProductos, busquedaProd]);
@@ -97,14 +101,26 @@ const AdminPanel = () => {
         return Object.values(grouped);
     }, [formData.variants]);
 
+    const updateColorImage = (colorName, newUrl) => {
+        setFormData({ ...formData, variants: formData.variants.map(v => v.color === colorName ? { ...v, image: newUrl } : v) });
+    };
+
     const handleGuardar = async (e) => {
         e.preventDefault();
         try {
             const payload = { ...formData, handle: formData.title.toLowerCase().replace(/ /g, '-') };
             if (editandoId) await axios.put(`${baseURL}/productos/${editandoId}`, payload, { headers: getAuthHeaders() });
             else await axios.post(`${baseURL}/productos`, payload, { headers: getAuthHeaders() });
-            setModalAbierto(false); cargarProductos();
+            setModalAbierto(false); cargarProductos(); alert("Guardado");
         } catch (error) { alert("Error al guardar"); }
+    };
+
+    const handleGuardarUsuario = async (e) => {
+        e.preventDefault();
+        try {
+            await axios.put(`${baseURL}/admin/panel/usuarios/${editandoUsuarioId}`, formDataUsuario, { headers: getAuthHeaders() });
+            setModalUsuarioAbierto(false); cargarUsuarios(); alert("Usuario actualizado");
+        } catch (error) { alert("Error al actualizar usuario"); }
     };
 
     return (
@@ -143,7 +159,11 @@ const AdminPanel = () => {
                         <i className="fas fa-search"></i>
                         <input type="text" placeholder="Buscar..." 
                             value={vistaActiva === 'productos' ? busquedaProd : vistaActiva === 'usuarios' ? busquedaUsr : busquedaVen} 
-                            onChange={(e) => vistaActiva === 'productos' ? setBusquedaProd(e.target.value) : vistaActiva === 'usuarios' ? setBusquedaUsr(e.target.value) : setBusquedaVen(e.target.value)} />
+                            onChange={(e) => {
+                                if(vistaActiva === 'productos') setBusquedaProd(e.target.value);
+                                else if(vistaActiva === 'usuarios') setBusquedaUsr(e.target.value);
+                                else setBusquedaVen(e.target.value);
+                            }} />
                     </div>
                     {vistaActiva === 'productos' && (
                         <button className="admin-add-btn" onClick={() => { setEditandoId(null); setFormData({title:'', product_type:'', vendor:'Gymshark', sku:'', price:0, inventory_quantity:0, variants:[]}); setModalAbierto(true); }}>
@@ -164,7 +184,7 @@ const AdminPanel = () => {
                                 <tr key={p._id}>
                                     <td className="center"><img src={p.variants?.[0]?.image || p.image_principal} className="table-thumb" alt="p" /></td>
                                     <td>{p.title}</td><td>{p.product_type}</td>
-                                    <td className="center">
+                                    <td className="col-actions center">
                                         <button className="btn-table btn-edit" onClick={() => { setEditandoId(p._id); setFormData({...p}); setModalAbierto(true); }}>Editar</button>
                                         <button className="btn-table btn-delete" onClick={() => { if(window.confirm("¿Eliminar?")) axios.delete(`${baseURL}/productos/${p._id}`, {headers:getAuthHeaders()}).then(cargarProductos) }}>Eliminar</button>
                                     </td>
@@ -173,9 +193,9 @@ const AdminPanel = () => {
                             {vistaActiva === 'usuarios' && listaUsuarios.map(u => (
                                 <tr key={u._id}>
                                     <td>{u.nombre} {u.apellido}</td><td>{u.email}</td><td className="center"><span className="role-badge">{u.rol}</span></td>
-                                    <td className="center">
-                                        <button className="btn-table btn-edit">Editar</button>
-                                        <button className="btn-table btn-delete" onClick={() => { if(window.confirm("¿Eliminar usuario?")) axios.delete(`${baseURL}/admin/panel/usuarios/${u._id}`, {headers:getAuthHeaders()}).then(cargarUsuarios) }}>Eliminar</button>
+                                    <td className="col-actions center">
+                                        <button className="btn-table btn-edit" onClick={() => { setEditandoUsuarioId(u._id); setFormDataUsuario({...u}); setModalUsuarioAbierto(true); }}>Editar</button>
+                                        <button className="btn-table btn-delete" onClick={() => { if(window.confirm("¿Eliminar?")) axios.delete(`${baseURL}/admin/panel/usuarios/${u._id}`, {headers:getAuthHeaders()}).then(cargarUsuarios) }}>Eliminar</button>
                                     </td>
                                 </tr>
                             ))}
@@ -194,6 +214,7 @@ const AdminPanel = () => {
                     onPageChange={vistaActiva === 'productos' ? setPagProductos : vistaActiva === 'usuarios' ? setPagUsuarios : setPagVentas} />
             </main>
 
+            {/* MODAL PRODUCTOS */}
             {modalAbierto && (
                 <div className="modal-overlay">
                     <div className="modal-content modal-xl">
@@ -211,24 +232,50 @@ const AdminPanel = () => {
                                     <div key={idx} className="color-group-card">
                                         <div className="color-header-row">
                                             <div className="field-group color-input-fixed"><label>Color</label><input type="text" list="lista-colores" value={group.color} onChange={e => { const nv = formData.variants.map(v => v.color === group.color ? {...v, color: e.target.value} : v); setFormData({...formData, variants: nv}); }} /></div>
-                                            <div className="field-group url-input-expanded"><label>URL Imagen</label><input type="text" value={group.image} onChange={e => { const nv = formData.variants.map(v => v.color === group.color ? {...v, image: e.target.value} : v); setFormData({...formData, variants: nv}); }} /></div>
+                                            <div className="field-group url-input-expanded"><label>URL Imagen Color</label><input type="text" value={group.image} onChange={e => updateColorImage(group.color, e.target.value)} /></div>
                                             <div className="mini-preview-box">{group.image ? <img src={group.image} alt="p" /> : <span className="preview-placeholder">URL</span>}</div>
                                         </div>
-                                        {group.items.map(item => (
-                                            <div key={item.originalIndex} className="size-row-container">
-                                                <div className="size-row-inputs">
-                                                    <div className="field-group"><label>Talla</label><input type="text" list="lista-tallas" value={item.size} onChange={e => { const nv = [...formData.variants]; nv[item.originalIndex].size = e.target.value; setFormData({...formData, variants: nv}); }} /></div>
-                                                    <div className="field-group"><label>Precio</label><input type="number" value={item.price} onChange={e => { const nv = [...formData.variants]; nv[item.originalIndex].price = Number(e.target.value); setFormData({...formData, variants: nv}); }} /></div>
-                                                    <div className="field-group sku-field"><label>SKU Variante</label><input type="text" value={item.sku} onChange={e => { const nv = [...formData.variants]; nv[item.originalIndex].sku = e.target.value; setFormData({...formData, variants: nv}); }} /></div>
+                                        <div className="sizes-grid">
+                                            {group.items.map(item => (
+                                                <div key={item.originalIndex} className="size-row-container">
+                                                    <div className="size-row-inputs">
+                                                        <div className="field-group"><label>Talla</label><input type="text" list="lista-tallas" value={item.size} onChange={e => { const nv = [...formData.variants]; nv[item.originalIndex].size = e.target.value; setFormData({...formData, variants: nv}); }} /></div>
+                                                        <div className="field-group"><label>Precio</label><input type="number" value={item.price} onChange={e => { const nv = [...formData.variants]; nv[item.originalIndex].price = Number(e.target.value); setFormData({...formData, variants: nv}); }} /></div>
+                                                        <div className="field-group"><label>Stock</label><input type="number" value={item.inventory_quantity} onChange={e => { const nv = [...formData.variants]; nv[item.originalIndex].inventory_quantity = Number(e.target.value); setFormData({...formData, variants: nv}); }} /></div>
+                                                        <div className="field-group sku-field"><label>SKU Variante</label><input type="text" value={item.sku} onChange={e => { const nv = [...formData.variants]; nv[item.originalIndex].sku = e.target.value; setFormData({...formData, variants: nv}); }} /></div>
+                                                    </div>
+                                                    <button type="button" className="btn-x-red" onClick={() => { const nv = formData.variants.filter((_, i) => i !== item.originalIndex); setFormData({...formData, variants: nv}); }}>✕</button>
                                                 </div>
-                                                <button type="button" className="btn-x-red" onClick={() => { const nv = formData.variants.filter((_, i) => i !== item.originalIndex); setFormData({...formData, variants: nv}); }}>✕</button>
-                                            </div>
-                                        ))}
-                                        <button type="button" className="btn-add-size" onClick={() => setFormData({ ...formData, variants: [...formData.variants, { color: group.color, size: '', price: 0, sku: '', image: group.image }] })}>+ Talla</button>
+                                            ))}
+                                            <button type="button" className="btn-add-size" onClick={() => setFormData({ ...formData, variants: [...formData.variants, { color: group.color, size: '', price: 0, sku: '', image: group.image }] })}>+ Talla</button>
+                                        </div>
                                     </div>
                                 ))}
                             </div>
                             <div className="modal-footer"><button type="button" className="btn-makia-cancel" onClick={() => setModalAbierto(false)}>Cancelar</button><button type="submit" className="btn-makia-save">Guardar Cambios</button></div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* MODAL USUARIOS */}
+            {modalUsuarioAbierto && (
+                <div className="modal-overlay">
+                    <div className="modal-content">
+                        <h2>Editar Usuario</h2>
+                        <form onSubmit={handleGuardarUsuario} className="admin-form-vertical">
+                            <div className="form-grid-2-cols">
+                                <div className="field-group"><label>Nombre</label><input type="text" value={formDataUsuario.nombre} onChange={e => setFormDataUsuario({...formDataUsuario, nombre: e.target.value})} /></div>
+                                <div className="field-group"><label>Apellido</label><input type="text" value={formDataUsuario.apellido} onChange={e => setFormDataUsuario({...formDataUsuario, apellido: e.target.value})} /></div>
+                                <div className="field-group"><label>Email</label><input type="email" value={formDataUsuario.email} onChange={e => setFormDataUsuario({...formDataUsuario, email: e.target.value})} /></div>
+                                <div className="field-group"><label>Rol</label>
+                                    <select value={formDataUsuario.rol} onChange={e => setFormDataUsuario({...formDataUsuario, rol: e.target.value})}>
+                                        <option value="cliente">Cliente</option>
+                                        <option value="admin">Administrador</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div className="modal-footer"><button type="button" className="btn-makia-cancel" onClick={() => setModalUsuarioAbierto(false)}>Cancelar</button><button type="submit" className="btn-makia-save">Actualizar Usuario</button></div>
                         </form>
                     </div>
                 </div>

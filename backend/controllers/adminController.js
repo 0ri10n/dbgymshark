@@ -1,9 +1,11 @@
 const mongoose = require('mongoose');
 const Product = require('../models/Productos');
+const Usuario = require('../models/Usuario');
+const Venta = require('../models/Venta');
 const bcrypt = require('bcryptjs');
-const { ObjectId } = require('mongoose').Types; // Usa el de Mongoose
+const { ObjectId } = require('mongoose').Types;
 
-// FUNCIÓN 1: Listar DBs
+// --- FUNCIÓN 1: Listar DBs ---
 exports.obtenerBasesDeDatos = async (req, res) => {
     try {
         const admin = mongoose.connection.db.admin();
@@ -17,7 +19,7 @@ exports.obtenerBasesDeDatos = async (req, res) => {
     }
 };
 
-// FUNCIÓN 2: Listar Tablas 
+// --- FUNCIÓN 2: Listar Tablas ---
 exports.obtenerTablas = async (req, res) => {
     try {
         const { dbName } = req.params;
@@ -29,7 +31,7 @@ exports.obtenerTablas = async (req, res) => {
     }
 };
 
-// FUNCIÓN 3: Obtener Datos con paginación
+// --- FUNCIÓN 3: Obtener Datos Genéricos con Paginación ---
 exports.obtenerDatosTabla = async (req, res) => {
     try {
         const { dbName, tableName } = req.params;
@@ -53,155 +55,147 @@ exports.obtenerDatosTabla = async (req, res) => {
     }
 };
 
-
-// ELIMINAR REGISTRO UNIVERSAL
-exports.eliminarDatoUniversal = async (req, res) => {
-    try {
-        const { dbName, tableName, id } = req.params;
-        const db = mongoose.connection.client.db(dbName);
-        const coleccion = db.collection(tableName);
-        
-        // El cambio importante es aquí:
-        const resultado = await coleccion.deleteOne({ _id: new ObjectId(id) });
-
-        if (resultado.deletedCount === 1) {
-            res.json({ msg: `Registro eliminado de ${tableName}` });
-        } else {
-            res.status(404).json({ msg: 'No se encontró el registro' });
-        }
-    } catch (error) {
-        console.error('Error CRUD:', error); // Aquí es donde viste el error de BSON
-        res.status(500).json({ msg: 'Error de versiones en la base de datos' });
-    }
-};
-
-// CREAR REGISTRO UNIVERSAL
-exports.crearDatoUniversal = async (req, res) => {
-    try {
-        const { dbName, tableName } = req.params;
-        const db = mongoose.connection.client.db(dbName);
-        const coleccion = db.collection(tableName);
-        
-        // Inserta el cuerpo del JSON enviado desde el frontend
-        const resultado = await coleccion.insertOne(req.body);
-        res.status(201).json({ msg: 'Registro creado', id: resultado.insertedId });
-    } catch (error) {
-        res.status(500).json({ msg: 'Error al crear el registro' });
-    }
-};
-
-// backend/controllers/adminController.js
-exports.editarDatoUniversal = async (req, res) => {
-    try {
-        const { dbName, tableName, id } = req.params;
-        const datosActualizados = req.body;
-        delete datosActualizados._id; // Por seguridad, no intentamos cambiar el ID de MongoDB
-
-        const db = mongoose.connection.client.db(dbName);
-        const resultado = await db.collection(tableName).updateOne(
-            { _id: new ObjectId(id) },
-            { $set: datosActualizados }
-        );
-
-        res.json({ msg: "Actualizado correctamente", resultado });
-    } catch (error) {
-        res.status(500).json({ msg: "Error al actualizar" });
-    }
-};
-
-
-const Usuario = require('../models/Usuario');
-const Venta = require('../models/Venta');
-
-
+// --- OBTENER USUARIOS PANEL (Corregido para Frontend) ---
 exports.obtenerUsuariosPanel = async (req, res) => {
     try {
-        const usuarios = await Usuario.find().select('-password').sort({ registro: -1 });
-        res.json(usuarios);
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const search = req.query.search || '';
+        const skip = (page - 1) * limit;
+
+        let filtro = {};
+        if (search) {
+            filtro = {
+                $or: [
+                    { nombre: { $regex: search, $options: 'i' } },
+                    { apellido: { $regex: search, $options: 'i' } },
+                    { email: { $regex: search, $options: 'i' } }
+                ]
+            };
+        }
+
+        const [usuarios, total] = await Promise.all([
+            Usuario.find(filtro).select('-password').sort({ registro: -1 }).skip(skip).limit(limit).lean(),
+            Usuario.countDocuments(filtro)
+        ]);
+
+        res.json({
+            usuarios,
+            pagination: { page, pages: Math.ceil(total / limit), total }
+        });
     } catch (error) {
         res.status(500).json({ msg: 'Error al cargar usuarios' });
     }
 };
 
-exports.crearUsuarioPanel = async (req, res) => {
+// --- OBTENER VENTAS PANEL (Corregido para Frontend) ---
+exports.obtenerVentasPanel = async (req, res) => {
     try {
-        const { nombre, apellido, email, password, rol, direccion } = req.body;
-        
-        if (!nombre || !email || !password) {
-            return res.status(400).json({ msg: 'Nombre, email y contraseña son obligatorios' });
-        }
-        
-        const salt = await bcrypt.genSalt(10);
-        const passwordEncriptada = await bcrypt.hash(password, salt);
-        const nuevoUsuario = new Usuario({ 
-            nombre, 
-            apellido, 
-            email, 
-            password: passwordEncriptada, // Guardamos la versión segura
-            rol, 
-            direccion 
-        });
-        
-        await nuevoUsuario.save();
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const search = req.query.search || '';
+        const skip = (page - 1) * limit;
 
-        res.status(201).json({ msg: 'Usuario creado exitosamente', usuario: nuevoUsuario });
+        let filtro = {};
+        if (search) {
+            filtro = {
+                $or: [
+                    { numeroOrden: { $regex: search, $options: 'i' } },
+                    { "usuario.nombre": { $regex: search, $options: 'i' } }
+                ]
+            };
+        }
+
+        const [ventas, total] = await Promise.all([
+            Venta.find(filtro).sort({ fecha: -1 }).skip(skip).limit(limit).lean(),
+            Venta.countDocuments(filtro)
+        ]);
+
+        res.json({
+            ventas,
+            pagination: { page, pages: Math.ceil(total / limit), total }
+        });
     } catch (error) {
-        console.error("Error al crear usuario:", error);
-        res.status(500).json({ msg: 'Error al crear usuario. Verifica que el correo no esté duplicado.' });
+        res.status(500).json({ msg: 'Error al cargar ventas' });
     }
 };
 
-// Editar Usuario
+// --- OPERACIONES CRUD USUARIOS ---
+exports.crearUsuarioPanel = async (req, res) => {
+    try {
+        const { nombre, apellido, email, password, rol, direccion } = req.body;
+        if (!nombre || !email || !password) return res.status(400).json({ msg: 'Faltan campos obligatorios' });
+        
+        const salt = await bcrypt.genSalt(10);
+        const passwordEncriptada = await bcrypt.hash(password, salt);
+        
+        const nuevoUsuario = new Usuario({ nombre, apellido, email, password: passwordEncriptada, rol, direccion });
+        await nuevoUsuario.save();
+        res.status(201).json({ msg: 'Usuario creado', usuario: nuevoUsuario });
+    } catch (error) {
+        res.status(500).json({ msg: 'Error al crear usuario' });
+    }
+};
+
 exports.actualizarUsuarioPanel = async (req, res) => {
     try {
-        
         const { nombre, apellido, email, rol, direccion, password } = req.body;
-        
         const datosAActualizar = { nombre, apellido, email, rol, direccion };
-        
-        // Si el admin escribió una nueva contraseña, también la encriptamos
+
         if (password && password.trim() !== '') {
             const salt = await bcrypt.genSalt(10);
             datosAActualizar.password = await bcrypt.hash(password, salt);
         }
 
-        const usuarioActualizado = await Usuario.findByIdAndUpdate(
-            req.params.id,
-            datosAActualizar,
-            { new: true } 
-        ).select('-password'); 
-
-        if (!usuarioActualizado) {
-            return res.status(404).json({ msg: 'Usuario no encontrado' });
-        }
-
+        const usuarioActualizado = await Usuario.findByIdAndUpdate(req.params.id, datosAActualizar, { new: true }).select('-password');
         res.json({ msg: 'Usuario actualizado', usuario: usuarioActualizado });
     } catch (error) {
-        console.error("Error al actualizar usuario:", error);
-        res.status(500).json({ msg: 'Error al actualizar usuario' });
+        res.status(500).json({ msg: 'Error al actualizar' });
     }
 };
 
-// Eliminar Usuario
 exports.eliminarUsuarioPanel = async (req, res) => {
     try {
-        const usuarioEliminado = await Usuario.findByIdAndDelete(req.params.id);
-        if (!usuarioEliminado) {
-            return res.status(404).json({ msg: 'Usuario no encontrado' });
-        }
-        res.json({ msg: 'Usuario eliminado correctamente' });
+        await Usuario.findByIdAndDelete(req.params.id);
+        res.json({ msg: 'Usuario eliminado' });
     } catch (error) {
-        console.error("Error al eliminar usuario:", error);
-        res.status(500).json({ msg: 'Error al eliminar usuario' });
+        res.status(500).json({ msg: 'Error al eliminar' });
     }
 };
 
-
-exports.obtenerVentasPanel = async (req, res) => {
+// --- OPERACIONES UNIVERSALES ---
+exports.eliminarDatoUniversal = async (req, res) => {
     try {
-        const ventas = await Venta.find().sort({ fechaPedido: -1 });
-        res.json(ventas);
+        const { dbName, tableName, id } = req.params;
+        const db = mongoose.connection.client.db(dbName);
+        const resultado = await db.collection(tableName).deleteOne({ _id: new ObjectId(id) });
+        res.json({ msg: 'Registro eliminado' });
     } catch (error) {
-        res.status(500).json({ msg: 'Error al cargar ventas' });
+        res.status(500).json({ msg: 'Error al eliminar registro' });
+    }
+};
+
+exports.crearDatoUniversal = async (req, res) => {
+    try {
+        const { dbName, tableName } = req.params;
+        const db = mongoose.connection.client.db(dbName);
+        const resultado = await db.collection(tableName).insertOne(req.body);
+        res.status(201).json({ msg: 'Registro creado', id: resultado.insertedId });
+    } catch (error) {
+        res.status(500).json({ msg: 'Error al crear' });
+    }
+};
+
+exports.editarDatoUniversal = async (req, res) => {
+    try {
+        const { dbName, tableName, id } = req.params;
+        const datosActualizados = { ...req.body };
+        delete datosActualizados._id;
+
+        const db = mongoose.connection.client.db(dbName);
+        await db.collection(tableName).updateOne({ _id: new ObjectId(id) }, { $set: datosActualizados });
+        res.json({ msg: "Actualizado correctamente" });
+    } catch (error) {
+        res.status(500).json({ msg: "Error al actualizar" });
     }
 };
