@@ -140,6 +140,10 @@ const AdminPanel = () => {
             const coloresExtraidos = [...new Set(formData.variants.map(v => v.color))].filter(Boolean);
             const tallasExtraidas = [...new Set(formData.variants.map(v => v.size))].filter(Boolean);
 
+            const skuDefinitivo = formData.sku && formData.sku.trim() !== '' 
+                ? formData.sku 
+                : generarSKU(formData.product_type, formData.title);
+
             // 2. Armamos el paquete asegurando que todos los campos del catálogo se enteren del cambio
             const payload = { 
                 ...formData, 
