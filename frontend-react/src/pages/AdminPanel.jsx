@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react'; // IMPORTACIÓN CRÍTICA
+import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import PaginationControls from '../components/PaginationControls';
@@ -43,29 +43,13 @@ const AdminPanel = () => {
 
     const baseURL = import.meta.env.VITE_API_URL || 'https://dbgymshark-ddk1.onrender.com/api';
 
-    // --- EXTRACCIÓN DE OPCIONES PARA DATALISTS (PRODUCT_TYPE, COLOR, TALLA) ---
-    const categoriasExistentes = useMemo(() => 
-        [...new Set(productos.map(p => p.product_type))].filter(Boolean), 
-    [productos]);
-
-    const coloresExistentes = useMemo(() => {
-        const colores = productos.flatMap(p => p.colors_available || []);
-        return [...new Set(colores)].filter(Boolean);
-    }, [productos]);
-
-    const tallasExistentes = useMemo(() => {
-        const tallas = productos.flatMap(p => p.sizes_available || []);
-        return [...new Set(tallas)].filter(Boolean);
-    }, [productos]);
-
     const getAuthHeaders = () => {
         const token = localStorage.getItem('token') || '';
         return { 'x-auth-token': token, 'Authorization': `Bearer ${token}` };
     };
 
-    // --- CARGA DE DATOS ---
+    // --- CARGA DE PRODUCTOS ---
     const cargarProductos = async () => {
-        setCargando(true);
         try {
             const res = await axios.get(`${baseURL}/productos?page=${pagProductos}&limit=${itemsPorPagina}&search=${busquedaProd}`, { headers: getAuthHeaders() });
             if (res.data) {
@@ -74,14 +58,14 @@ const AdminPanel = () => {
                 setTotalProductosCount(res.data.pagination?.total || 0); 
             }
         } catch (error) { console.error("Error productos:", error); }
-        finally { setCargando(false); }
     };
 
+    // --- CARGA DE USUARIOS Y VENTAS (Contadores y Buscadores Vinculados) ---
     const cargarDatosExtra = async (vista) => {
-        const paginaActual = vista === 'usuarios' ? pagUsuarios : pagVentas;
-        const busquedaActual = vista === 'usuarios' ? busquedaUsr : busquedaVen;
+        const pagina = vista === 'usuarios' ? pagUsuarios : pagVentas;
+        const search = vista === 'usuarios' ? busquedaUsr : busquedaVen;
         try {
-            const res = await axios.get(`${baseURL}/admin/panel/${vista}?page=${paginaActual}&limit=${itemsPorPagina}&search=${busquedaActual}`, { headers: getAuthHeaders() });
+            const res = await axios.get(`${baseURL}/admin/panel/${vista}?page=${pagina}&limit=${itemsPorPagina}&search=${search}`, { headers: getAuthHeaders() });
             if (vista === 'usuarios') {
                 setListaUsuarios(res.data.usuarios || []);
                 setTotalPagUsuarios(res.data.pagination?.pages || 1);
@@ -98,6 +82,11 @@ const AdminPanel = () => {
     useEffect(() => { cargarDatosExtra('usuarios'); }, [pagUsuarios, busquedaUsr]);
     useEffect(() => { cargarDatosExtra('ventas'); }, [pagVentas, busquedaVen]);
 
+    // --- EXTRACCIÓN DE OPCIONES PARA DATALISTS ---
+    const categoriasExistentes = useMemo(() => [...new Set(productos.map(p => p.product_type))].filter(Boolean), [productos]);
+    const coloresExistentes = useMemo(() => [...new Set(productos.flatMap(p => p.colors_available || []))].filter(Boolean), [productos]);
+    const tallasExistentes = useMemo(() => [...new Set(productos.flatMap(p => p.sizes_available || []))].filter(Boolean), [productos]);
+
     const variantsByColor = useMemo(() => {
         const grouped = {};
         formData.variants.forEach((v, index) => {
@@ -110,11 +99,7 @@ const AdminPanel = () => {
 
     const addSizeToColor = (colorName) => {
         const currentImage = formData.variants.find(v => v.color === colorName)?.image || "";
-        const newSize = { 
-            color: colorName, size: '', price: formData.price || 0, 
-            inventory_quantity: 0, sku: '', image: currentImage 
-        };
-        setFormData({ ...formData, variants: [...formData.variants, newSize] });
+        setFormData({ ...formData, variants: [...formData.variants, { color: colorName, size: '', price: formData.price || 0, inventory_quantity: 0, sku: '', image: currentImage }] });
     };
 
     const addEmptyColorGroup = () => {
@@ -122,44 +107,19 @@ const AdminPanel = () => {
     };
 
     const updateColorImage = (colorName, newUrl) => {
-        const updatedVariants = formData.variants.map(v => 
-            v.color === colorName ? { ...v, image: newUrl } : v
-        );
-        setFormData({ ...formData, variants: updatedVariants });
+        setFormData({ ...formData, variants: formData.variants.map(v => v.color === colorName ? { ...v, image: newUrl } : v) });
     };
 
     const handleGuardar = async (e) => {
         e.preventDefault();
         try {
-            const prices = formData.variants.map(v => v.price);
-            const payload = {
-                ...formData,
-                image_src: [...new Set(formData.variants.map(v => v.image))].filter(img => img).join(', '),
-                image_principal: formData.variants[0]?.image || "",
-                colors_available: [...new Set(formData.variants.map(v => v.color))].filter(c => c),
-                sizes_available: [...new Set(formData.variants.map(v => v.size))].filter(s => s),
-                price_range: { 
-                    min: prices.length > 0 ? Math.min(...prices) : formData.price,
-                    max: prices.length > 0 ? Math.max(...prices) : formData.price
-                },
-                handle: formData.title.toLowerCase().replace(/ /g, '-')
-            };
-
+            const payload = { ...formData, handle: formData.title.toLowerCase().replace(/ /g, '-') };
             if (editandoId) await axios.put(`${baseURL}/productos/${editandoId}`, payload, { headers: getAuthHeaders() });
             else await axios.post(`${baseURL}/productos`, payload, { headers: getAuthHeaders() });
-            
-            setModalAbierto(false);
+            setModalAbierto(false); 
             cargarProductos();
             alert("Guardado con éxito");
-        } catch (error) {
-            alert(error.response?.data?.msg || "Error al guardar. Verifique SKU.");
-        }
-    };
-
-    const formatFecha = (fechaRaw) => {
-        if (!fechaRaw) return "N/A";
-        const d = fechaRaw.$date ? new Date(fechaRaw.$date) : new Date(fechaRaw);
-        return isNaN(d.getTime()) ? "Fecha Inválida" : d.toLocaleDateString();
+        } catch (error) { alert("Error al guardar producto."); }
     };
 
     return (
@@ -197,12 +157,13 @@ const AdminPanel = () => {
                 <div className="admin-controls-row">
                     <div className="search-bar-makia">
                         <i className="fas fa-search"></i>
-                        <input type="text" placeholder="Buscar..." value={vistaActiva === 'productos' ? busquedaProd : vistaActiva === 'usuarios' ? busquedaUsr : busquedaVen} 
+                        <input type="text" placeholder="Buscar..." 
+                            value={vistaActiva === 'productos' ? busquedaProd : vistaActiva === 'usuarios' ? busquedaUsr : busquedaVen} 
                             onChange={(e) => vistaActiva === 'productos' ? setBusquedaProd(e.target.value) : vistaActiva === 'usuarios' ? setBusquedaUsr(e.target.value) : setBusquedaVen(e.target.value)} />
                     </div>
                     {vistaActiva === 'productos' && (
-                        <button className="admin-add-btn" onClick={() => { setEditandoId(null); setFormData({title:'', product_type:'', vendor:'Gymshark | Be a visionary.', sku:'', price:0, inventory_quantity:0, variants:[]}); setModalAbierto(true); }}>
-                            + Nuevo Producto
+                        <button className="admin-add-btn" onClick={() => { setEditandoId(null); setFormData({title:'', product_type:'', vendor:'Gymshark', sku:'', price:0, inventory_quantity:0, variants:[]}); setModalAbierto(true); }}>
+                            + NUEVO PRODUCTO
                         </button>
                     )}
                 </div>
@@ -210,9 +171,9 @@ const AdminPanel = () => {
                 <div className="admin-table-wrapper">
                     <table className="admin-table-fixed">
                         <thead>
-                            {vistaActiva === 'productos' && <tr><th>Imagen</th><th className="col-title">Título</th><th>Tipo</th><th className="center">Acciones</th></tr>}
-                            {vistaActiva === 'usuarios' && <tr><th>Nombre Completo</th><th>Email</th><th>Rol</th><th>Registro</th></tr>}
-                            {vistaActiva === 'ventas' && <tr><th>Orden</th><th>Cliente</th><th>Fecha</th><th>Total</th><th>Estado</th></tr>}
+                            {vistaActiva === 'productos' && <tr><th>Imagen</th><th>Título</th><th>Tipo</th><th className="center">Acciones</th></tr>}
+                            {vistaActiva === 'usuarios' && <tr><th>Nombre Completo</th><th>Email</th><th>Rol</th><th className="center">Acciones</th></tr>}
+                            {vistaActiva === 'ventas' && <tr><th>Orden</th><th>Cliente</th><th>Fecha</th><th>Total</th><th className="center">Estado</th></tr>}
                         </thead>
                         <tbody>
                             {vistaActiva === 'productos' && productos.map(p => (
@@ -226,23 +187,18 @@ const AdminPanel = () => {
                                 </tr>
                             ))}
                             {vistaActiva === 'usuarios' && listaUsuarios.map(u => (
-                                <tr key={u._id}>
-                                    <td>{u.nombre} {u.apellido}</td><td>{u.email}</td><td><span className="role-badge">{u.rol}</span></td>
-                                    <td>{formatFecha(u.createdAt)}</td>
-                                </tr>
+                                <tr key={u._id}><td>{u.nombre} {u.apellido}</td><td>{u.email}</td><td className="center"><span className="role-badge">{u.rol}</span></td><td className="center">---</td></tr>
                             ))}
                             {vistaActiva === 'ventas' && listaVentas.map(v => (
-                                <tr key={v._id}>
-                                    <td className="center">#{v.numeroOrden || v._id.substring(0,8)}</td>
-                                    <td>{v.usuario?.nombre || 'Anónimo'}</td>
-                                    <td>{formatFecha(v.fecha)}</td>
-                                    <td>${v.total?.toFixed(2)}</td><td><span className="role-badge">{v.estado || 'Pagado'}</span></td>
-                                </tr>
+                                <tr key={v._id}><td>#{v.numeroOrden || v._id.substring(0,8)}</td><td>{v.usuario?.nombre || 'Anónimo'}</td><td>{new Date(v.fecha).toLocaleDateString()}</td><td>${v.total?.toFixed(2)}</td><td className="center"><span className="role-badge">{v.estado || 'Pagado'}</span></td></tr>
                             ))}
                         </tbody>
                     </table>
                 </div>
-                <PaginationControls page={vistaActiva === 'productos' ? pagProductos : vistaActiva === 'usuarios' ? pagUsuarios : pagVentas} totalPages={vistaActiva === 'productos' ? totalPagProductos : vistaActiva === 'usuarios' ? totalPagUsuarios : totalPagVentas} onPageChange={vistaActiva === 'productos' ? setPagProductos : vistaActiva === 'usuarios' ? setPagUsuarios : setPagVentas} />
+                <PaginationControls 
+                    page={vistaActiva === 'productos' ? pagProductos : vistaActiva === 'usuarios' ? pagUsuarios : pagVentas} 
+                    totalPages={vistaActiva === 'productos' ? totalPagProductos : vistaActiva === 'usuarios' ? totalPagUsuarios : totalPagVentas} 
+                    onPageChange={vistaActiva === 'productos' ? setPagProductos : vistaActiva === 'usuarios' ? setPagUsuarios : setPagVentas} />
             </main>
 
             {modalAbierto && (
@@ -256,26 +212,25 @@ const AdminPanel = () => {
                                 <div className="field-group"><label>SKU Base</label><input type="text" value={formData.sku} onChange={e => setFormData({...formData, sku: e.target.value})} /></div>
                                 <div className="field-group"><label>Precio Base</label><input type="number" value={formData.price} onChange={e => setFormData({...formData, price: Number(e.target.value)})} /></div>
                             </div>
+
                             <div className="variants-section">
-                                <div className="section-header-variants">
-                                    <h3>Variantes</h3>
-                                    <button type="button" className="btn-makia-save" onClick={addEmptyColorGroup}>+ Color</button>
-                                </div>
+                                <div className="section-header-variants"><h3>Variantes</h3><button type="button" className="btn-makia-save" onClick={addEmptyColorGroup}>+ Color</button></div>
                                 {variantsByColor.map((group, idx) => (
                                     <div key={idx} className="color-group-card">
                                         <div className="color-header-row">
                                             <div className="field-group color-input-fixed"><label>Color</label><input type="text" list="lista-colores" value={group.color} onChange={e => setFormData({...formData, variants: formData.variants.map(v => v.color === group.color ? {...v, color: e.target.value} : v)})} /></div>
                                             <div className="field-group url-input-expanded"><label>URL Imagen Color</label><input type="text" value={group.image} onChange={e => updateColorImage(group.color, e.target.value)} /></div>
-                                            <div className="mini-preview-container">{group.image ? <img src={group.image} alt="p" className="form-mini-preview" /> : <div className="form-mini-preview-placeholder">URL</div>}</div>
                                         </div>
                                         <div className="sizes-grid">
                                             {group.items.map(item => (
-                                                <div key={item.originalIndex} className="size-row">
-                                                    <div className="field-group"><label>Talla</label><input type="text" list="lista-tallas" value={item.size} onChange={e => { const nv = [...formData.variants]; nv[item.originalIndex].size = e.target.value; setFormData({...formData, variants: nv}); }} /></div>
-                                                    <div className="field-group"><label>Precio</label><input type="number" value={item.price} onChange={e => { const nv = [...formData.variants]; nv[item.originalIndex].price = Number(e.target.value); setFormData({...formData, variants: nv}); }} /></div>
-                                                    <div className="field-group"><label>Stock</label><input type="number" value={item.inventory_quantity} onChange={e => { const nv = [...formData.variants]; nv[item.originalIndex].inventory_quantity = Number(e.target.value); setFormData({...formData, variants: nv}); }} /></div>
-                                                    <div className="field-group"><label>SKU Variante</label><input type="text" value={item.sku || ""} onChange={e => { const nv = [...formData.variants]; nv[item.originalIndex].sku = e.target.value; setFormData({...formData, variants: nv}); }} /></div>
-                                                    <button type="button" className="btn-x" onClick={() => setFormData({...formData, variants: formData.variants.filter((_, i) => i !== item.originalIndex)})}>✕</button>
+                                                <div key={item.originalIndex} className="size-row-container">
+                                                    <div className="size-row-inputs">
+                                                        <div className="field-group"><label>Talla</label><input type="text" list="lista-tallas" value={item.size} onChange={e => { const nv = [...formData.variants]; nv[item.originalIndex].size = e.target.value; setFormData({...formData, variants: nv}); }} /></div>
+                                                        <div className="field-group"><label>Precio</label><input type="number" value={item.price} onChange={e => { const nv = [...formData.variants]; nv[item.originalIndex].price = Number(e.target.value); setFormData({...formData, variants: nv}); }} /></div>
+                                                        <div className="field-group"><label>Stock</label><input type="number" value={item.inventory_quantity} onChange={e => { const nv = [...formData.variants]; nv[item.originalIndex].inventory_quantity = Number(e.target.value); setFormData({...formData, variants: nv}); }} /></div>
+                                                        <div className="field-group sku-field"><label>SKU Variante</label><input type="text" value={item.sku || ""} onChange={e => { const nv = [...formData.variants]; nv[item.originalIndex].sku = e.target.value; setFormData({...formData, variants: nv}); }} /></div>
+                                                    </div>
+                                                    <button type="button" className="btn-x-centered" onClick={() => setFormData({...formData, variants: formData.variants.filter((_, i) => i !== item.originalIndex)})}>✕</button>
                                                 </div>
                                             ))}
                                             <button type="button" className="btn-add-size" onClick={() => addSizeToColor(group.color)}>+ Talla</button>
