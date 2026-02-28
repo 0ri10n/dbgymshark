@@ -148,6 +148,7 @@ const AdminPanel = () => {
             const payload = { 
                 ...formData, 
                 handle: formData.title.toLowerCase().replace(/ /g, '-'),
+                sku: skuDefinitivo,
                 variants: formData.variants,
                 // ¡Aquí está la clave! Actualizamos las listas maestras
                 colors_available: coloresExtraidos,
