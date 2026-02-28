@@ -4,12 +4,11 @@
 :root {
     --makia-black: #000000;
     --makia-surface: #111111;
-    --makia-blue: #4da3ff;        /* AZUL VIBRANTE MAKIA */
+    --makia-blue: #4da3ff;
     --makia-border: #222222;
     --makia-text: #ffffff;
     --makia-muted: #888888;
-    --makia-danger: #ff4d4d;      /* ROJO ELIMINAR */
-    --makia-purple: #8b5cf6;
+    --makia-danger: #ff4d4d;
     --radius: 12px;
     --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -58,6 +57,8 @@
 .welcome-text { 
     font-size: 0.75rem; 
     color: var(--makia-muted); 
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
 .user-name-blue-header { 
@@ -83,24 +84,11 @@
     border-color: var(--makia-danger);
 }
 
-/* LÍNEA DIVISORIA SUTIL BAJO HEADER */
 .header-divider-sutil {
     height: 1px;
     background: rgba(255, 255, 255, 0.05);
     width: 100%;
     margin: 0 auto 2.5rem;
-}
-
-.header-divider {
-    border: 0;
-    border-top: 1px solid var(--makia-border);
-    margin: 0 0 1.5rem 0;
-}
-
-.panel-subtitle {
-    font-size: 1.6rem;
-    font-weight: 700;
-    margin-bottom: 2.5rem;
 }
 
 /* TARJETAS DE ESTADÍSTICAS */
@@ -130,7 +118,7 @@
 
 .active-prod { border-color: var(--makia-blue) !important; box-shadow: 0 0 20px rgba(77, 163, 255, 0.2); }
 .active-ventas { border-color: #10b981 !important; box-shadow: 0 0 20px rgba(16, 185, 129, 0.2); }
-.active-user { border-color: var(--makia-purple) !important; box-shadow: 0 0 20px rgba(139, 92, 246, 0.2); }
+.active-user { border-color: #8b5cf6 !important; box-shadow: 0 0 20px rgba(139, 92, 246, 0.2); }
 
 /* CONTROLES Y BUSCADOR */
 .admin-controls-row {
@@ -150,20 +138,8 @@
     gap: 10px;
 }
 
-.search-bar-makia i {
-    color: #000;
-    font-size: 18px;
-}
-
-.search-bar-makia input {
-    border: none;
-    background: transparent;
-    color: #000;
-    width: 100%;
-    outline: none;
-    font-family: inherit;
-    font-size: 0.95rem;
-}
+.search-bar-makia i { color: #000; font-size: 18px; }
+.search-bar-makia input { border: none; background: transparent; color: #000; width: 100%; outline: none; font-size: 0.95rem; }
 
 .admin-add-btn {
     background: var(--makia-blue);
@@ -182,57 +158,16 @@
     border: 1px solid var(--makia-border);
     border-radius: 18px;
     overflow: hidden;
-    margin-bottom: 2rem;
 }
 
-.admin-table-fixed {
-    width: 100%;
-    border-collapse: collapse;
-}
+.admin-table-fixed { width: 100%; border-collapse: collapse; }
+.admin-table-fixed th { background: #080808; padding: 1.5rem; color: var(--makia-muted); text-transform: uppercase; font-size: 0.8rem; }
+.admin-table-fixed td { padding: 1.5rem; border-bottom: 1px solid rgba(255, 255, 255, 0.03); text-align: center; vertical-align: middle; }
 
-.admin-table-fixed th {
-    background: #080808;
-    padding: 1.5rem;
-    color: var(--makia-muted);
-    text-transform: uppercase;
-    text-align: center; 
-    font-size: 0.8rem;
-    letter-spacing: 1.5px;
-    border-bottom: 1px solid var(--makia-border);
-}
+.table-thumb { width: 55px; height: 55px; object-fit: cover; border-radius: 10px; }
+.role-badge { padding: 5px 12px; border-radius: 6px; background: rgba(77, 163, 255, 0.1); color: var(--makia-blue); font-size: 0.75rem; font-weight: bold; text-transform: uppercase; }
 
-.admin-table-fixed td {
-    padding: 1.5rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
-    vertical-align: middle;
-    text-align: center; 
-    color: var(--makia-text);
-}
-
-.col-title { width: 30%; }
-
-.table-thumb {
-    width: 55px;
-    height: 55px;
-    object-fit: cover;
-    border-radius: 10px;
-}
-
-.col-actions {
-    display: flex;
-    gap: 10px;
-    justify-content: center;
-}
-
-.btn-table {
-    border: none; 
-    padding: 9px 18px; 
-    border-radius: 8px; 
-    font-weight: 800; 
-    cursor: pointer; 
-    text-transform: uppercase; 
-    font-size: 0.7rem;
-}
+.btn-table { border: none; padding: 9px 18px; border-radius: 8px; font-weight: 800; cursor: pointer; text-transform: uppercase; font-size: 0.7rem; margin: 0 5px; }
 .btn-edit { background: #fff; color: #000; }
 .btn-delete { background: var(--makia-danger); color: #fff; }
 
@@ -260,29 +195,17 @@
 }
 
 .admin-form-vertical { display: flex; flex-direction: column; gap: 2rem; }
-
-.form-grid-2-cols {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 30px;
-    margin-bottom: 10px;
-}
-
+.form-grid-2-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
 .field-group { display: flex; flex-direction: column; gap: 10px; }
 .field-group label { font-size: 0.85rem; font-weight: 700; color: var(--makia-muted); text-transform: uppercase; }
 .field-group input, .field-group select { background: #111; border: 1px solid var(--makia-border); color: #fff; padding: 14px; border-radius: 10px; outline: none; }
 
-/* VARIANTES - CORRECCIÓN DISTRIBUCIÓN BOTÓN +COLOR */
-.variants-section {
-    display: flex;
-    flex-direction: column;
-}
-
+/* VARIANTES Y +COLOR */
 .section-header-variants {
     display: flex;
-    justify-content: space-between; /* Botón a la derecha */
+    justify-content: space-between;
     align-items: center;
-    margin-bottom: 25px; /* Espacio con las variantes */
+    margin-bottom: 25px;
 }
 
 .color-group-card {
@@ -296,77 +219,62 @@
 
 .color-header-row { 
     display: flex; 
-    gap: 25px; 
+    gap: 20px; 
     align-items: flex-end; 
-    margin-bottom: 35px;
+    margin-bottom: 25px;
 }
 
-.color-input-fixed { width: 220px; }
-.url-input-expanded { flex: 1; }
-
-/* PREVISUALIZACIÓN DE IMAGEN */
-.mini-preview-container { 
-    display: flex; 
-    align-items: center; 
-    justify-content: center; 
-    width: 65px;
-    height: 65px;
+/* PREVISUALIZACIÓN DE IMAGEN RESTAURADA */
+.mini-preview-box {
+    width: 55px;
+    height: 55px;
     background: #080808;
-    border-radius: 10px;
     border: 1px solid var(--makia-border);
-    overflow: hidden;
-}
-
-.form-mini-preview {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.form-mini-preview-placeholder {
-    font-size: 0.6rem;
-    color: #444;
-}
-
-/* FILAS DE TALLAS - CORRECCIÓN SKU Y CENTRADO DE X */
-.size-row {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr) 40px; /* 3 columnas + espacio para X */
-    gap: 15px;
-    background: #0f0f0f;
-    padding: 20px;
-    border-radius: 12px;
-    align-items: center; /* Centrado vertical */
-    margin-bottom: 15px;
-}
-
-/* El SKU ocupa el espacio inferior de los 3 inputs */
-.size-row .field-group:nth-child(4) {
-    grid-column: 1 / span 3; 
-    margin-top: 5px;
-}
-
-/* LA X abarca ambas filas para quedar centrada */
-.size-row .btn-x {
-    grid-column: 4;
-    grid-row: 1 / span 2; 
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
-    height: 100%;
+    overflow: hidden;
+}
+.mini-preview-box img { width: 100%; height: 100%; object-fit: cover; }
+.preview-placeholder { font-size: 0.55rem; color: var(--makia-muted); font-weight: bold; }
+
+/* FILAS DE TALLAS Y SKU ABAJO */
+.size-row-container {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background: #0f0f0f;
+    padding: 15px;
+    border-radius: 12px;
+    margin-bottom: 12px;
 }
 
-.btn-x {
-    background: none;
-    color: var(--makia-danger);
+.size-row-inputs {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+}
+
+.sku-field {
+    grid-column: 1 / span 3;
+    margin-top: 8px;
+}
+
+/* TACHES ROJOS CENTRADOS */
+.btn-x-red {
+    background: transparent;
+    color: var(--makia-danger) !important;
     border: none;
-    cursor: pointer;
-    font-size: 1.8rem;
+    font-size: 1.6rem;
     font-weight: bold;
-    transition: var(--transition);
+    cursor: pointer;
+    padding: 0 10px;
+    transition: 0.2s;
 }
 
-.btn-x:hover { color: #ff0000; transform: scale(1.2); }
+.btn-x-red:hover { transform: scale(1.2); color: #ff0000 !important; }
 
 .btn-add-size {
     background: transparent;
@@ -378,10 +286,7 @@
     font-weight: 700;
     cursor: pointer;
     margin-top: 10px;
-    transition: all 0.2s ease;
 }
-
-.btn-add-size:hover { border-color: var(--makia-blue); background: rgba(77, 163, 255, 0.05); }
 
 /* FOOTER MODAL */
 .modal-footer {
@@ -393,34 +298,5 @@
     padding-top: 2rem;
 }
 
-.btn-makia-save {
-    background: var(--makia-blue);
-    color: #fff;
-    border-radius: 10px;
-    padding: 14px 30px;
-    font-weight: 800;
-    border: none;
-    cursor: pointer;
-    text-transform: uppercase;
-}
-
-.btn-makia-cancel {
-    background: #fff;
-    color: #000;
-    border-radius: 10px;
-    padding: 14px 30px;
-    font-weight: 800;
-    border: none;
-    cursor: pointer;
-    text-transform: uppercase;
-}
-
-.role-badge {
-    padding: 5px 12px;
-    border-radius: 6px;
-    background: rgba(77, 163, 255, 0.1);
-    color: var(--makia-blue);
-    font-size: 0.75rem;
-    font-weight: bold;
-    text-transform: uppercase;
-}
+.btn-makia-save { background: var(--makia-blue); color: #fff; border-radius: 10px; padding: 14px 30px; font-weight: 800; border: none; cursor: pointer; text-transform: uppercase; }
+.btn-makia-cancel { background: #fff; color: #000; border-radius: 10px; padding: 14px 30px; font-weight: 800; border: none; cursor: pointer; text-transform: uppercase; }
