@@ -8,31 +8,37 @@ import './Catalogo.css';
 const CATEGORIAS_LIMPIAS = [
     'Accessories', 'Bags', 'Baselayers', 'Bodysuits', 'Bottles', 'Bottoms',
     'Crop Tops', 'Dresses', 'Footwear', 'Gift Cards', 'Headwear', 'Hoodies',
-    'Jackets', 'Jackets & Outerwear', 'Joggers', 'Leggings', 'Long Sleeve Tops',
-    'Miscellaneous', 'One Pieces', 'Outerwear', 'Pants', 'Pullovers',
-    'Short Sleeve Tops', 'Shorts', 'Skorts', 'Sleeveless Tops', 'Socks',
-    'Sports Bras', 'Stringers', 'Sweaters', 'Swimwear', 'T-Shirts',
-    'Tanks', 'Tops', 'Uncategorized', 'Underwear', 'Vests'
+    'Jackets', 'Leggings', 'Pants', 'Shorts', 'Socks', 'Sports Bras', 'T-Shirts', 'Tops'
 ];
 
-// PALETA DE COLORES MAKIA COMPLETA
+// PALETA DE COLORES TOTALMENTE EXPANDIDA
 const getColorHex = (name = "") => {
     const n = name.toLowerCase().trim();
-    if (n === 'black' || n.includes('onyx') || n.includes('asphalt')) return "#111111";
-    if (n === 'white') return "#FFFFFF";
-    if (n.includes('teal') || n.includes('aqua')) return "#008080";
-    if (n.includes('olive') || n.includes('aloe') || n.includes('alpine') || n.includes('green')) return "#2d4d43";
-    if (n.includes('sage') || n.includes('eucalyptus')) return "#b2ac88";
-    if (n.includes('navy') || n.includes('evening blue')) return "#000080";
-    if (n.includes('blue') || n.includes('aegean') || n.includes('lakeside')) return "#1e3a8a";
-    if (n.includes('pink') || n.includes('rose') || n.includes('dolly') || n.includes('guava')) return "#db2777";
-    if (n.includes('red') || n.includes('carmine') || n.includes('cherry')) return "#991b1b";
+    // Escala de Grises y Negros
+    if (n === 'black' || n.includes('onyx') || n.includes('asphalt') || n.includes('charcoal')) return "#111111";
+    if (n === 'white' || n.includes('snow')) return "#FFFFFF";
     if (n.includes('grey') || n.includes('gray') || n.includes('pebble') || n.includes('core')) return "#4b5563";
-    if (n.includes('brown') || n.includes('truffle') || n.includes('espresso')) return "#3b2f2f";
-    if (n.includes('purple') || n.includes('plum') || n.includes('orchid')) return "#6b21a8";
-    if (n.includes('orange') || n.includes('apricot') || n.includes('peach')) return "#f97316";
-    if (n.includes('yellow') || n.includes('lemon')) return "#facc15";
-    return "#374151"; 
+    
+    // Azules y Verdes
+    if (n.includes('teal') || n.includes('aqua') || n.includes('aegean')) return "#008080";
+    if (n.includes('navy') || n.includes('evening blue')) return "#000080";
+    if (n.includes('blue') || n.includes('lakeside') || n.includes('sky')) return "#1e3a8a";
+    if (n.includes('olive') || n.includes('aloe') || n.includes('alpine') || n.includes('green')) return "#2d4d43";
+    if (n.includes('sage') || n.includes('eucalyptus') || n.includes('mint')) return "#b2ac88";
+    
+    // Rojos, Rosas y Morados
+    if (n.includes('pink') || n.includes('rose') || n.includes('dolly') || n.includes('guava')) return "#db2777";
+    if (n.includes('red') || n.includes('carmine') || n.includes('cherry') || n.includes('burgundy')) return "#991b1b";
+    if (n.includes('purple') || n.includes('plum') || n.includes('orchid') || n.includes('violet')) return "#6b21a8";
+    if (n.includes('lilac') || n.includes('lavender')) return "#b666d2";
+    
+    // Colores Tierra y Cálidos
+    if (n.includes('brown') || n.includes('truffle') || n.includes('espresso') || n.includes('baked')) return "#3b2f2f";
+    if (n.includes('beige') || n.includes('sand') || n.includes('ecru') || n.includes('oat')) return "#d6d3d1";
+    if (n.includes('orange') || n.includes('apricot') || n.includes('peach') || n.includes('clay')) return "#f97316";
+    if (n.includes('yellow') || n.includes('lemon') || n.includes('gold')) return "#facc15";
+    
+    return "#374151"; // Color neutro para nombres no reconocidos
 };
 
 const getPrimaryImage = (p = {}) => {
@@ -52,8 +58,9 @@ const Catalogo = () => {
     const [pagina, setPagina] = useState(1);
     const [totalPaginas, setTotalPaginas] = useState(1);
     
+    // FILTROS
     const [catFiltro, setCatFiltro] = useState(null);
-    const [dropdownAbierto, setDropdownAbierto] = useState(false);
+    const [dropdownAbierto, setDropdownAbierto] = useState(false); 
     const [rangoPrecio, setRangoPrecio] = useState(5000); 
     
     const [tallasSeleccionadas, setTallasSeleccionadas] = useState({});
@@ -76,12 +83,13 @@ const Catalogo = () => {
 
     const granTotal = cart.reduce((acc, item) => acc + ((item.precioMXN || item.price) * item.quantity), 0);
 
-    // FUNCIÓN DE COMPRA - SOLUCIÓN AL ERROR 500
     const handleFinalizarCompra = async () => {
+        // RESTRICCIÓN DE SESIÓN
         if (!user) {
-            alert("Inicia sesión para finalizar tu compra.");
+            alert("Debes iniciar sesión para realizar una compra.");
             return;
         }
+
         if (cart.length === 0) return;
 
         try {
@@ -89,7 +97,7 @@ const Catalogo = () => {
             const nombreFinal = `${user.nombre || ''} ${user.apellido || ''}`.trim();
 
             const ordenData = {
-                nombreCliente: nombreFinal || "Cliente Registrado",
+                nombreCliente: nombreFinal,
                 productos: cart.map(item => ({
                     nombre: item.title,
                     talla: item.selectedSize || "N/A",
@@ -103,20 +111,18 @@ const Catalogo = () => {
             await axios.post(`${baseURL}/admin/panel/ventas`, ordenData, {
                 headers: { 'x-auth-token': token }
             });
-            
-            alert("¡Compra finalizada con éxito!");
+            alert("¡Compra exitosa!");
             clearCart();
             setIsCartOpen(false);
         } catch (error) {
-            console.error("Error 500:", error.response?.data);
+            console.error("Error al comprar:", error);
             alert("Error en el servidor al procesar la venta.");
         }
     };
 
     const productosFiltrados = productos.filter(p => {
-        const cumpleCat = !catFiltro || p.product_type === catFiltro;
-        const cumplePrecio = (p.precioMXN || p.price) <= rangoPrecio;
-        return cumpleCat && cumplePrecio;
+        const precio = p.precioMXN || p.price;
+        return (!catFiltro || p.product_type === catFiltro) && precio <= rangoPrecio;
     });
 
     return (
@@ -139,10 +145,13 @@ const Catalogo = () => {
             <div className="store-layout-container">
                 <aside className="sidebar-filter-box">
                     <div className="sidebar-sticky-wrapper">
-                        {/* FILTRO DROPDOWN CATEGORÍAS */}
+                        {/* TÍTULO DE SECCIÓN */}
+                        <h2 className="sidebar-h2-main">Filtros</h2>
+
+                        {/* DROPDOWN DE CATEGORÍA */}
                         <div className="filter-dropdown-container">
                             <button className="filter-dropdown-btn" onClick={() => setDropdownAbierto(!dropdownAbierto)}>
-                                <span>{catFiltro || "Categorías"}</span>
+                                <span>{catFiltro || "Categoría"}</span>
                                 <i className={`fas fa-chevron-${dropdownAbierto ? 'up' : 'down'}`}></i>
                             </button>
                             {dropdownAbierto && (
@@ -157,13 +166,14 @@ const Catalogo = () => {
                         </div>
 
                         {catFiltro && (
-                            <button className="btn-clear-filter" onClick={() => setCatFiltro(null)}>Limpiar ✕</button>
+                            <button className="btn-clear-filter" onClick={() => setCatFiltro(null)}>Limpiar Filtro ✕</button>
                         )}
 
-                        {/* FILTRO RANGO PRECIO */}
+                        {/* RANGO DE PRECIO */}
                         <div className="price-filter-section">
                             <h2 className="sidebar-h2">Precio máx: ${rangoPrecio}</h2>
                             <input type="range" min="0" max="5000" step="100" value={rangoPrecio} onChange={(e) => setRangoPrecio(Number(e.target.value))} className="makia-range-slider" />
+                            <div className="range-labels"><span>$0</span><span>$5,000+</span></div>
                         </div>
                     </div>
                 </aside>
@@ -210,7 +220,7 @@ const Catalogo = () => {
                 </main>
             </div>
 
-            {/* MODAL BOLSA CON MINIATURAS CORREGIDAS */}
+            {/* BOLSA DE COMPRAS */}
             {isCartOpen && (
                 <div className="cart-modal-overlay" onClick={() => setIsCartOpen(false)}>
                     <div className="cart-modal-panel" onClick={e => e.stopPropagation()}>
