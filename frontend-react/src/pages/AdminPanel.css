@@ -280,9 +280,9 @@
 
 .section-header-variants {
     display: flex;
-    justify-content: space-between; /* Mueve el botón a la derecha */
+    justify-content: space-between; /* Botón a la derecha */
     align-items: center;
-    margin-bottom: 25px; /* Espacio pequeño entre el encabezado y las variantes */
+    margin-bottom: 25px; /* Espacio con las variantes */
 }
 
 .color-group-card {
@@ -328,29 +328,32 @@
     color: #444;
 }
 
-/* FILAS DE TALLAS - CORRECCIÓN SKU HACIA ABAJO */
+/* FILAS DE TALLAS - CORRECCIÓN SKU Y CENTRADO DE X */
 .size-row {
     display: grid;
-    /* Reducimos a 3 columnas arriba + columna para el botón X */
-    grid-template-columns: repeat(3, 1fr) auto; 
+    grid-template-columns: repeat(3, 1fr) 40px; /* 3 columnas + espacio para X */
     gap: 15px;
     background: #0f0f0f;
     padding: 20px;
     border-radius: 12px;
-    align-items: end;
+    align-items: center; /* Centrado vertical */
     margin-bottom: 15px;
 }
 
-/* Forzamos al SKU (4to elemento del grid) a ocupar la fila inferior completa */
+/* El SKU ocupa el espacio inferior de los 3 inputs */
 .size-row .field-group:nth-child(4) {
     grid-column: 1 / span 3; 
     margin-top: 5px;
 }
 
-/* Ajuste posición del botón X */
+/* LA X abarca ambas filas para quedar centrada */
 .size-row .btn-x {
     grid-column: 4;
-    grid-row: 1; /* Mantiene la X alineada con la fila superior */
+    grid-row: 1 / span 2; 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
 }
 
 .btn-x {
@@ -358,10 +361,9 @@
     color: var(--makia-danger);
     border: none;
     cursor: pointer;
-    font-size: 1.5rem;
+    font-size: 1.8rem;
     font-weight: bold;
-    transition: 0.2s;
-    padding-bottom: 5px;
+    transition: var(--transition);
 }
 
 .btn-x:hover { color: #ff0000; transform: scale(1.2); }
