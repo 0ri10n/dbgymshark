@@ -161,50 +161,35 @@ const Beams = ({
           uniform float uSpeed;
         `,
         vertexHeader: `
-  float getPos(vec3 pos) {
-    // Usamos un seno simple en lugar de cnoise para liberar la CPU
-    return sin(pos.y * 0.5 + time * uSpeed) * 0.5;
-  }
-  vec3 getCurrentPos(vec3 pos) {
-    vec3 newpos = pos;
-    newpos.z += getPos(pos);
-    return newpos;
-  }
-  vec3 getNormal(vec3 pos) {
-    vec3 curpos = getCurrentPos(pos);
-    vec3 nextposX = getCurrentPos(pos + vec3(0.01, 0.0, 0.0));
-    vec3 nextposZ = getCurrentPos(pos + vec3(0.0, -0.01, 0.0));
-    vec3 tangentX = normalize(nextposX - curpos);
-    vec3 tangentZ = normalize(nextposZ - curpos);
-    return normalize(cross(tangentZ, tangentX));
-  }`,
-        fragmentHeader: '',
+          float getPos(vec3 pos) {
+            // Onda simple corregida: Cero ruido pesado, puro rendimiento
+            return sin(pos.y * 0.2 + time * uSpeed) * 0.5;
+          }
+        `,
         vertex: {
-          '#include <begin_vertex>': `transformed.z += getPos(transformed.xyz);`,
-          '#include <beginnormal_vertex>': `objectNormal = getNormal(position.xyz);`
+          '#include <begin_vertex>': `
+            transformed.z += getPos(position);
+          `
         },
-        header: `
-            varying vec2 vUv;
-            uniform float time;
-            uniform float uSpeed;`,
-                    vertexHeader: `
-            float getPos(vec3 pos) {
-                // Usamos un seno simple en lugar de cnoise para liberar la CPU
-                return sin(pos.y * 0.5 + time * uSpeed) * 0.5;
-            }`,
-        material: { fog: true },
-        uniforms: {
-          diffuse: new THREE.Color(1, 1, 1), 
-          time: { shared: true, mixed: true, linked: true, value: 0 },
-          uSpeed: { shared: true, mixed: true, linked: true, value: speed * 0.5 }
+        fragment: {
+          '#include <dithering_fragment>': `
+            // Forzamos el brillo propio del material
+            gl_FragColor.rgb += 0.15; 
+          `
         },
         material: { 
           transparent: true, 
-          opacity: 0.8,
-          blending: THREE.AdditiveBlending 
+          opacity: 0.5,
+          blending: THREE.AdditiveBlending,
+          side: THREE.DoubleSide
+        },
+        uniforms: {
+          diffuse: new THREE.Color(1, 1, 1), // Rayos blancos brillantes
+          time: { shared: true, mixed: true, linked: true, value: 0 },
+          uSpeed: { shared: true, mixed: true, linked: true, value: speed }
         }
       }),
-    [speed, noiseIntensity, scale]
+    [speed]
   );
 
   return (
@@ -218,7 +203,8 @@ const Beams = ({
           height={beamHeight} 
         />
       </group>
-      <color attach="background" args={['#05070a']} /> 
+      {/* Fondo azul marino muy oscuro para que resalte la marca MAKIA */}
+      <color attach="background" args={['#080a0f']} /> 
       <PerspectiveCamera makeDefault position={[0, 0, 20]} fov={30} />
     </CanvasWrapper>
   );
@@ -276,7 +262,6 @@ const MergedPlanes = forwardRef(({ material, width, count, height }, ref) => {
   const mesh = useRef(null);
   useImperativeHandle(ref, () => mesh.current);
   const geometry = useMemo(
-    // Redujimos los segmentos de 100 a 15 para salvar el CPU
     () => createStackedPlanesBufferGeometry(count, width, height, 0, 6),
     [count, width, height]
   );
