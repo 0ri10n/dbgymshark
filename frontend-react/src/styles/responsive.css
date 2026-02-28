@@ -27,3 +27,28 @@
     min-height: 100vh;
     min-height: 100svh;
 }
+
+.not-found-page {
+    min-height: 100vh;
+    min-height: 100svh;
+    padding: clamp(56px, 10vw, 100px) 20px;
+    text-align: center;
+    background-color: #050508;
+    color: #fff;
+    display: grid;
+    align-content: center;
+    justify-items: center;
+    gap: 12px;
+}
+
+.not-found-title {
+    margin: 0;
+    font-size: clamp(2.4rem, 10vw, 3.2rem);
+    color: #d9fb56;
+    line-height: 1;
+}
+
+.not-found-link {
+    color: #d9fb56;
+    text-decoration: underline;
+}

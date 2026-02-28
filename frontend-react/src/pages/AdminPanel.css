@@ -301,3 +301,233 @@
 
 .btn-makia-save { background: var(--makia-blue); color: #fff; border-radius: 10px; padding: 14px 30px; font-weight: 800; border: none; cursor: pointer; text-transform: uppercase; }
 .btn-makia-cancel { background: #fff; color: #000; border-radius: 10px; padding: 14px 30px; font-weight: 800; border: none; cursor: pointer; text-transform: uppercase; }
+
+/* CLASSES USED IN JSX */
+.admin-main {
+    min-width: 0;
+}
+
+.center {
+    text-align: center;
+}
+
+.col-actions {
+    white-space: nowrap;
+}
+
+.modal-xl {
+    max-width: 1100px;
+}
+
+.variants-section {
+    display: grid;
+    gap: 16px;
+}
+
+.sizes-grid {
+    display: grid;
+    gap: 10px;
+}
+
+.url-input-expanded {
+    min-width: 0;
+}
+
+.color-input-fixed {
+    min-width: 180px;
+}
+
+/* RESPONSIVE */
+@media (max-width: 1200px) {
+    .admin-container {
+        padding: 1.6rem;
+    }
+
+    .admin-stats {
+        gap: 14px;
+        margin-bottom: 2rem;
+    }
+
+    .admin-stat-card {
+        padding: 1.2rem;
+        border-radius: 14px;
+    }
+
+    .stat-count {
+        font-size: 2rem;
+    }
+
+    .search-bar-makia {
+        width: min(100%, 360px);
+    }
+}
+
+@media (max-width: 1024px) {
+    .admin-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .admin-user-panel {
+        width: 100%;
+        justify-content: space-between;
+        padding: 10px 14px;
+    }
+
+    .admin-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-controls-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+        margin-bottom: 1.4rem;
+    }
+
+    .search-bar-makia {
+        width: 100%;
+    }
+
+    .admin-add-btn {
+        width: 100%;
+        min-height: 44px;
+    }
+
+    .admin-table-wrapper {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .admin-table-fixed {
+        min-width: 760px;
+    }
+
+    .modal-content {
+        width: min(96vw, 950px);
+        padding: 1.5rem;
+        border-radius: 16px;
+    }
+
+    .form-grid-2-cols {
+        gap: 14px;
+    }
+
+    .color-group-card {
+        padding: 1rem;
+        border-radius: 12px;
+        margin-bottom: 1rem;
+    }
+
+    .color-header-row {
+        flex-wrap: wrap;
+        align-items: stretch;
+        gap: 12px;
+    }
+
+    .mini-preview-box {
+        margin-left: 0;
+    }
+}
+
+@media (max-width: 768px) {
+    .admin-container {
+        padding: 1rem;
+    }
+
+    .admin-user-panel {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+
+    .user-welcome-info {
+        align-items: flex-start;
+        text-align: left;
+    }
+
+    .admin-logout-btn {
+        width: 100%;
+        min-height: 44px;
+    }
+
+    .header-divider-sutil {
+        margin-bottom: 1.2rem;
+    }
+
+    .admin-table-fixed th,
+    .admin-table-fixed td {
+        padding: 0.85rem;
+    }
+
+    .btn-table {
+        margin: 2px;
+        padding: 8px 12px;
+    }
+
+    .form-grid-2-cols {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .size-row-container {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+
+    .size-row-inputs {
+        grid-template-columns: 1fr;
+    }
+
+    .sku-field {
+        grid-column: auto;
+        margin-top: 0;
+    }
+
+    .btn-x-red {
+        align-self: flex-end;
+    }
+
+    .modal-footer {
+        flex-direction: column;
+        gap: 10px;
+        margin-top: 1.2rem;
+        padding-top: 1rem;
+    }
+
+    .btn-makia-save,
+    .btn-makia-cancel {
+        width: 100%;
+        min-height: 44px;
+        padding: 12px 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    .brand-logo-img {
+        height: 22px;
+    }
+
+    .welcome-text {
+        font-size: 0.7rem;
+    }
+
+    .user-name-blue-header {
+        font-size: 0.95rem;
+    }
+
+    .stat-count {
+        font-size: 1.6rem;
+    }
+
+    .search-bar-makia {
+        padding: 8px 14px;
+    }
+
+    .modal-content {
+        max-height: 94svh;
+        padding: 1rem 0.9rem;
+    }
+}
