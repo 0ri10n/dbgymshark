@@ -15,20 +15,34 @@ const CATEGORIAS_LIMPIAS = [
     'Tanks', 'Tops', 'Uncategorized', 'Underwear', 'Vests'
 ];
 
+// Restauración de todos los colores para los círculos
 const getColorHex = (name = "") => {
     const n = name.toLowerCase().trim();
     if (n === 'black') return "#111111";
     if (n === 'white') return "#FFFFFF";
-    if (n.includes('blue')) return "#1e3a8a";
-    if (n.includes('grey') || n.includes('gray')) return "#4b5563";
-    if (n.includes('red')) return "#991b1b";
-    if (n.includes('pink')) return "#db2777";
+    if (n.includes('teal')) return "#008080";
+    if (n.includes('olive') || n.includes('aloe') || n.includes('alpine')) return "#556b2f";
     if (n.includes('green')) return "#2d4d43";
+    if (n.includes('sage')) return "#b2ac88";
+    if (n.includes('navy')) return "#000080";
+    if (n.includes('aqua') || n.includes('aegean')) return "#00ffff";
+    if (n.includes('blue')) return "#1e3a8a";
+    if (n.includes('lilac')) return "#b666d2";
+    if (n.includes('burgundy') || n.includes('maroon') || n.includes('berry')) return "#800020";
+    if (n.includes('pink') || n.includes('rose') || n.includes('dolly')) return "#db2777";
+    if (n.includes('red') || n.includes('carmine')) return "#991b1b";
+    if (n.includes('purple') || n.includes('violet')) return "#6b21a8";
+    if (n.includes('orange') || n.includes('apricot')) return "#f97316";
+    if (n.includes('yellow')) return "#facc15";
+    if (n.includes('brown') || n.includes('truffle') || n.includes('baked')) return "#5C4033";
+    if (n.includes('beige') || n.includes('sand') || n.includes('ecru')) return "#d6d3d1";
+    if (n.includes('grey') || n.includes('gray') || n.includes('asphalt') || n.includes('charcoal')) return "#4b5563";
     return "#374151"; 
 };
 
 const getPrimaryImage = (p = {}) => {
-    const img = p.image_principal || (p.variants && p.variants[0]?.image);
+    const img = p.image_principal || p.imagen || p.image_src || (p.variants && p.variants[0]?.image);
+    if (typeof img === 'string' && img.includes(',')) return img.split(',')[0].trim();
     return img || "/placeholder.jpg";
 };
 
@@ -42,7 +56,6 @@ const Catalogo = () => {
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [pagina, setPagina] = useState(1);
     const [totalPaginas, setTotalPaginas] = useState(1);
-
     const [catFiltro, setCatFiltro] = useState(null);
     const [tallasSeleccionadas, setTallasSeleccionadas] = useState({});
     const [colorVisual, setColorVisual] = useState({});
@@ -64,35 +77,18 @@ const Catalogo = () => {
 
     const granTotal = cart.reduce((acc, item) => acc + ((item.precioMXN || item.price) * item.quantity), 0);
 
-    const handleAgregar = (p) => {
-        const talla = tallasSeleccionadas[p._id];
-        const colorActivo = colorVisual[p._id] || p.colors_available?.[0];
-        const imagenSeleccionada = p.variants?.find(v => v.color === colorActivo)?.image || getPrimaryImage(p);
-
-        if (!talla) { alert("Por favor selecciona una talla."); return; }
-
-        addToCart({ 
-            ...p, 
-            selectedSize: talla, 
-            selectedColor: colorActivo,
-            selectedImage: imagenSeleccionada,
-            quantity: 1
-        });
-        setIsCartOpen(true); 
-    };
-
     const handleFinalizarCompra = async () => {
-        if (!user) { 
-            alert("Debes iniciar sesión para realizar la compra."); 
-            return; 
+        if (!user) {
+            alert("Debes iniciar sesión con tu cuenta de cliente para realizar una compra.");
+            return;
         }
         if (cart.length === 0) return;
 
         try {
             const token = localStorage.getItem('token');
-            // Corrección: Manda nombre y apellido reales concatenados
+            // Corrección: Captura de nombre y apellido real del usuario
             const nombreCompleto = `${user.nombre || ''} ${user.apellido || ''}`.trim();
-            
+
             const ordenData = {
                 nombreCliente: nombreCompleto,
                 productos: cart.map(item => ({
@@ -113,9 +109,9 @@ const Catalogo = () => {
             alert("¡Compra finalizada con éxito!");
             clearCart();
             setIsCartOpen(false);
-        } catch (error) { 
+        } catch (error) {
             console.error(error);
-            alert("Error al procesar la compra."); 
+            alert("Hubo un error al procesar tu pedido.");
         }
     };
 
@@ -128,13 +124,9 @@ const Catalogo = () => {
                         <i className="fas fa-shopping-bag"></i>
                         <span id="cartCount">{cart.length}</span>
                     </div>
-                    <div className="user-icon" onClick={logout}><i className="far fa-user"></i></div>
+                    <div className="user-icon" onClick={logout} style={{cursor:'pointer'}}><i className="far fa-user"></i></div>
                 </div>
             </header>
-
-            <div className="hero-banner-full">
-                <img src="/hero-banner-client.jpg" alt="MAKIA" />
-            </div>
 
             <div className="store-layout-container">
                 <aside className="sidebar-filter-box">
@@ -157,24 +149,23 @@ const Catalogo = () => {
                     </div>
 
                     <div className="fixed-grid-3">
-                        {!cargando && productos.filter(p => !catFiltro || p.product_type === catFiltro).map((prod) => {
+                        {productos.filter(p => !catFiltro || p.product_type === catFiltro).map((prod) => {
                             const colorActivo = colorVisual[prod._id] || prod.colors_available?.[0];
-                            const imgFinal = prod.variants?.find(v => v.color === colorActivo)?.image || getPrimaryImage(prod);
-
                             return (
                                 <div key={prod._id} className="makia-product-card">
-                                    <div className="img-frame"><img src={imgFinal} alt="p" className="p-img" /></div>
+                                    <div className="img-frame">
+                                        <img src={getPrimaryImage(prod)} alt="p" className="p-img" />
+                                    </div>
                                     <div className="info-frame">
-                                        <div className="cat-badge">{prod.product_type}</div>
                                         <h3>{prod.title}</h3>
                                         <p className="p-price">${(prod.precioMXN || prod.price).toLocaleString()} MXN</p>
                                         <div className="swatch-row-carrusel">
                                             {prod.colors_available?.map(col => (
                                                 <button 
                                                     key={col} 
-                                                    className={`swatch-circle ${colorActivo === col ? 'active' : ''}`} 
-                                                    style={{ backgroundColor: getColorHex(col) }} 
-                                                    onClick={() => setColorVisual(prev => ({ ...prev, [prod._id]: col }))} 
+                                                    className="swatch-circle" 
+                                                    style={{ backgroundColor: getColorHex(col) }}
+                                                    onClick={() => setColorVisual(prev => ({ ...prev, [prod._id]: col }))}
                                                 />
                                             ))}
                                         </div>
@@ -183,7 +174,12 @@ const Catalogo = () => {
                                                 <option value="">Talla</option>
                                                 {prod.sizes_available?.map(t => <option key={t} value={t}>{t}</option>)}
                                             </select>
-                                            <button className="btn-add-to-bag-makia" onClick={() => handleAgregar(prod)}>AÑADIR</button>
+                                            <button className="btn-add-to-bag-makia" onClick={() => {
+                                                const talla = tallasSeleccionadas[prod._id];
+                                                if(!talla) return alert("Por favor seleccione una talla.");
+                                                addToCart({...prod, selectedSize: talla, selectedColor: colorActivo || 'N/A', selectedImage: getPrimaryImage(prod), quantity: 1});
+                                                setIsCartOpen(true);
+                                            }}>AÑADIR</button>
                                         </div>
                                     </div>
                                 </div>
@@ -199,17 +195,13 @@ const Catalogo = () => {
                     <div className="cart-modal-panel" onClick={e => e.stopPropagation()}>
                         <div className="cart-modal-top">
                             <h2>TU BOLSA</h2>
-                            <span className="close-cart-x" onClick={() => setIsCartOpen(false)}>&times;</span>
+                            <span onClick={() => setIsCartOpen(false)} className="close-cart-x">&times;</span>
                         </div>
                         <div className="cart-modal-list">
                             {cart.map((item, i) => (
                                 <div key={i} className="cart-modal-row">
-                                    <img 
-                                        src={item.selectedImage} 
-                                        alt="item" 
-                                        className="cart-item-mini-img" 
-                                        style={{ width: '70px', height: '90px', objectFit: 'cover', borderRadius: '8px' }}
-                                    />
+                                    {/* Imagen con bordes redondeados */}
+                                    <img src={item.selectedImage} alt="item" className="cart-item-mini-img" />
                                     <div className="cart-item-info">
                                         <p className="cart-item-title">{item.title}</p>
                                         <div className="cart-item-controls-row">
@@ -229,6 +221,7 @@ const Catalogo = () => {
                                     </div>
                                     <div className="cart-item-end">
                                         <p className="cart-item-price">${((item.precioMXN || item.price) * item.quantity).toLocaleString()}</p>
+                                        {/* Tache rojo para eliminar */}
                                         <button className="btn-remove-x-red" onClick={() => removeFromCart(i)}>&times;</button>
                                     </div>
                                 </div>
