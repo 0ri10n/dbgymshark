@@ -81,12 +81,14 @@ const Catalogo = () => {
         cargarData();
     }, [pagina, busqueda, baseURL]);
 
+    const granTotal = cart.reduce((acc, item) => acc + ((item.precioMXN || item.price) * item.quantity), 0);
+
     const handleAgregar = (p) => {
         const talla = tallasSeleccionadas[p._id];
         const colorActivo = colorVisual[p._id] || p.colors_available?.[0];
         const imagenSeleccionada = p.variants?.find(v => v.color === colorActivo)?.image || getPrimaryImage(p);
 
-        if (!talla) { alert("Por favor seleccione una talla."); return; }
+        if (!talla) { alert("Por favor seleccione una talla antes de añadir."); return; }
 
         addToCart({ 
             ...p, 
@@ -101,9 +103,6 @@ const Catalogo = () => {
     const handleFinalizarCompra = async () => {
         if (cart.length === 0) return;
         try {
-            const total = cart.reduce((acc, item) => acc + ((item.precioMXN || item.price) * item.quantity), 0);
-            
-            // Estructura exacta según tu modelo Venta.js
             const ordenData = {
                 nombreCliente: user?.nombre || "Invitado",
                 productos: cart.map(item => ({
@@ -113,33 +112,36 @@ const Catalogo = () => {
                     precio: Number(item.precioMXN || item.price),
                     cantidad: Number(item.quantity)
                 })),
-                total: total,
-                fechaPedido: new Date() // Se envía como objeto Date para MongoDB
+                total: granTotal,
+                fechaPedido: new Date()
             };
 
             const token = localStorage.getItem('token');
-            
-            // Solución Error 404: Se utiliza la ruta universal de creación definida en adminRoutes.js
-            await axios.post(`${baseURL}/admin/crear/gymshark/ventas`, ordenData, {
-                headers: { 
-                    'x-auth-token': token,
-                    'Authorization': `Bearer ${token}` 
-                }
+            // Endpoint corregido para persistencia en BD
+            await axios.post(`${baseURL}/admin/panel/ventas`, ordenData, {
+                headers: { 'x-auth-token': token, 'Authorization': `Bearer ${token}` }
             });
             
-            alert("¡Compra finalizada con éxito! Folio generado.");
+            alert("¡Compra finalizada con éxito! Los datos se han guardado en la base de datos.");
             clearCart();
             setIsCartOpen(false);
         } catch (error) {
             console.error("Error al procesar compra:", error);
-            alert("Error al guardar la venta. Verifique sus permisos de administrador.");
+            alert("Error al procesar la compra. Verifique sus permisos.");
         }
     };
+
+    const productosAMostrar = productos.filter(p => {
+        const precioActual = p.precioMXN || p.price; 
+        const matchCat = !catFiltro || p.product_type === catFiltro;
+        const matchPrecio = precioActual <= precioMax;
+        return matchCat && matchPrecio;
+    });
 
     return (
         <div className="client-view">
             <header className="client-header-makia">
-                <img src="/logo-makia-pages.png" alt="Logo" className="brand-logo-img" />
+                <img src="/logo-makia-pages.png" alt="Makia Logo" className="brand-logo-img" />
                 <div className="header-right-icons">
                     <div className="cart-wrapper" onClick={() => setIsCartOpen(true)}>
                         <i className="fas fa-shopping-bag"></i>
@@ -185,13 +187,13 @@ const Catalogo = () => {
                     </div>
 
                     <div className="fixed-grid-3">
-                        {!cargando && productos.filter(p => !catFiltro || p.product_type === catFiltro).map((prod) => {
+                        {!cargando && productosAMostrar.map((prod) => {
                             const colorActivo = colorVisual[prod._id] || prod.colors_available?.[0];
                             const imgFinal = prod.variants?.find(v => v.color === colorActivo)?.image || getPrimaryImage(prod);
 
                             return (
                                 <div key={prod._id} className="makia-product-card">
-                                    <div className="img-frame"><img src={imgFinal} alt="p" className="p-img" /></div>
+                                    <div className="img-frame"><img src={imgFinal} alt={prod.title} className="p-img" /></div>
                                     <div className="info-frame">
                                         <div className="cat-badge">{prod.product_type}</div>
                                         <h3>{prod.title}</h3>
@@ -203,8 +205,8 @@ const Catalogo = () => {
                                         </div>
                                         <div className="card-footer">
                                             <select className="makia-size-dropdown" value={tallasSeleccionadas[prod._id] || ""} onChange={(e) => setTallasSeleccionadas(prev => ({ ...prev, [prod._id]: e.target.value }))}>
-                                                <option value="">Talla</option>
-                                                {prod.sizes_available?.map(t => <option key={t} value={t}>{t}</option>)}
+                                                <option value="">Selecciona Talla</option>
+                                                {(prod.sizes_available || []).map(t => <option key={t} value={t}>{t}</option>)}
                                             </select>
                                             <button className="btn-add-to-bag-makia" onClick={() => handleAgregar(prod)}>AÑADIR</button>
                                         </div>
@@ -226,39 +228,45 @@ const Catalogo = () => {
                         </div>
                         <div className="cart-modal-list">
                             {cart.map((item, i) => (
-                                <div key={i} className="cart-modal-row" style={{ display: 'flex', alignItems: 'center', gap: '15px', padding: '15px 0', borderBottom: '1px solid #111' }}>
-                                    {/* Imagen forzada a tamaño pequeño inline para asegurar visualización */}
+                                <div key={i} className="cart-modal-row">
+                                    {/* Imagen pequeña forzada inline */}
                                     <img 
                                         src={item.selectedImage} 
                                         alt="item" 
                                         style={{ width: '60px', height: '80px', objectFit: 'cover', borderRadius: '8px', flexShrink: 0, border: '1px solid #222' }} 
                                     />
-                                    <div className="cart-item-info" style={{ flex: 1 }}>
-                                        <p className="cart-item-title" style={{ fontSize: '13px', fontWeight: '600', margin: '0 0 5px 0' }}>{item.title}</p>
-                                        <div className="cart-item-controls-row" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                            {/* Cambio estético de talla dentro de la bolsa */}
+                                    <div className="cart-item-info">
+                                        <p className="cart-item-title">{item.title}</p>
+                                        <div className="cart-item-controls-row">
                                             <select 
-                                                style={{ background: '#111', color: '#fff', fontSize: '11px', border: '1px solid #333', borderRadius: '4px', padding: '2px 5px' }}
+                                                className="cart-mini-select"
                                                 value={item.selectedSize}
                                                 onChange={(e) => updateCartItem(i, { ...item, selectedSize: e.target.value })}
                                             >
                                                 {item.sizes_available?.map(s => <option key={s} value={s}>{s}</option>)}
                                             </select>
-                                            <div className="qty-stepper" style={{ display: 'flex', alignItems: 'center', background: '#111', borderRadius: '4px', border: '1px solid #333' }}>
-                                                <button style={{ background: 'none', border: 'none', color: '#57a4e4', padding: '2px 8px', cursor: 'pointer', fontWeight: 'bold' }} onClick={() => updateCartItem(i, { ...item, quantity: Math.max(1, item.quantity - 1) })}>-</button>
-                                                <span style={{ fontSize: '12px', minWidth: '20px', textAlign: 'center' }}>{item.quantity}</span>
-                                                <button style={{ background: 'none', border: 'none', color: '#57a4e4', padding: '2px 8px', cursor: 'pointer', fontWeight: 'bold' }} onClick={() => updateCartItem(i, { ...item, quantity: item.quantity + 1 })}>+</button>
+                                            <div className="qty-stepper">
+                                                <button onClick={() => updateCartItem(i, { ...item, quantity: Math.max(1, item.quantity - 1) })}>-</button>
+                                                <span>{item.quantity}</span>
+                                                <button onClick={() => updateCartItem(i, { ...item, quantity: item.quantity + 1 })}>+</button>
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="cart-item-end" style={{ textAlign: 'right' }}>
-                                        <p style={{ color: '#57a4e4', fontWeight: '700', fontSize: '14px', margin: '0 0 5px 0' }}>${((item.precioMXN || item.price) * item.quantity).toLocaleString()}</p>
-                                        <button style={{ background: 'none', border: 'none', color: '#ff4d4d', fontSize: '11px', textDecoration: 'underline', cursor: 'pointer' }} onClick={() => removeFromCart(i)}>Eliminar</button>
+                                    <div className="cart-item-end">
+                                        <p className="cart-item-price">${((item.precioMXN || item.price) * item.quantity).toLocaleString()}</p>
+                                        {/* Tache rojo solicitado */}
+                                        <button className="btn-remove-x" onClick={() => removeFromCart(i)}>&times;</button>
                                     </div>
                                 </div>
                             ))}
                         </div>
-                        <button className="btn-checkout-makia" onClick={handleFinalizarCompra} style={{ width: '100%', background: '#fff', color: '#000', border: 'none', padding: '20px', fontWeight: '900', textTransform: 'uppercase', borderRadius: '6px', cursor: 'pointer', marginTop: '20px' }}>FINALIZAR COMPRA</button>
+                        <div className="cart-footer-totals">
+                            <div className="total-row">
+                                <span>TOTAL:</span>
+                                <span className="total-amount">${granTotal.toLocaleString()} MXN</span>
+                            </div>
+                            <button className="btn-checkout-makia" onClick={handleFinalizarCompra}>FINALIZAR COMPRA</button>
+                        </div>
                     </div>
                 </div>
             )}
