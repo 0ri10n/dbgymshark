@@ -62,7 +62,6 @@ const Catalogo = () => {
     const [precioMax, setPrecioMax] = useState(3500);
     const [tallasSeleccionadas, setTallasSeleccionadas] = useState({});
     const [colorVisual, setColorVisual] = useState({});
-    const [catDesplegado, setCatDesplegado] = useState(true);
 
     const baseURL = import.meta.env.VITE_API_URL || 'https://dbgymshark-ddk1.onrender.com/api';
 
@@ -88,7 +87,7 @@ const Catalogo = () => {
         const colorActivo = colorVisual[p._id] || p.colors_available?.[0];
         const imagenSeleccionada = p.variants?.find(v => v.color === colorActivo)?.image || getPrimaryImage(p);
 
-        if (!talla) { alert("Por favor seleccione una talla antes de añadir."); return; }
+        if (!talla) { alert("Por favor selecciona una talla."); return; }
 
         addToCart({ 
             ...p, 
@@ -101,10 +100,16 @@ const Catalogo = () => {
     };
 
     const handleFinalizarCompra = async () => {
+        if (!user) {
+            alert("Debes iniciar sesión con tu cuenta de cliente para realizar una compra.");
+            return;
+        }
         if (cart.length === 0) return;
+
         try {
+            const token = localStorage.getItem('token');
             const ordenData = {
-                nombreCliente: user?.nombre || "Invitado",
+                nombreCliente: `${user.nombre} ${user.apellido || ''}`,
                 productos: cart.map(item => ({
                     nombre: item.title,
                     talla: item.selectedSize,
@@ -116,18 +121,19 @@ const Catalogo = () => {
                 fechaPedido: new Date()
             };
 
-            const token = localStorage.getItem('token');
-            // Endpoint corregido para persistencia en BD
             await axios.post(`${baseURL}/admin/panel/ventas`, ordenData, {
-                headers: { 'x-auth-token': token, 'Authorization': `Bearer ${token}` }
+                headers: { 
+                    'x-auth-token': token,
+                    'Authorization': `Bearer ${token}` 
+                }
             });
             
-            alert("¡Compra finalizada con éxito! Los datos se han guardado en la base de datos.");
+            alert("¡Compra finalizada con éxito! Tu pedido ha sido registrado.");
             clearCart();
             setIsCartOpen(false);
         } catch (error) {
             console.error("Error al procesar compra:", error);
-            alert("Error al procesar la compra. Verifique sus permisos.");
+            alert("Hubo un error al procesar tu pedido. Intenta de nuevo.");
         }
     };
 
@@ -141,7 +147,7 @@ const Catalogo = () => {
     return (
         <div className="client-view">
             <header className="client-header-makia">
-                <img src="/logo-makia-pages.png" alt="Makia Logo" className="brand-logo-img" />
+                <img src="/logo-makia-pages.png" alt="Logo" className="brand-logo-img" />
                 <div className="header-right-icons">
                     <div className="cart-wrapper" onClick={() => setIsCartOpen(true)}>
                         <i className="fas fa-shopping-bag"></i>
@@ -158,24 +164,13 @@ const Catalogo = () => {
             <div className="store-layout-container">
                 <aside className="sidebar-filter-box">
                     <div className="sidebar-sticky-wrapper">
-                        <div className="sidebar-top-row">
-                            <h2 className="sidebar-h2">Filtros</h2>
-                            <button className="clear-filters-btn" onClick={() => {setCatFiltro(null); setBusqueda(''); setPrecioMax(3500);}}>Limpiar</button>
-                        </div>
-                        <div className="filter-group">
-                            <div className="cat-header-clickable" onClick={() => setCatDesplegado(!catDesplegado)}>
-                                <h3 className="sidebar-h3" style={{margin:0}}>Categorías</h3>
-                                <i className={`fas fa-chevron-${catDesplegado ? 'up' : 'down'}`}></i>
-                            </div>
-                            {catDesplegado && (
-                                <div className="cat-dropdown-list">
-                                    {CATEGORIAS_LIMPIAS.map(cat => (
-                                        <div key={cat} className={`sub-item ${catFiltro === cat ? 'active' : ''}`} onClick={() => setCatFiltro(catFiltro === cat ? null : cat)}>
-                                            {cat}
-                                        </div>
-                                    ))}
+                        <h2 className="sidebar-h2">Filtros</h2>
+                        <div className="cat-dropdown-list">
+                            {CATEGORIAS_LIMPIAS.map(cat => (
+                                <div key={cat} className={`sub-item ${catFiltro === cat ? 'active' : ''}`} onClick={() => setCatFiltro(cat)}>
+                                    {cat}
                                 </div>
-                            )}
+                            ))}
                         </div>
                     </div>
                 </aside>
@@ -183,7 +178,7 @@ const Catalogo = () => {
                 <main className="shop-main-content">
                     <div className="white-search-box">
                         <i className="fas fa-search"></i>
-                        <input type="text" placeholder="¿Qué estás buscando hoy?" value={busqueda} onChange={(e) => {setBusqueda(e.target.value); setPagina(1);}} />
+                        <input type="text" placeholder="Buscar..." value={busqueda} onChange={(e) => setBusqueda(e.target.value)} />
                     </div>
 
                     <div className="fixed-grid-3">
@@ -193,7 +188,7 @@ const Catalogo = () => {
 
                             return (
                                 <div key={prod._id} className="makia-product-card">
-                                    <div className="img-frame"><img src={imgFinal} alt={prod.title} className="p-img" /></div>
+                                    <div className="img-frame"><img src={imgFinal} alt="p" className="p-img" /></div>
                                     <div className="info-frame">
                                         <div className="cat-badge">{prod.product_type}</div>
                                         <h3>{prod.title}</h3>
@@ -204,9 +199,9 @@ const Catalogo = () => {
                                             ))}
                                         </div>
                                         <div className="card-footer">
-                                            <select className="makia-size-dropdown" value={tallasSeleccionadas[prod._id] || ""} onChange={(e) => setTallasSeleccionadas(prev => ({ ...prev, [prod._id]: e.target.value }))}>
-                                                <option value="">Selecciona Talla</option>
-                                                {(prod.sizes_available || []).map(t => <option key={t} value={t}>{t}</option>)}
+                                            <select className="makia-size-dropdown" onChange={(e) => setTallasSeleccionadas(prev => ({ ...prev, [prod._id]: e.target.value }))}>
+                                                <option value="">Talla</option>
+                                                {prod.sizes_available?.map(t => <option key={t} value={t}>{t}</option>)}
                                             </select>
                                             <button className="btn-add-to-bag-makia" onClick={() => handleAgregar(prod)}>AÑADIR</button>
                                         </div>
@@ -229,12 +224,7 @@ const Catalogo = () => {
                         <div className="cart-modal-list">
                             {cart.map((item, i) => (
                                 <div key={i} className="cart-modal-row">
-                                    {/* Imagen pequeña forzada inline */}
-                                    <img 
-                                        src={item.selectedImage} 
-                                        alt="item" 
-                                        style={{ width: '60px', height: '80px', objectFit: 'cover', borderRadius: '8px', flexShrink: 0, border: '1px solid #222' }} 
-                                    />
+                                    <img src={item.selectedImage} alt="item" className="cart-item-mini-img" />
                                     <div className="cart-item-info">
                                         <p className="cart-item-title">{item.title}</p>
                                         <div className="cart-item-controls-row">
@@ -254,7 +244,6 @@ const Catalogo = () => {
                                     </div>
                                     <div className="cart-item-end">
                                         <p className="cart-item-price">${((item.precioMXN || item.price) * item.quantity).toLocaleString()}</p>
-                                        {/* Tache rojo solicitado */}
                                         <button className="btn-remove-x" onClick={() => removeFromCart(i)}>&times;</button>
                                     </div>
                                 </div>

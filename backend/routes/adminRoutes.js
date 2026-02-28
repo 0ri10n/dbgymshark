@@ -20,12 +20,12 @@ router.put('/panel/usuarios/:id', auth, admin, adminController.actualizarUsuario
 router.delete('/panel/usuarios/:id', auth, admin, adminController.eliminarUsuarioPanel);
 
 // --- PANEL DE CONTROL: Ventas ---
-// GET para visualizar el historial en el AdminPanel
+// Solo el administrador puede ver el historial de ventas
 router.get('/panel/ventas', auth, admin, adminController.obtenerVentasPanel);
 
-// POST para procesar nuevas compras desde el Catálogo
-// Se agrega esta ruta para resolver el Error 404 al finalizar compra
-router.post('/panel/ventas', auth, admin, adminController.crearVentaPanel);
+// CUALQUIER USUARIO LOGUEADO (Cliente o Admin) puede crear una venta
+// Se quita el middleware 'admin' de esta ruta para evitar el error 403 al comprar
+router.post('/panel/ventas', auth, adminController.crearVentaPanel);
 
 // EL EXPORT SIEMPRE VA AL FINAL
 module.exports = router;
