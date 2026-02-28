@@ -81,13 +81,6 @@ const Catalogo = () => {
         cargarData();
     }, [pagina, busqueda]);
 
-    const productosAMostrar = productos.filter(p => {
-        const precioActual = p.precioMXN || p.price; 
-        const matchCat = !catFiltro || p.product_type === catFiltro;
-        const matchPrecio = precioActual <= precioMax;
-        return matchCat && matchPrecio;
-    });
-
     const handleAgregar = (p) => {
         const talla = tallasSeleccionadas[p._id];
         const colorActivo = colorVisual[p._id] || p.colors_available?.[0];
@@ -127,6 +120,7 @@ const Catalogo = () => {
             };
 
             const token = localStorage.getItem('token');
+            // Corrección de ruta para persistencia en tabla de ventas
             await axios.post(`${baseURL}/admin/panel/ventas`, ordenData, {
                 headers: { 'x-auth-token': token, 'Authorization': `Bearer ${token}` }
             });
@@ -136,9 +130,16 @@ const Catalogo = () => {
             setIsCartOpen(false);
         } catch (error) {
             console.error("Error al procesar compra:", error);
-            alert("Error al procesar la compra. Intente de nuevo.");
+            alert("Error al procesar la compra. Verifique su conexión.");
         }
     };
+
+    const productosAMostrar = productos.filter(p => {
+        const precioActual = p.precioMXN || p.price; 
+        const matchCat = !catFiltro || p.product_type === catFiltro;
+        const matchPrecio = precioActual <= precioMax;
+        return matchCat && matchPrecio;
+    });
 
     return (
         <div className="client-view">
@@ -269,16 +270,24 @@ const Catalogo = () => {
                                     <img src={item.selectedImage} alt={item.title} className="cart-item-mini-img" />
                                     <div className="cart-item-info">
                                         <p className="cart-item-title">{item.title}</p>
-                                        <p className="cart-item-details">{item.selectedColor} / {item.selectedSize}</p>
-                                        <div className="qty-controls">
-                                            <button onClick={() => updateCartItem(i, { ...item, quantity: Math.max(1, item.quantity - 1) })}>-</button>
-                                            <span>{item.quantity}</span>
-                                            <button onClick={() => updateCartItem(i, { ...item, quantity: item.quantity + 1 })}>+</button>
+                                        <div className="cart-item-controls-row">
+                                            <select 
+                                                className="cart-mini-select"
+                                                value={item.selectedSize}
+                                                onChange={(e) => updateCartItem(i, { ...item, selectedSize: e.target.value })}
+                                            >
+                                                {item.sizes_available?.map(s => <option key={s} value={s}>{s}</option>)}
+                                            </select>
+                                            <div className="qty-stepper">
+                                                <button onClick={() => updateCartItem(i, { ...item, quantity: Math.max(1, item.quantity - 1) })}>-</button>
+                                                <span>{item.quantity}</span>
+                                                <button onClick={() => updateCartItem(i, { ...item, quantity: item.quantity + 1 })}>+</button>
+                                            </div>
                                         </div>
                                     </div>
                                     <div className="cart-item-end">
                                         <p className="cart-item-price">${((item.precioMXN || item.price) * item.quantity).toLocaleString()}</p>
-                                        <button onClick={() => removeFromCart(i)} className="btn-remove">&times;</button>
+                                        <button onClick={() => removeFromCart(i)} className="btn-remove-text">Eliminar</button>
                                     </div>
                                 </div>
                             ))}
