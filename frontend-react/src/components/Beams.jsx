@@ -51,7 +51,16 @@ function extendMaterial(BaseMaterial, cfg) {
 }
 
 const CanvasWrapper = ({ children }) => (
-  <Canvas dpr={1} frameloop="always" className="beams-container">
+  <Canvas 
+    dpr={1} 
+    frameloop="always" 
+    className="beams-container"
+    gl={{ 
+      antialias: false, 
+      powerPreference: "high-performance", 
+      alpha: false 
+    }}
+  >
     {children}
   </Canvas>
 );
@@ -162,8 +171,8 @@ const Beams = ({
         `,
         vertexHeader: `
           float getPos(vec3 pos) {
-            // Onda simple corregida: Cero ruido pesado, puro rendimiento
-            return sin(pos.y * 0.2 + time * uSpeed) * 0.5;
+            // Movimiento ultra ligero de ondas
+            return sin(pos.y * 0.2 + time * uSpeed) * 0.4;
           }
         `,
         vertex: {
@@ -173,18 +182,18 @@ const Beams = ({
         },
         fragment: {
           '#include <dithering_fragment>': `
-            // Forzamos el brillo propio del material
-            gl_FragColor.rgb += 0.15; 
+            // Inyectamos brillo blanco puro al renderizado final
+            gl_FragColor.rgb += 0.4; 
           `
         },
         material: { 
           transparent: true, 
-          opacity: 0.5,
-          blending: THREE.AdditiveBlending,
+          opacity: 0.6,
+          blending: THREE.AdditiveBlending, // Esto genera el efecto de "brillo" al cruzarse los rayos
           side: THREE.DoubleSide
         },
         uniforms: {
-          diffuse: new THREE.Color(1, 1, 1), // Rayos blancos brillantes
+          diffuse: new THREE.Color(1, 1, 1), // Color blanco para visibilidad máxima
           time: { shared: true, mixed: true, linked: true, value: 0 },
           uSpeed: { shared: true, mixed: true, linked: true, value: speed }
         }
@@ -203,8 +212,8 @@ const Beams = ({
           height={beamHeight} 
         />
       </group>
-      {/* Fondo azul marino muy oscuro para que resalte la marca MAKIA */}
-      <color attach="background" args={['#080a0f']} /> 
+      {/* Usamos un azul marino muy profundo de fondo para que resalte el logo gris de MAKIA */}
+      <color attach="background" args={['#0a0c12']} /> 
       <PerspectiveCamera makeDefault position={[0, 0, 20]} fov={30} />
     </CanvasWrapper>
   );
