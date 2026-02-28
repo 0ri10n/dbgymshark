@@ -37,8 +37,11 @@ const AdminPanel = () => {
     const [modalAbierto, setModalAbierto] = useState(false);
     const [editandoId, setEditandoId] = useState(null);
     const [formData, setFormData] = useState({ 
-        title: '', product_type: '', vendor: 'Gymshark | Be a visionary.', 
-        sku: '', price: 0, inventory_quantity: 0, variants: [], image_principal: ''
+    title: '', 
+    product_type: '', 
+    vendor: 'Gymshark | Be a visionary.', 
+    variants: [], 
+    image_principal: '' 
     });
 
     const [modalUsuarioAbierto, setModalUsuarioAbierto] = useState(false);
@@ -135,45 +138,50 @@ const AdminPanel = () => {
     };
 
     const handleGuardar = async (e) => {
-        e.preventDefault();
-        try {
-            const coloresExtraidos = [...new Set(formData.variants.map(v => v.color))].filter(Boolean);
-            const tallasExtraidas = [...new Set(formData.variants.map(v => v.size))].filter(Boolean);
+    e.preventDefault();
+    if (formData.variants.length === 0) {
+        alert("Debes agregar al menos una variante (Color/Talla)");
+        return;
+    }
 
-            const variantesProcesadas = formData.variants.map((variante, index) => {
-                const skuVariante = variante.sku && variante.sku.trim() !== '' 
-                    ? variante.sku 
-                    : `${generarSKU(formData.product_type, formData.title)}-V${index + 1}`;
-                
-                return {
-                    ...variante,
-                    sku: skuVariante,
-                    price: Number(variante.price) || Number(formData.price) || 0 
-                };
-            });
+    try {
+        const coloresExtraidos = [...new Set(formData.variants.map(v => v.color))].filter(Boolean);
+        const tallasExtraidas = [...new Set(formData.variants.map(v => v.size))].filter(Boolean);
 
-            const payload = { 
-                ...formData, 
-                handle: formData.title.toLowerCase().replace(/ /g, '-'),
-                variants: variantesProcesadas,
-                colors_available: coloresExtraidos,
-                sizes_available: tallasExtraidas,
-                precioMXN: Number(formData.price) 
-            };
-            
-            if (editandoId) {
-                await axios.put(`${baseURL}/productos/${editandoId}`, payload, { headers: getAuthHeaders() });
-            } else {
-                await axios.post(`${baseURL}/productos`, payload, { headers: getAuthHeaders() });
-            }
-            setModalAbierto(false); 
-            cargarProductos(); 
-            alert("Guardado correctamente");
-        } catch (error) { 
-            console.error("Error al guardar:", error.response?.data || error.message);
-            alert("Error al guardar"); 
+        // Procesamos variantes: si no hay SKU, generamos uno permanente
+        const variantesProcesadas = formData.variants.map((v, i) => ({
+            ...v,
+            sku: v.sku?.trim() || `${generarSKU(formData.product_type, formData.title)}-V${i + 1}`,
+            price: Number(v.price) || 0
+        }));
+
+        const payload = { 
+            ...formData, 
+            handle: formData.title.toLowerCase().replace(/ /g, '-'),
+            variants: variantesProcesadas,
+            colors_available: coloresExtraidos,
+            sizes_available: tallasExtraidas,
+            // 🌟 LOGICA DE EXTRACCIÓN:
+            // El precio del producto será el de la primera variante
+            precioMXN: variantesProcesadas[0].price, 
+            price: variantesProcesadas[0].price,
+            // La imagen principal será la de la primera variante
+            image_principal: variantesProcesadas[0].image 
+        };
+        
+        if (editandoId) {
+            await axios.put(`${baseURL}/productos/${editandoId}`, payload, { headers: getAuthHeaders() });
+        } else {
+            await axios.post(`${baseURL}/productos`, payload, { headers: getAuthHeaders() });
         }
-    };
+        setModalAbierto(false); 
+        cargarProductos(); 
+        alert("¡Producto guardado con éxito!");
+    } catch (error) { 
+        console.error("Error:", error.response?.data || error.message);
+        alert("Error al guardar: revisa los campos de las variantes."); 
+    }
+};
 
     const handleGuardarUsuario = async (e) => {
         e.preventDefault();
@@ -292,36 +300,16 @@ const AdminPanel = () => {
                         <h2>{editandoId ? 'Editar' : 'Nuevo'} Producto</h2>
                         <form onSubmit={handleGuardar} className="admin-form-vertical">
                             <div className="form-grid-2-cols">
-                                <div className="field-group"><label>Título</label><input type="text" required value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} /></div>
-                                <div className="field-group"><label>Categoría</label><input type="text" list="lista-categorias" value={formData.product_type} onChange={e => setFormData({...formData, product_type: e.target.value})} /></div>
-                                <div className="field-group"><label>SKU Base</label><input type="text" value={formData.sku} onChange={e => setFormData({...formData, sku: e.target.value})} /></div>
                                 <div className="field-group">
-                                    <label>Precio Base</label>
-                                    <input 
-                                        type="number" 
-                                        value={formData.price} 
-                                        onChange={e => {
-                                            const nuevoPrecio = Number(e.target.value);
-                                            const nuevasVariants = [...formData.variants];
-                                            if (nuevasVariants.length > 0) nuevasVariants[0].price = nuevoPrecio;
-                                            setFormData({...formData, price: nuevoPrecio, variants: nuevasVariants});
-                                        }} 
-                                    />
+                                    <label>Título del Producto</label>
+                                    <input type="text" required value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} />
                                 </div>
-                                <div className="field-group url-input-expanded">
-                                    <label>URL Imagen Principal</label>
-                                    <input 
-                                        type="text" 
-                                        value={formData.image_principal || ""} 
-                                        onChange={e => {
-                                            const nuevaUrl = e.target.value;
-                                            const nuevasVariants = [...formData.variants];
-                                            if (nuevasVariants.length > 0) nuevasVariants[0].image = nuevaUrl;
-                                            setFormData({...formData, image_principal: nuevaUrl, variants: nuevasVariants});
-                                        }} 
-                                    />
+                                <div className="field-group">
+                                    <label>Categoría</label>
+                                    <input type="text" list="lista-categorias" value={formData.product_type} onChange={e => setFormData({...formData, product_type: e.target.value})} />
                                 </div>
-                            </div>
+                                {/* ¡SKU, Precio y URL Base eliminados por orden del jefe! */}
+                                </div>
                             <div className="variants-section">
                                 <div className="section-header-variants"><h3>Variantes</h3><button type="button" className="btn-makia-save" onClick={addEmptyColorGroup}>+ Color</button></div>
                                 {variantsByColor.map((group, idx) => (
