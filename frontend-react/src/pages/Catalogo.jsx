@@ -3,10 +3,8 @@ import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { CartContext } from '../context/CartContext';
 import PaginationControls from '../components/PaginationControls';
-import Login from './Login';
 import './Catalogo.css';
 
-// Lista completa de categorías solicitada
 const CATEGORIAS_LIMPIAS = [
     'Accessories', 'Bags', 'Baselayers', 'Bodysuits', 'Bottles', 'Bottoms',
     'Crop Tops', 'Dresses', 'Footwear', 'Gift Cards', 'Headwear', 'Hoodies',
@@ -50,7 +48,7 @@ const getPrimaryImage = (p = {}) => {
 
 const Catalogo = () => {
     const { user, logout } = useAuth();
-    const { cart, addToCart, removeFromCart, updateCartItem } = useContext(CartContext);
+    const { cart, addToCart, removeFromCart, updateCartItem, clearCart } = useContext(CartContext);
     
     const [productos, setProductos] = useState([]);
     const [busqueda, setBusqueda] = useState('');
@@ -65,11 +63,12 @@ const Catalogo = () => {
     const [colorVisual, setColorVisual] = useState({});
     const [catDesplegado, setCatDesplegado] = useState(true);
 
+    const baseURL = import.meta.env.VITE_API_URL || 'https://dbgymshark-ddk1.onrender.com/api';
+
     useEffect(() => {
         const cargarData = async () => {
             setCargando(true);
             try {
-                const baseURL = import.meta.env.VITE_API_URL || 'https://dbgymshark-ddk1.onrender.com/api';
                 const res = await axios.get(`${baseURL}/productos?page=${pagina}&limit=20&search=${busqueda}`);
                 if (res.data.productos) {
                     setProductos(res.data.productos);
@@ -98,7 +97,6 @@ const Catalogo = () => {
             return;
         }
 
-        // Se guarda el color y la imagen específica para la previsualización
         addToCart({ 
             ...p, 
             selectedSize: talla, 
@@ -107,6 +105,35 @@ const Catalogo = () => {
             quantity: 1
         });
         setIsCartOpen(true); 
+    };
+
+    const handleFinalizarCompra = async () => {
+        if (cart.length === 0) return;
+        
+        try {
+            const total = cart.reduce((acc, item) => acc + ((item.precioMXN || item.price) * item.quantity), 0);
+            
+            const ordenData = {
+                nombreCliente: user?.nombre || "Invitado",
+                productos: cart.map(item => ({
+                    nombre: item.title,
+                    talla: item.selectedSize,
+                    color: item.selectedColor,
+                    precio: item.precioMXN || item.price,
+                    cantidad: item.quantity
+                })),
+                total: total,
+                fechaPedido: new Date().toISOString() // Manda la fecha correctamente a la BD
+            };
+
+            await axios.post(`${baseURL}/ventas`, ordenData);
+            alert("¡Compra realizada con éxito!");
+            clearCart();
+            setIsCartOpen(false);
+        } catch (error) {
+            console.error("Error al procesar compra:", error);
+            alert("Hubo un error al procesar tu pedido.");
+        }
     };
 
     return (
@@ -235,7 +262,6 @@ const Catalogo = () => {
                         <div className="cart-modal-list">
                             {cart.map((item, i) => (
                                 <div key={i} className="cart-modal-row">
-                                    {/* Previsualización de imagen pequeña en el carrito */}
                                     <img src={item.selectedImage} alt={item.title} className="cart-item-mini-img" />
                                     <div className="cart-item-info">
                                         <p className="cart-item-title">{item.title}</p>
@@ -253,7 +279,7 @@ const Catalogo = () => {
                                 </div>
                             ))}
                         </div>
-                        <button className="btn-checkout-makia" onClick={() => alert("Compra finalizada")}>FINALIZAR COMPRA</button>
+                        <button className="btn-checkout-makia" onClick={handleFinalizarCompra}>FINALIZAR COMPRA</button>
                     </div>
                 </div>
             )}
