@@ -55,7 +55,7 @@ exports.obtenerDatosTabla = async (req, res) => {
     }
 };
 
-// --- OBTENER USUARIOS PANEL (Corregido para Frontend) ---
+// --- OBTENER USUARIOS PANEL ---
 exports.obtenerUsuariosPanel = async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
@@ -88,7 +88,7 @@ exports.obtenerUsuariosPanel = async (req, res) => {
     }
 };
 
-// --- OBTENER VENTAS PANEL (Corregido para Frontend) ---
+// --- OBTENER VENTAS PANEL ---
 exports.obtenerVentasPanel = async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
@@ -101,13 +101,13 @@ exports.obtenerVentasPanel = async (req, res) => {
             filtro = {
                 $or: [
                     { numeroOrden: { $regex: search, $options: 'i' } },
-                    { "usuario.nombre": { $regex: search, $options: 'i' } }
+                    { nombreCliente: { $regex: search, $options: 'i' } }
                 ]
             };
         }
 
         const [ventas, total] = await Promise.all([
-            Venta.find(filtro).sort({ fecha: -1 }).skip(skip).limit(limit).lean(),
+            Venta.find(filtro).sort({ fechaPedido: -1 }).skip(skip).limit(limit).lean(),
             Venta.countDocuments(filtro)
         ]);
 
@@ -117,6 +117,21 @@ exports.obtenerVentasPanel = async (req, res) => {
         });
     } catch (error) {
         res.status(500).json({ msg: 'Error al cargar ventas' });
+    }
+};
+
+// --- FUNCIÓN AGREGADA: Crear Venta desde Catálogo / Panel ---
+exports.crearVentaPanel = async (req, res) => {
+    try {
+        const nuevaVenta = new Venta(req.body);
+        await nuevaVenta.save();
+        res.status(201).json({
+            msg: "Venta registrada exitosamente",
+            venta: nuevaVenta
+        });
+    } catch (error) {
+        console.error("Error en crearVentaPanel:", error);
+        res.status(500).json({ msg: "Error al procesar la venta en el servidor" });
     }
 };
 
@@ -168,7 +183,7 @@ exports.eliminarDatoUniversal = async (req, res) => {
     try {
         const { dbName, tableName, id } = req.params;
         const db = mongoose.connection.client.db(dbName);
-        const resultado = await db.collection(tableName).deleteOne({ _id: new ObjectId(id) });
+        await db.collection(tableName).deleteOne({ _id: new ObjectId(id) });
         res.json({ msg: 'Registro eliminado' });
     } catch (error) {
         res.status(500).json({ msg: 'Error al eliminar registro' });
