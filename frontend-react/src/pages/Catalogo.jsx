@@ -5,27 +5,21 @@ import { CartContext } from '../context/CartContext';
 import PaginationControls from '../components/PaginationControls';
 import './Catalogo.css';
 
-// 1. LISTA DE CATEGORÍAS COMPLETA
 const CATEGORIAS_LIMPIAS = [
     'Accessories', 'Bags', 'Baselayers', 'Bodysuits', 'Bottles', 'Bottoms',
     'Crop Tops', 'Dresses', 'Footwear', 'Gift Cards', 'Headwear', 'Hoodies',
-    'Jackets', 'Jackets & Outerwear', 'Joggers', 'Leggings', 'Long Sleeve Tops',
-    'Miscellaneous', 'One Pieces', 'Outerwear', 'Pants', 'Pullovers',
-    'Short Sleeve Tops', 'Shorts', 'Skorts', 'Sleeveless Tops', 'Socks',
-    'Sports Bras', 'Stringers', 'Sweaters', 'Swimwear', 'T-Shirts',
-    'Tanks', 'Tops', 'Uncategorized', 'Underwear', 'Vests'
+    'Jackets', 'Leggings', 'Pants', 'Shorts', 'Socks', 'Sports Bras', 'T-Shirts', 'Tops'
 ];
 
-// 2. PALETA DE COLORES MAKIA
 const getColorHex = (name = "") => {
     const n = name.toLowerCase().trim();
     if (n === 'black') return "#111111";
     if (n === 'white') return "#FFFFFF";
-    if (n.includes('blue')) return "#1e3a8a";
-    if (n.includes('red')) return "#991b1b";
-    if (n.includes('pink') || n.includes('rose')) return "#db2777";
-    if (n.includes('green') || n.includes('aloe')) return "#2d4d43";
     if (n.includes('teal')) return "#008080";
+    if (n.includes('olive') || n.includes('aloe') || n.includes('alpine')) return "#556b2f";
+    if (n.includes('blue')) return "#1e3a8a";
+    if (n.includes('pink') || n.includes('rose')) return "#db2777";
+    if (n.includes('red')) return "#991b1b";
     if (n.includes('grey') || n.includes('gray')) return "#4b5563";
     return "#374151"; 
 };
@@ -47,9 +41,9 @@ const Catalogo = () => {
     const [pagina, setPagina] = useState(1);
     const [totalPaginas, setTotalPaginas] = useState(1);
     
-    // 3. ESTADOS DE FILTROS (FLECHA Y PRECIO)
+    // ESTADOS DE FILTROS
     const [catFiltro, setCatFiltro] = useState(null);
-    const [filtrosAbiertos, setFiltrosAbiertos] = useState(true); 
+    const [dropdownAbierto, setDropdownAbierto] = useState(false); 
     const [rangoPrecio, setRangoPrecio] = useState(5000); 
     
     const [tallasSeleccionadas, setTallasSeleccionadas] = useState({});
@@ -72,32 +66,16 @@ const Catalogo = () => {
 
     const granTotal = cart.reduce((acc, item) => acc + ((item.precioMXN || item.price) * item.quantity), 0);
 
-    const handleAgregar = (p) => {
-        const talla = tallasSeleccionadas[p._id];
-        const colorActivo = colorVisual[p._id] || (p.colors_available && p.colors_available[0]);
-        const imagenSeleccionada = p.variants?.find(v => v.color === colorActivo)?.image || getPrimaryImage(p);
-
-        if (!talla) { alert("Por favor selecciona una talla."); return; }
-
-        addToCart({ 
-            ...p, 
-            selectedSize: talla, 
-            selectedColor: colorActivo,
-            selectedImage: imagenSeleccionada,
-            quantity: 1
-        });
-        setIsCartOpen(true); 
-    };
-
-    // 4. FUNCIÓN DE COMPRA (SOLUCIONA ERROR 500)
     const handleFinalizarCompra = async () => {
+        if (!user) {
+            alert("Debes iniciar sesión para realizar una compra.");
+            return;
+        }
         if (cart.length === 0) return;
+
         try {
             const token = localStorage.getItem('token');
-            // Generación automática del nombre para evitar campos vacíos
-            const nombreFinal = (user?.nombre && user?.apellido) 
-                ? `${user.nombre} ${user.apellido}` 
-                : "Cliente Registrado";
+            const nombreFinal = `${user.nombre || ''} ${user.apellido || ''}`.trim();
 
             const ordenData = {
                 nombreCliente: nombreFinal,
@@ -114,17 +92,15 @@ const Catalogo = () => {
             await axios.post(`${baseURL}/admin/panel/ventas`, ordenData, {
                 headers: { 'x-auth-token': token }
             });
-            
             alert("¡Compra exitosa!");
             clearCart();
             setIsCartOpen(false);
         } catch (error) {
-            console.error("Error al procesar compra:", error);
-            alert("Error en el servidor al guardar la venta.");
+            console.error("Error al comprar:", error);
+            alert("Error en el servidor.");
         }
     };
 
-    // 5. LÓGICA DE FILTRADO
     const productosFiltrados = productos.filter(p => {
         const cumpleCat = !catFiltro || p.product_type === catFiltro;
         const cumplePrecio = (p.precioMXN || p.price) <= rangoPrecio;
@@ -144,76 +120,68 @@ const Catalogo = () => {
                 </div>
             </header>
 
-            <div className="hero-banner-full">
-                <img src="/hero-banner-client.jpg" alt="MAKIA" />
-            </div>
-
             <div className="store-layout-container">
                 <aside className="sidebar-filter-box">
                     <div className="sidebar-sticky-wrapper">
-                        {/* FLECHITA Y DESPLIEGUE */}
-                        <div className="filter-accordion-header" onClick={() => setFiltrosAbiertos(!filtrosAbiertos)} style={{cursor:'pointer', display:'flex', justifyContent:'space-between', alignItems:'center'}}>
-                            <h2 className="sidebar-h2">Categorías</h2>
-                            <i className={`fas fa-chevron-${filtrosAbiertos ? 'up' : 'down'}`} style={{color: 'var(--makia-accent)'}}></i>
+                        {/* BOTÓN DROPDOWN DE CATEGORÍAS */}
+                        <div className="filter-dropdown-container">
+                            <button 
+                                className="filter-dropdown-btn" 
+                                onClick={() => setDropdownAbierto(!dropdownAbierto)}
+                            >
+                                <span>{catFiltro || "Seleccionar Categoría"}</span>
+                                <i className={`fas fa-chevron-${dropdownAbierto ? 'up' : 'down'}`}></i>
+                            </button>
+                            
+                            {dropdownAbierto && (
+                                <div className="filter-dropdown-menu">
+                                    {CATEGORIAS_LIMPIAS.map(cat => (
+                                        <div 
+                                            key={cat} 
+                                            className="dropdown-item" 
+                                            onClick={() => { setCatFiltro(cat); setDropdownAbierto(false); }}
+                                        >
+                                            {cat}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
-                        
-                        {filtrosAbiertos && (
-                            <div className="cat-dropdown-list" style={{maxHeight:'400px', overflowY:'auto', paddingRight:'10px'}}>
-                                {CATEGORIAS_LIMPIAS.map(cat => (
-                                    <div key={cat} className={`sub-item ${catFiltro === cat ? 'active' : ''}`} onClick={() => setCatFiltro(cat)}>
-                                        {cat}
-                                    </div>
-                                ))}
-                            </div>
+
+                        {/* BOTÓN LIMPIAR */}
+                        {catFiltro && (
+                            <button className="btn-clear-filter" onClick={() => setCatFiltro(null)}>
+                                Limpiar Filtro ✕
+                            </button>
                         )}
 
-                        {/* RANGO DE PRECIOS */}
-                        <div className="price-filter-section" style={{marginTop:'30px'}}>
+                        <div className="price-filter-section">
                             <h2 className="sidebar-h2">Precio máx: ${rangoPrecio}</h2>
                             <input 
                                 type="range" 
-                                min="0" 
-                                max="5000" 
-                                step="100"
+                                min="0" max="5000" step="100" 
                                 value={rangoPrecio} 
-                                onChange={(e) => setRangoPrecio(Number(e.target.value))}
+                                onChange={(e) => setRangoPrecio(Number(e.target.value))} 
                                 className="makia-range-slider"
-                                style={{width:'100%', accentColor:'var(--makia-accent)'}}
                             />
-                            <div style={{display:'flex', justifyContent:'space-between', fontSize:'12px', color:'#555', marginTop:'8px'}}>
-                                <span>$0</span><span>$5,000+</span>
-                            </div>
                         </div>
                     </div>
                 </aside>
 
                 <main className="shop-main-content">
-                    <div className="white-search-box">
-                        <i className="fas fa-search"></i>
-                        <input type="text" placeholder="Buscar..." value={busqueda} onChange={(e) => setBusqueda(e.target.value)} />
-                    </div>
-
                     <div className="fixed-grid-3">
                         {!cargando && productosFiltrados.map((prod) => {
                             const colorActivo = colorVisual[prod._id] || (prod.colors_available && prod.colors_available[0]);
                             const imagenAMostrar = prod.variants?.find(v => v.color === colorActivo)?.image || getPrimaryImage(prod);
-
                             return (
                                 <div key={prod._id} className="makia-product-card">
-                                    <div className="img-frame">
-                                        <img src={imagenAMostrar} alt="p" className="p-img" />
-                                    </div>
+                                    <div className="img-frame"><img src={imagenAMostrar} alt="p" className="p-img" /></div>
                                     <div className="info-frame">
-                                        <h3>{prod.title}</h3>
+                                        <h3 className="card-title-text">{prod.title}</h3>
                                         <p className="p-price">${(prod.precioMXN || prod.price).toLocaleString()} MXN</p>
                                         <div className="swatch-row-carrusel">
                                             {prod.colors_available?.map(col => (
-                                                <button 
-                                                    key={col} 
-                                                    className={`swatch-circle ${colorActivo === col ? 'active' : ''}`} 
-                                                    style={{ backgroundColor: getColorHex(col) }}
-                                                    onClick={() => setColorVisual(prev => ({ ...prev, [prod._id]: col }))}
-                                                />
+                                                <button key={col} className={`swatch-circle ${colorActivo === col ? 'active' : ''}`} style={{ backgroundColor: getColorHex(col) }} onClick={() => setColorVisual(prev => ({ ...prev, [prod._id]: col }))} />
                                             ))}
                                         </div>
                                         <div className="card-footer">
@@ -221,7 +189,12 @@ const Catalogo = () => {
                                                 <option value="">Talla</option>
                                                 {prod.sizes_available?.map(t => <option key={t} value={t}>{t}</option>)}
                                             </select>
-                                            <button className="btn-add-to-bag-makia" onClick={() => handleAgregar(prod)}>AÑADIR</button>
+                                            <button className="btn-add-to-bag-makia" onClick={() => {
+                                                const talla = tallasSeleccionadas[prod._id];
+                                                if (!talla) { alert("Selecciona talla"); return; }
+                                                addToCart({ ...prod, selectedSize: talla, selectedColor: colorActivo, selectedImage: imagenAMostrar, quantity: 1 });
+                                                setIsCartOpen(true);
+                                            }}>AÑADIR</button>
                                         </div>
                                     </div>
                                 </div>
@@ -232,7 +205,6 @@ const Catalogo = () => {
                 </main>
             </div>
 
-            {/* BOLSA / CARRITO */}
             {isCartOpen && (
                 <div className="cart-modal-overlay" onClick={() => setIsCartOpen(false)}>
                     <div className="cart-modal-panel" onClick={e => e.stopPropagation()}>
