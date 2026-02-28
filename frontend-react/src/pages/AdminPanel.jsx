@@ -249,22 +249,43 @@ const AdminPanel = () => {
                                 <div className="field-group"><label>SKU Base</label><input type="text" value={formData.sku} onChange={e => setFormData({...formData, sku: e.target.value})} /></div>
                                 <div className="field-group"><label>Precio Base</label><input type="number" value={formData.price} onChange={e => setFormData({...formData, price: Number(e.target.value)})} /></div>
                             </div>
+                            
+                            {/* SECCIÓN VARIANTES - CLASES ACTUALIZADAS PARA CSS */}
                             <div className="variants-section">
-                                <div className="section-header-variants"><h3>Variantes</h3><button type="button" className="btn-makia-save" onClick={addEmptyColorGroup}>+ Color</button></div>
+                                <div className="section-header-variants">
+                                    <h3>Variantes</h3>
+                                    <button type="button" className="btn-makia-save" onClick={addEmptyColorGroup}>+ Color</button>
+                                </div>
+                                
                                 {variantsByColor.map((group, idx) => (
                                     <div key={idx} className="color-group-card">
                                         <div className="color-header-row">
-                                            <div className="field-group color-input-fixed"><label>Color</label><input type="text" value={group.color} onChange={e => setFormData({...formData, variants: formData.variants.map(v => v.color === group.color ? {...v, color: e.target.value} : v)})} /></div>
-                                            <div className="field-group url-input-expanded"><label>URL Imagen Color</label><input type="text" value={group.image} onChange={e => setFormData({...formData, variants: formData.variants.map(v => v.color === group.color ? {...v, image: e.target.value} : v)})} /></div>
-                                            <div className="mini-preview-container">{group.image ? <img src={group.image} alt="p" className="form-mini-preview" /> : <div className="form-mini-preview-placeholder">URL</div>}</div>
+                                            <div className="field-group color-input-fixed">
+                                                <label>Color</label>
+                                                <input type="text" value={group.color} onChange={e => setFormData({...formData, variants: formData.variants.map(v => v.color === group.color ? {...v, color: e.target.value} : v)})} />
+                                            </div>
+                                            <div className="field-group url-input-expanded">
+                                                <label>URL Imagen Color</label>
+                                                <input type="text" value={group.image} onChange={e => setFormData({...formData, variants: formData.variants.map(v => v.color === group.color ? {...v, image: e.target.value} : v)})} />
+                                            </div>
+                                            <div className="mini-preview-container">
+                                                {group.image ? <img src={group.image} alt="p" className="form-mini-preview" /> : <div className="form-mini-preview-placeholder">URL</div>}
+                                            </div>
                                         </div>
+                                        
                                         <div className="sizes-grid">
                                             {group.items.map(item => (
                                                 <div key={item.originalIndex} className="size-row">
                                                     <div className="field-group"><label>Talla</label><input type="text" value={item.size} onChange={e => { const nv = [...formData.variants]; nv[item.originalIndex].size = e.target.value; setFormData({...formData, variants: nv}); }} /></div>
                                                     <div className="field-group"><label>Precio</label><input type="number" value={item.price} onChange={e => { const nv = [...formData.variants]; nv[item.originalIndex].price = Number(e.target.value); setFormData({...formData, variants: nv}); }} /></div>
                                                     <div className="field-group"><label>Stock</label><input type="number" value={item.inventory_quantity} onChange={e => { const nv = [...formData.variants]; nv[item.originalIndex].inventory_quantity = Number(e.target.value); setFormData({...formData, variants: nv}); }} /></div>
-                                                    <div className="field-group"><label>SKU Variante</label><input type="text" value={item.sku || ""} onChange={e => { const nv = [...formData.variants]; nv[item.originalIndex].sku = e.target.value; setFormData({...formData, variants: nv}); }} /></div>
+                                                    
+                                                    {/* EL SKU BAJARÁ AUTOMÁTICAMENTE SEGÚN EL CSS */}
+                                                    <div className="field-group">
+                                                        <label>SKU Variante</label>
+                                                        <input type="text" value={item.sku || ""} onChange={e => { const nv = [...formData.variants]; nv[item.originalIndex].sku = e.target.value; setFormData({...formData, variants: nv}); }} />
+                                                    </div>
+                                                    
                                                     <button type="button" className="btn-x" onClick={() => setFormData({...formData, variants: formData.variants.filter((_, i) => i !== item.originalIndex)})}>✕</button>
                                                 </div>
                                             ))}
@@ -273,7 +294,11 @@ const AdminPanel = () => {
                                     </div>
                                 ))}
                             </div>
-                            <div className="modal-footer"><button type="button" className="btn-makia-cancel" onClick={() => setModalAbierto(false)}>Cancelar</button><button type="submit" className="btn-makia-save">Guardar Cambios</button></div>
+
+                            <div className="modal-footer">
+                                <button type="button" className="btn-makia-cancel" onClick={() => setModalAbierto(false)}>Cancelar</button>
+                                <button type="submit" className="btn-makia-save">Guardar Cambios</button>
+                            </div>
                         </form>
                     </div>
                 </div>

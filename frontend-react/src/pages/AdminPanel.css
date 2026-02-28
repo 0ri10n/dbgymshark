@@ -176,7 +176,7 @@
     text-transform: uppercase;
 }
 
-/* TABLAS CON LÍNEAS DIVISORIAS POR FILA */
+/* TABLAS */
 .admin-table-wrapper {
     background: var(--makia-surface);
     border: 1px solid var(--makia-border);
@@ -203,7 +203,6 @@
 
 .admin-table-fixed td {
     padding: 1.5rem;
-    /* LÍNEA DIVISORIA POR FILA CASI IMPERCEPTIBLE */
     border-bottom: 1px solid rgba(255, 255, 255, 0.03);
     vertical-align: middle;
     text-align: center; 
@@ -237,7 +236,7 @@
 .btn-edit { background: #fff; color: #000; }
 .btn-delete { background: var(--makia-danger); color: #fff; }
 
-/* MODALES Y FORMULARIO (ESPACIADO CORREGIDO) */
+/* MODALES Y FORMULARIO */
 .modal-overlay {
     position: fixed;
     inset: 0;
@@ -262,7 +261,6 @@
 
 .admin-form-vertical { display: flex; flex-direction: column; gap: 2rem; }
 
-/* Grid para separar campos amontonados del encabezado */
 .form-grid-2-cols {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -274,7 +272,19 @@
 .field-group label { font-size: 0.85rem; font-weight: 700; color: var(--makia-muted); text-transform: uppercase; }
 .field-group input, .field-group select { background: #111; border: 1px solid var(--makia-border); color: #fff; padding: 14px; border-radius: 10px; outline: none; }
 
-/* VARIANTES POR COLOR */
+/* VARIANTES - CORRECCIÓN DISTRIBUCIÓN BOTÓN +COLOR */
+.variants-section {
+    display: flex;
+    flex-direction: column;
+}
+
+.section-header-variants {
+    display: flex;
+    justify-content: space-between; /* Mueve el botón a la derecha */
+    align-items: center;
+    margin-bottom: 25px; /* Espacio pequeño entre el encabezado y las variantes */
+}
+
 .color-group-card {
     background: #0a0a0a;
     border: 1px solid var(--makia-border);
@@ -318,16 +328,29 @@
     color: #444;
 }
 
-/* FILAS DE TALLAS CON DISTRIBUCIÓN PARA SKU */
+/* FILAS DE TALLAS - CORRECCIÓN SKU HACIA ABAJO */
 .size-row {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr 1.5fr auto; /* Espacio dedicado para SKU individual */
-    gap: 20px;
+    /* Reducimos a 3 columnas arriba + columna para el botón X */
+    grid-template-columns: repeat(3, 1fr) auto; 
+    gap: 15px;
     background: #0f0f0f;
     padding: 20px;
     border-radius: 12px;
     align-items: end;
     margin-bottom: 15px;
+}
+
+/* Forzamos al SKU (4to elemento del grid) a ocupar la fila inferior completa */
+.size-row .field-group:nth-child(4) {
+    grid-column: 1 / span 3; 
+    margin-top: 5px;
+}
+
+/* Ajuste posición del botón X */
+.size-row .btn-x {
+    grid-column: 4;
+    grid-row: 1; /* Mantiene la X alineada con la fila superior */
 }
 
 .btn-x {
