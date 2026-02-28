@@ -152,14 +152,16 @@ const AdminPanel = () => {
                     price: Number(variante.price) || Number(formData.price) || 0 // Aseguramos que nunca falte el precio
                 };
             });
-            
+
             const payload = { 
-                ...formData, 
-                handle: formData.title.toLowerCase().replace(/ /g, '-'),
-                variants: formData.variants,
-                colors_available: coloresExtraidos,
-                sizes_available: tallasExtraidas
-            };
+            ...formData, 
+            handle: formData.title.toLowerCase().replace(/ /g, '-'),
+            variants: variantesProcesadas, // <--- ¡USAMOS LAS PROCESADAS!
+            colors_available: coloresExtraidos,
+            sizes_available: tallasExtraidas,
+            // Sincronizamos para el esquema de Mongoose
+            precioMXN: Number(formData.price) 
+        };
             
             if (editandoId) {
                 await axios.put(`${baseURL}/productos/${editandoId}`, payload, { headers: getAuthHeaders() });
