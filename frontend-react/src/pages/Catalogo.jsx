@@ -8,7 +8,6 @@ import './Catalogo.css';
 
 const TIPO_CAMBIO_USD_MXN = 17.00;
 
-// Lista de categorías para el sidebar
 const CATEGORIAS_LIMPIAS = [
     'Accessories', 'Bags', 'Baselayers', 'Bodysuits', 'Bottles', 'Bottoms',
     'Crop Tops', 'Dresses', 'Footwear', 'Gift Cards', 'Headwear', 'Hoodies',
@@ -19,7 +18,6 @@ const CATEGORIAS_LIMPIAS = [
     'Tanks', 'Tops', 'Uncategorized', 'Underwear', 'Vests'
 ];
 
-// Mapeo lógico de colores a Hexadecimal
 const getColorHex = (name = "") => {
     const n = name.toLowerCase().trim();
     if (n === 'black') return "#111111";
@@ -59,7 +57,6 @@ const Catalogo = () => {
     const [busqueda, setBusqueda] = useState('');
     const [cargando, setCargando] = useState(true);
     const [isCartOpen, setIsCartOpen] = useState(false);
-    const [showLoginModal, setShowLoginModal] = useState(false);
     const [pagina, setPagina] = useState(1);
     const [totalPaginas, setTotalPaginas] = useState(1);
 
@@ -110,15 +107,17 @@ const Catalogo = () => {
     return (
         <div className="client-view">
             <header className="client-header-makia">
-                {/* Logo alineado a la izquierda con tamaño controlado por CSS */}
-                <img src="/logo-makia-pages.png" alt="Makia Logo" className="brand-logo-img-catalogo" />
+                {/* Logo unificado con el estilo de AdminPanel */}
+                <img src="/logo-makia-pages.png" alt="Makia Logo" className="brand-logo-img" />
                 
                 <div className="header-right-icons">
                     <div className="cart-wrapper" onClick={() => setIsCartOpen(true)}>
                         <i className="fas fa-shopping-bag"></i>
                         <span id="cartCount">{cart.length}</span>
                     </div>
-                    <div className="user-icon" onClick={logout} style={{cursor:'pointer'}}><i className="far fa-user"></i></div>
+                    <div className="user-icon" onClick={logout} style={{cursor:'pointer'}}>
+                        <i className="far fa-user"></i>
+                    </div>
                 </div>
             </header>
 
@@ -161,7 +160,8 @@ const Catalogo = () => {
                 </aside>
 
                 <main className="shop-main-content">
-                    <div className="white-search-box">
+                    {/* Buscador unificado con AdminPanel */}
+                    <div className="search-bar-makia-client">
                         <i className="fas fa-search"></i>
                         <input 
                             type="text" 
@@ -212,7 +212,6 @@ const Catalogo = () => {
                 </main>
             </div>
 
-            {/* Modal del Carrito */}
             {isCartOpen && (
                 <div className="cart-modal-overlay" onClick={() => setIsCartOpen(false)}>
                     <div className="cart-modal-panel" onClick={e => e.stopPropagation()}>
