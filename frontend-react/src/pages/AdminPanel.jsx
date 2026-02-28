@@ -212,18 +212,19 @@ const AdminPanel = () => {
                                 </tr>
                             ))}
                             {vistaActiva === 'ventas' && listaVentas.map(v => {
-                                // Validación de fecha para evitar "Fecha Inválida"
-                                const fechaRaw = v.fecha || v.createdAt;
-                                const fechaObjeto = fechaRaw ? new Date(fechaRaw) : null;
-                                const fechaFormateada = (fechaObjeto && !isNaN(fechaObjeto.getTime())) 
-                                    ? fechaObjeto.toLocaleDateString() 
+                                // SOLUCIÓN: Usamos fechaPedido según tu documento de Mongo
+                                // Si es un objeto de Mongo con $date, lo extraemos.
+                                const rawDate = v.fechaPedido?.$date || v.fechaPedido || v.createdAt;
+                                const dateObj = rawDate ? new Date(rawDate) : null;
+                                const displayDate = (dateObj && !isNaN(dateObj.getTime())) 
+                                    ? dateObj.toLocaleDateString() 
                                     : "Sin fecha";
 
                                 return (
                                     <tr key={v._id}>
                                         <td>#{v.numeroOrden || v._id.substring(0,8)}</td>
-                                        <td>{v.usuario?.nombre || 'Anónimo'}</td>
-                                        <td>{fechaFormateada}</td>
+                                        <td>{v.nombreCliente || v.usuario?.nombre || 'Anónimo'}</td>
+                                        <td>{displayDate}</td>
                                         <td>${v.total?.toFixed(2)}</td>
                                         <td className="center"><span className="role-badge">{v.estado || 'Pagado'}</span></td>
                                     </tr>
