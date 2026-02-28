@@ -110,10 +110,16 @@ const AdminPanel = () => {
     };
 
     const addEmptyColorGroup = () => {
-        setFormData({ ...formData, variants: [...formData.variants, { color: '', size: '', price: formData.price || 0, inventory_quantity: 0, sku: '', image: "" }] });
+        const nuevoColorName = `Color ${variantsByColor.length + 1}`;
+        setFormData({ 
+            ...formData, 
+            variants: [
+                ...formData.variants, 
+                { color: nuevoColorName, size: '', price: formData.price || 0, inventory_quantity: 0, sku: '', image: "" }
+            ] 
+        });
     };
 
-    // CORRECCIÓN: Asegura que todas las variantes del mismo color reciban la URL
     const updateColorImage = (colorName, newUrl) => {
         setFormData({ 
             ...formData, 
@@ -121,47 +127,39 @@ const AdminPanel = () => {
         });
     };
 
-// --- GENERADOR DE SKU PROFESIONAL Y PERMANENTE ---
     const generarSKU = (categoria, titulo) => {
-        const marca = "MAK"; // Prefijo de tu marca (Makia)
-        // Tomamos las primeras 3 letras de la categoría (Ej: "Accessories" -> "ACC")
+        const marca = "MAK"; 
         const cat = (categoria || "GEN").substring(0, 3).toUpperCase();
-        // Tomamos un fragmento de la fecha para hacerlo único
         const idUnico = Date.now().toString().slice(-5); 
-        
-        // Resultado: MAK-ACC-45912
         return `${marca}-${cat}-${idUnico}`;
     };
 
     const handleGuardar = async (e) => {
         e.preventDefault();
         try {
-            // 1. MAGIA DE QA: Extraemos todos los colores y tallas únicos de las variantes actuales
             const coloresExtraidos = [...new Set(formData.variants.map(v => v.color))].filter(Boolean);
             const tallasExtraidas = [...new Set(formData.variants.map(v => v.size))].filter(Boolean);
 
             const variantesProcesadas = formData.variants.map((variante, index) => {
                 const skuVariante = variante.sku && variante.sku.trim() !== '' 
                     ? variante.sku 
-                    // Si está vacío, le generamos uno único: MAK-ACC-12345-V1, MAK-ACC-12345-V2, etc.
                     : `${generarSKU(formData.product_type, formData.title)}-V${index + 1}`;
                 
                 return {
                     ...variante,
                     sku: skuVariante,
-                    price: Number(variante.price) || Number(formData.price) || 0 // Aseguramos que nunca falte el precio
+                    price: Number(variante.price) || Number(formData.price) || 0 
                 };
             });
 
             const payload = { 
-            ...formData, 
-            handle: formData.title.toLowerCase().replace(/ /g, '-'),
-            variants: variantesProcesadas, // <--- ¡USAMOS LAS PROCESADAS!
-            colors_available: coloresExtraidos,
-            sizes_available: tallasExtraidas,
-            // Sincronizamos para el esquema de Mongoose
-            precioMXN: Number(formData.price) 
-        };
+                ...formData, 
+                handle: formData.title.toLowerCase().replace(/ /g, '-'),
+                variants: variantesProcesadas,
+                colors_available: coloresExtraidos,
+                sizes_available: tallasExtraidas,
+                precioMXN: Number(formData.price) 
+            };
             
             if (editandoId) {
                 await axios.put(`${baseURL}/productos/${editandoId}`, payload, { headers: getAuthHeaders() });
@@ -172,7 +170,7 @@ const AdminPanel = () => {
             cargarProductos(); 
             alert("Guardado correctamente");
         } catch (error) { 
-            console.error("Error al guardar:", error);
+            console.error("Error al guardar:", error.response?.data || error.message);
             alert("Error al guardar"); 
         }
     };
@@ -297,15 +295,54 @@ const AdminPanel = () => {
                                 <div className="field-group"><label>Título</label><input type="text" required value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} /></div>
                                 <div className="field-group"><label>Categoría</label><input type="text" list="lista-categorias" value={formData.product_type} onChange={e => setFormData({...formData, product_type: e.target.value})} /></div>
                                 <div className="field-group"><label>SKU Base</label><input type="text" value={formData.sku} onChange={e => setFormData({...formData, sku: e.target.value})} /></div>
-                                <div className="field-group"><label>Precio Base</label><input type="number" value={formData.price} onChange={e => setFormData({...formData, price: Number(e.target.value)})} /></div>
-                                <div className="field-group url-input-expanded"><label>URL Imagen Principal</label><input type="text" value={formData.image_principal || ""} onChange={e => setFormData({...formData, image_principal: e.target.value})} /></div>
+                                <div className="field-group">
+                                    <label>Precio Base</label>
+                                    <input 
+                                        type="number" 
+                                        value={formData.price} 
+                                        onChange={e => {
+                                            const nuevoPrecio = Number(e.target.value);
+                                            const nuevasVariants = [...formData.variants];
+                                            if (nuevasVariants.length > 0) nuevasVariants[0].price = nuevoPrecio;
+                                            setFormData({...formData, price: nuevoPrecio, variants: nuevasVariants});
+                                        }} 
+                                    />
+                                </div>
+                                <div className="field-group url-input-expanded">
+                                    <label>URL Imagen Principal</label>
+                                    <input 
+                                        type="text" 
+                                        value={formData.image_principal || ""} 
+                                        onChange={e => {
+                                            const nuevaUrl = e.target.value;
+                                            const nuevasVariants = [...formData.variants];
+                                            if (nuevasVariants.length > 0) nuevasVariants[0].image = nuevaUrl;
+                                            setFormData({...formData, image_principal: nuevaUrl, variants: nuevasVariants});
+                                        }} 
+                                    />
+                                </div>
                             </div>
                             <div className="variants-section">
                                 <div className="section-header-variants"><h3>Variantes</h3><button type="button" className="btn-makia-save" onClick={addEmptyColorGroup}>+ Color</button></div>
                                 {variantsByColor.map((group, idx) => (
                                     <div key={idx} className="color-group-card">
                                         <div className="color-header-row">
-                                            <div className="field-group color-input-fixed"><label>Color</label><input type="text" list="lista-colores" value={group.color} onChange={e => setFormData({...formData, variants: (formData.variants || []).map(v => v.color === group.color ? {...v, color: e.target.value} : v)})} /></div>
+                                            <div className="field-group color-input-fixed">
+                                                <label>Color</label>
+                                                <input 
+                                                    type="text" 
+                                                    list="lista-colores" 
+                                                    value={group.color} 
+                                                    onChange={e => {
+                                                        const nuevoValor = e.target.value;
+                                                        const nuevasVariants = [...formData.variants];
+                                                        group.items.forEach(item => {
+                                                            nuevasVariants[item.originalIndex].color = nuevoValor;
+                                                        });
+                                                        setFormData({...formData, variants: nuevasVariants});
+                                                    }} 
+                                                />
+                                            </div>
                                             <div className="field-group url-input-expanded"><label>URL Imagen Color</label><input type="text" value={group.image} onChange={e => updateColorImage(group.color, e.target.value)} /></div>
                                             <div className="mini-preview-box">
                                                 {group.image ? <img src={group.image} alt="Preview" /> : <span className="preview-placeholder">URL</span>}
