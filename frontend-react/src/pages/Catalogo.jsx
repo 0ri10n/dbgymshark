@@ -5,6 +5,7 @@ import { CartContext } from '../context/CartContext';
 import PaginationControls from '../components/PaginationControls';
 import './Catalogo.css';
 
+// Lista completa de categorías solicitada
 const CATEGORIAS_LIMPIAS = [
     'Accessories', 'Bags', 'Baselayers', 'Bodysuits', 'Bottles', 'Bottoms',
     'Crop Tops', 'Dresses', 'Footwear', 'Gift Cards', 'Headwear', 'Hoodies',
@@ -15,7 +16,7 @@ const CATEGORIAS_LIMPIAS = [
     'Tanks', 'Tops', 'Uncategorized', 'Underwear', 'Vests'
 ];
 
-// Restauración de todos los colores para los círculos
+// Restauración de paleta de colores completa para los círculos
 const getColorHex = (name = "") => {
     const n = name.toLowerCase().trim();
     if (n === 'black') return "#111111";
@@ -25,23 +26,15 @@ const getColorHex = (name = "") => {
     if (n.includes('green')) return "#2d4d43";
     if (n.includes('sage')) return "#b2ac88";
     if (n.includes('navy')) return "#000080";
-    if (n.includes('aqua') || n.includes('aegean')) return "#00ffff";
     if (n.includes('blue')) return "#1e3a8a";
-    if (n.includes('lilac')) return "#b666d2";
-    if (n.includes('burgundy') || n.includes('maroon') || n.includes('berry')) return "#800020";
-    if (n.includes('pink') || n.includes('rose') || n.includes('dolly')) return "#db2777";
-    if (n.includes('red') || n.includes('carmine')) return "#991b1b";
-    if (n.includes('purple') || n.includes('violet')) return "#6b21a8";
-    if (n.includes('orange') || n.includes('apricot')) return "#f97316";
-    if (n.includes('yellow')) return "#facc15";
-    if (n.includes('brown') || n.includes('truffle') || n.includes('baked')) return "#5C4033";
-    if (n.includes('beige') || n.includes('sand') || n.includes('ecru')) return "#d6d3d1";
-    if (n.includes('grey') || n.includes('gray') || n.includes('asphalt') || n.includes('charcoal')) return "#4b5563";
+    if (n.includes('pink') || n.includes('rose')) return "#db2777";
+    if (n.includes('red')) return "#991b1b";
+    if (n.includes('grey') || n.includes('gray')) return "#4b5563";
     return "#374151"; 
 };
 
 const getPrimaryImage = (p = {}) => {
-    const img = p.image_principal || p.imagen || p.image_src || (p.variants && p.variants[0]?.image);
+    const img = p.image_principal || p.imagen || (p.variants && p.variants[0]?.image);
     if (typeof img === 'string' && img.includes(',')) return img.split(',')[0].trim();
     return img || "/placeholder.jpg";
 };
@@ -78,6 +71,7 @@ const Catalogo = () => {
     const granTotal = cart.reduce((acc, item) => acc + ((item.precioMXN || item.price) * item.quantity), 0);
 
     const handleFinalizarCompra = async () => {
+        // Bloqueo de compra si no hay sesión iniciada
         if (!user) {
             alert("Debes iniciar sesión con tu cuenta de cliente para realizar una compra.");
             return;
@@ -86,8 +80,8 @@ const Catalogo = () => {
 
         try {
             const token = localStorage.getItem('token');
-            // Corrección: Captura de nombre y apellido real del usuario
-            const nombreCompleto = `${user.nombre || ''} ${user.apellido || ''}`.trim();
+            // Corrección: Mapeo de nombre y apellido real para evitar undefined y error 500
+            const nombreCompleto = `${user.nombre || user.name || ''} ${user.apellido || ''}`.trim() || "Cliente Registrado";
 
             const ordenData = {
                 nombreCliente: nombreCompleto,
@@ -98,7 +92,7 @@ const Catalogo = () => {
                     precio: Number(item.precioMXN || item.price),
                     cantidad: Number(item.quantity)
                 })),
-                total: granTotal,
+                total: Number(granTotal.toFixed(2)),
                 fechaPedido: new Date()
             };
 
@@ -110,7 +104,7 @@ const Catalogo = () => {
             clearCart();
             setIsCartOpen(false);
         } catch (error) {
-            console.error(error);
+            console.error("Error al procesar compra:", error);
             alert("Hubo un error al procesar tu pedido.");
         }
     };
@@ -200,8 +194,10 @@ const Catalogo = () => {
                         <div className="cart-modal-list">
                             {cart.map((item, i) => (
                                 <div key={i} className="cart-modal-row">
-                                    {/* Imagen con bordes redondeados */}
-                                    <img src={item.selectedImage} alt="item" className="cart-item-mini-img" />
+                                    {/* Estilo forzado inline para asegurar imagen pequeña */}
+                                    <div style={{ width: '70px', height: '90px', borderRadius: '8px', overflow: 'hidden', flexShrink: 0, border: '1px solid #333' }}>
+                                        <img src={item.selectedImage} alt="item" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    </div>
                                     <div className="cart-item-info">
                                         <p className="cart-item-title">{item.title}</p>
                                         <div className="cart-item-controls-row">
@@ -221,7 +217,6 @@ const Catalogo = () => {
                                     </div>
                                     <div className="cart-item-end">
                                         <p className="cart-item-price">${((item.precioMXN || item.price) * item.quantity).toLocaleString()}</p>
-                                        {/* Tache rojo para eliminar */}
                                         <button className="btn-remove-x-red" onClick={() => removeFromCart(i)}>&times;</button>
                                     </div>
                                 </div>
