@@ -15,7 +15,6 @@ const Registro = () => {
         confirmPassword: ''
     });
 
-    // 1. FUNCIÓN CENTRALIZADA: Mejora la legibilidad y evita errores de linter
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({
@@ -27,28 +26,22 @@ const Registro = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         
-        // 2. VALIDACIÓN: Seguridad básica antes de molestar al servidor
         if (formData.password !== formData.confirmPassword) {
             return alert("Las contraseñas no coinciden");
         }
 
         try {
-            // 3. TRUCO DE ARQUITECTA: Usamos el guion bajo (_) para indicar a ESLint 
-            // que omitimos confirmPassword intencionalmente
             const { confirmPassword: _, ...datosAEnviar } = formData;
 
-            // 4. CONEXIÓN: Usamos la URL de Render de Kevin
             const baseURL = import.meta.env.VITE_API_URL || 'https://dbgymshark-ddk1.onrender.com/api';
             const url = `${baseURL}/auth/registro`;
             const res = await axios.post(url, datosAEnviar);
             
-            // 5. LOGIN: Pasamos token y role como espera tu contexto
             login(res.data.token, res.data.role);
             
             alert("¡Cuenta creada con éxito!");
             navigate('/');
         } catch (error) {
-            // Manejo de errores de Abdiel (QA)
             const msg = error.response?.data?.msg || "Error al registrar el usuario";
             alert(msg);
         }

@@ -2,17 +2,14 @@ const path = require('path');
 const fs = require('fs');
 const dotenv = require('dotenv');
 const errorHandler = require('./middleware/errorHandler');
-//const mongoSanitize = require('express-mongo-sanitize');
 const helmet = require('helmet');
-
-// Load base env first
 const rootEnvPath = path.resolve(__dirname, '../.env');
 if (fs.existsSync(rootEnvPath)) {
     dotenv.config({ path: rootEnvPath });
 }
 
-// In development, override with .env.development when present.
-// Never auto-load local development env on Render deployments.
+
+
 const isDevelopment = process.env.NODE_ENV === 'development';
 const isRender = process.env.RENDER === 'true';
 const devEnvPath = path.resolve(__dirname, '../.env.development');
@@ -20,7 +17,7 @@ if (isDevelopment && !isRender && fs.existsSync(devEnvPath)) {
     dotenv.config({ path: devEnvPath, override: true });
 }
 
-// Optional explicit env file override
+
 const explicitEnvFile = process.env.ENV_FILE;
 if (explicitEnvFile) {
     const explicitPath = path.resolve(__dirname, `../${explicitEnvFile}`);
@@ -36,35 +33,29 @@ const connectDB = require('./config/db');
 
 const app = express();
 
-// Backend setup
 connectDB();
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 
-// --- MIDDLEWARES DE SEGURIDAD  ---
-// 1. Protege las cabeceras HTTP
 app.use(helmet({
     contentSecurityPolicy: false,
     crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
-// 2. Bloquea inyecciones NoSQL 
-//app.use(mongoSanitize());
 
-// --- ESCUDO ANTI-INYECCIONES NoSQL ---
+// Middleware personalizado para detectar y bloquear inyecciones NoSQL en el body
 app.use((req, res, next) => {
     if (req.body && Object.keys(req.body).length > 0) {
         const dataString = JSON.stringify(req.body);
         if (dataString.includes('"$') || dataString.includes('"$gt"')) {
-            console.log("🛡️ ALERTA QA: Intento de inyección NoSQL interceptado.");
+            console.log("ALERTA QA: Intento de inyección NoSQL interceptado.");
             return res.status(403).json({ exito: false, mensaje: "Ataque bloqueado." });
         }
     }
     next();
 });
 
-// API routes
 const authRoutes = require('./routes/authRoutes');
 const productRoutes = require('./routes/productRoutes');
 const adminRoutes = require('./routes/adminRoutes');
@@ -73,11 +64,11 @@ app.use('/api/auth', authRoutes);
 app.use('/api/productos', productRoutes);
 app.use('/api/admin', adminRoutes);
 
-// Frontend (React only)
 const reactDistPath = path.resolve(__dirname, '../frontend-react/dist');
 const reactIndexPath = path.join(reactDistPath, 'index.html');
 const shouldServeReact = fs.existsSync(reactIndexPath);
 
+// Sirve los archivos estáticos del frontend en producción
 if (shouldServeReact) {
     app.use(express.static(reactDistPath));
 

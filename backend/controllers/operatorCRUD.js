@@ -37,6 +37,7 @@ exports.obtenerProductos = async (req, res) => {
     }
 
 
+    // Agrupa variantes bajo un mismo producto padre usando handle o title
     pipeline.push({
       $group: {
         _id: { $ifNull: ['$handle', '$title'] },
@@ -64,13 +65,14 @@ exports.obtenerProductos = async (req, res) => {
     });
 
 
+    // Filtros posteriores a la agrupación (por talla específica o estado de stock)
     const postMatch = {};
     if (talla && talla.trim()) postMatch.tallas_disponibles = talla.trim();
     if (stock === 'true') postMatch.totalInventory = { $gt: 0 };
     if (stock === 'false') postMatch.totalInventory = { $lte: 0 };
     if (Object.keys(postMatch).length) pipeline.push({ $match: postMatch });
 
-  
+    // Faceting para obtener datos paginados y el conteo total en una sola consulta
     pipeline.push({
       $facet: {
         metadata: [{ $count: 'total' }],
@@ -104,7 +106,7 @@ exports.crearProducto = async (req, res) => {
   try {
     let { handle, title } = req.body;
 
-    // Si por alguna razón no llega el handle, el backend lo rescata creándolo
+    // Genera un handle URL-friendly si no se proporciona
     if (!handle && title) {
         handle = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
         req.body.handle = handle;
@@ -131,6 +133,7 @@ exports.obtenerProductoPorHandle = async (req, res) => {
     const collection = getCollection();
     const handle = req.params.handle;
 
+    // Busca y reconstruye el producto con sus variantes basado en el handle
     const doc = await collection
       .aggregate([
         { $match: { handle } },
@@ -194,7 +197,6 @@ exports.actualizarProducto = async (req, res) => {
 
 exports.eliminarProducto = async (req, res) => {
   try {
-    // Usamos directamente el modelo de Mongoose
     const productoEliminado = await Producto.findByIdAndDelete(req.params.id);
 
     if (!productoEliminado) {
@@ -210,10 +212,9 @@ exports.eliminarProducto = async (req, res) => {
 
 exports.registrarVenta = async (req, res) => {
     try {
-        // 1. Recibimos los datos exactos que manda tu Catalogo.jsx
         const { usuario, productos, total } = req.body;
 
-        // 2. Traducimos el carrito al formato de nuestro Modelo Venta.js
+        // Formatea los productos del carrito al esquema de la base de datos
         const productosFormateados = productos.map(item => ({
             nombre: item.titulo,
             talla: item.talla || 'N/A',
@@ -222,17 +223,14 @@ exports.registrarVenta = async (req, res) => {
             cantidad: item.cantidad
         }));
 
-        // 3. Armamos el paquete final
         const nuevaVenta = new Venta({
             nombreCliente: usuario,
             productos: productosFormateados,
             total: total
         });
 
-        // 4. Guardamos en la base de datos
         await nuevaVenta.save();
         
-        // 5. Respondemos al frontend que todo salió perfecto
         res.status(201).json({ msg: 'Venta registrada con éxito', orden: nuevaVenta.numeroOrden });
 
     } catch (error) {

@@ -15,7 +15,6 @@ const CATEGORIAS_LIMPIAS = [
     'Tanks', 'Tops', 'Uncategorized', 'Underwear', 'Vests'
 ];
 
-// PALETA DE COLORES MAKIA COMPLETA
 const getColorHex = (name = "") => {
     const n = name.toLowerCase().trim();
     if (n === 'black' || n.includes('onyx') || n.includes('asphalt')) return "#111111";
@@ -53,7 +52,7 @@ const Catalogo = () => {
     const [totalPaginas, setTotalPaginas] = useState(1);
     
     const [catFiltro, setCatFiltro] = useState(null);
-    const [dropdownAbierto, setDropdownAbierto] = useState(false); // Control para el único botón
+    const [dropdownAbierto, setDropdownAbierto] = useState(false);
     const [rangoPrecio, setRangoPrecio] = useState(5000); 
     
     const [tallasSeleccionadas, setTallasSeleccionadas] = useState({});
@@ -61,12 +60,11 @@ const Catalogo = () => {
 
     const baseURL = import.meta.env.VITE_API_URL || 'https://dbgymshark-ddk1.onrender.com/api';
 
-    // 1. Cargar datos UNA SOLA VEZ (traemos un lote grande para que React trabaje)
+    // Carga inicial de todo el catálogo para permitir filtrado rápido en cliente
     useEffect(() => {
         const cargarData = async () => {
             setCargando(true);
             try {
-                // Pedimos un límite muy alto para traer todo el catálogo a la memoria de React
                 const res = await axios.get(`${baseURL}/productos?limit=5000`);
                 setProductos(res.data.productos || []);
             } catch (e) { console.error(e); }
@@ -75,13 +73,14 @@ const Catalogo = () => {
         cargarData();
     }, [baseURL]); 
 
-    // 2. NUEVO: Si cambias de categoría, precio o buscas algo, ¡regresamos a la página 1!
+    // Reinicia a la primera página cuando cambian los filtros
     useEffect(() => {
         setPagina(1);
     }, [catFiltro, rangoPrecio, busqueda]);
 
     const granTotal = cart.reduce((acc, item) => acc + ((item.precioMXN || item.price) * item.quantity), 0);
 
+    // Procesa la compra enviando la orden al backend
     const handleFinalizarCompra = async () => {
         if (!user) {
             alert("Inicia sesión para finalizar tu compra.");
@@ -118,7 +117,7 @@ const Catalogo = () => {
         }
     };
 
-    // --- 1. PRIMERO FILTRAMOS TODO ---
+    // Lógica de filtrado en memoria (Categoría, Precio, Búsqueda)
     const productosFiltrados = productos.filter(p => {
         const tipoProductoDB = p.product_type ? String(p.product_type).trim().toLowerCase() : "";
         const categoriaSeleccionada = catFiltro ? String(catFiltro).trim().toLowerCase() : "";
@@ -127,17 +126,14 @@ const Catalogo = () => {
         const precioReal = Number(p.precioMXN || p.price || 0);
         const cumplePrecio = precioReal <= rangoPrecio;
 
-        // Como trajimos todo a React, hacemos la búsqueda por texto aquí también (súper rápido)
         const cumpleBusqueda = busqueda ? (p.title || "").toLowerCase().includes(busqueda.toLowerCase()) : true;
 
         return cumpleCat && cumplePrecio && cumpleBusqueda;
     });
 
-    // --- 2. LUEGO CALCULAMOS LAS PÁGINAS REALES ---
     const ITEMS_POR_PAGINA = 20;
     const totalPaginasReales = Math.ceil(productosFiltrados.length / ITEMS_POR_PAGINA) || 1;
 
-    // --- 3. REBANAMOS SOLO LOS 20 QUE VAN EN PANTALLA ---
     const productosPaginados = productosFiltrados.slice(
         (pagina - 1) * ITEMS_POR_PAGINA,
         pagina * ITEMS_POR_PAGINA
@@ -164,7 +160,6 @@ const Catalogo = () => {
                 <aside className="sidebar-filter-box">
                     <div className="sidebar-sticky-wrapper">
                         
-                        {/* SECCIÓN CATEGORÍAS - UN SOLO BOTÓN */}
                         <h2 className="sidebar-section-title">CATEGORÍA</h2>
                         <div className="filter-group-stack">
                             <div className="filter-item-accordion">
@@ -195,7 +190,6 @@ const Catalogo = () => {
                             </div>
                         </div>
 
-                        {/* SECCIÓN PRESUPUESTO */}
                         <div className="price-filter-section-new">
                             <h2 className="sidebar-section-title">PRESUPUESTO: ${rangoPrecio}</h2>
                             <div className="slider-container">
@@ -213,7 +207,7 @@ const Catalogo = () => {
 
                         {catFiltro && (
                             <button className="btn-clear-minimal" onClick={() => setCatFiltro(null)}>
-                                Limpiar filtros ✕
+                                Limpiar filtros
                             </button>
                         )}
                     </div>
@@ -261,7 +255,6 @@ const Catalogo = () => {
                 </main>
             </div>
 
-            {/* MODAL BOLSA */}
             {isCartOpen && (
                 <div className="cart-modal-overlay" onClick={() => setIsCartOpen(false)}>
                     <div className="cart-modal-panel" onClick={e => e.stopPropagation()}>

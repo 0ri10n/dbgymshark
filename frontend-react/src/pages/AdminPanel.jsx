@@ -7,7 +7,6 @@ import './AdminPanel.css';
 const AdminPanel = () => {
     const { user, logout } = useAuth();
    
-    // --- ESTADOS ---
     const [vistaActiva, setVistaActiva] = useState('productos');
     const [cargando, setCargando] = useState(false);
     const itemsPorPagina = 10;
@@ -34,7 +33,6 @@ const AdminPanel = () => {
     const [modalAbierto, setModalAbierto] = useState(false);
     const [editandoId, setEditandoId] = useState(null);
    
-    // MOLDE LIMPIO
     const [formData, setFormData] = useState({
         title: '', product_type: '', vendor: 'Gymshark | Be a visionary.',
         variants: [], image_principal: ''
@@ -55,7 +53,6 @@ const AdminPanel = () => {
         };
     };
 
-    // --- CARGA DE DATOS ---
     const cargarProductos = async () => {
         try {
             const res = await axios.get(`${baseURL}/productos?page=${pagProductos}&limit=${itemsPorPagina}&search=${busquedaProd}`, { headers: getAuthHeaders() });
@@ -84,16 +81,16 @@ const AdminPanel = () => {
         } catch (error) { console.error(`Error en ${vista}:`, error); }
     };
 
+    // Recarga datos cuando cambia la paginación o la búsqueda
     useEffect(() => { cargarProductos(); }, [pagProductos, busquedaProd]);
     useEffect(() => { cargarDatosExtra('usuarios'); }, [pagUsuarios, busquedaUsr]);
     useEffect(() => { cargarDatosExtra('ventas'); }, [pagVentas, busquedaVen]);
 
-    // --- DATALISTS ---
+    // Genera listas únicas para las opciones de autocompletado
     const categoriasExistentes = useMemo(() => [...new Set(productos.map(p => p.product_type))].filter(Boolean), [productos]);
     const coloresExistentes = useMemo(() => [...new Set(productos.flatMap(p => p.colors_available || []))].filter(Boolean), [productos]);
     const tallasExistentes = useMemo(() => [...new Set(productos.flatMap(p => p.sizes_available || []))].filter(Boolean), [productos]);
 
-    // --- LÓGICA DE VARIANTES (REFACTORIZADA) ---
     const agregarVariante = () => {
         setFormData({
             ...formData,
@@ -121,7 +118,7 @@ const AdminPanel = () => {
         return `${marca}-${cat}-${idUnico}`;
     };
 
-    // --- GUARDAR ---
+    // Procesa y limpia los datos del formulario antes de enviar
     const handleGuardar = async (e) => {
         e.preventDefault();
         if (!formData.variants || formData.variants.length === 0) {
@@ -130,7 +127,6 @@ const AdminPanel = () => {
         }
 
         try {
-            // Limpiamos los textos de forma segura
             const variantesLimpias = formData.variants.map(v => ({
                 ...v,
                 color: (v.color || '').trim(),
@@ -140,6 +136,7 @@ const AdminPanel = () => {
             const coloresExtraidos = [...new Set(variantesLimpias.map(v => v.color))].filter(Boolean);
             const tallasExtraidas = [...new Set(variantesLimpias.map(v => v.size))].filter(Boolean);
 
+            // Genera SKUs automáticos para variantes nuevas
             const variantesProcesadas = variantesLimpias.map((v, i) => ({
                 ...v,
                 sku: (v.sku && v.sku.trim() !== '') ? v.sku.trim() : `${generarSKU(formData.product_type, formData.title)}-V${i + 1}`,
@@ -190,7 +187,6 @@ const AdminPanel = () => {
 
     return (
         <div className="admin-container">
-            {/* PÉGALO AL PRINCIPIO DEL RETURN, ABAJO DE <div className="admin-container"> */}
             <datalist id="lista-categorias">
                 {categoriasExistentes.map(cat => <option key={`cat-${cat}`} value={cat} />)}
             </datalist>
@@ -301,13 +297,11 @@ const AdminPanel = () => {
                     onPageChange={vistaActiva === 'productos' ? setPagProductos : vistaActiva === 'usuarios' ? setPagUsuarios : setPagVentas} />
             </main>
 
-            {/* MODAL PRODUCTOS */}
             {modalAbierto && (
                 <div className="modal-overlay">
                     <div className="modal-content modal-xl">
                         <h2>{editandoId ? 'Editar' : 'Nuevo'} Producto</h2>
 
-                        {/* DATALISTS MOVIDOS AQUÍ ADENTRO Y BLINDADOS */}
                         <datalist id="lista-categorias">
                             {categoriasExistentes.map(cat => <option key={`cat-${cat}`} value={cat} />)}
                             <option value="T-Shirts" /><option value="Shorts" /><option value="Hoodies" /><option value="Accessories" />
@@ -415,7 +409,6 @@ const AdminPanel = () => {
                 </div>
             )}
 
-            {/* MODAL USUARIOS */}
             {modalUsuarioAbierto && (
                 <div className="modal-overlay">
                     <div className="modal-content">

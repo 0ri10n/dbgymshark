@@ -1,9 +1,9 @@
 const Producto = require('../models/Productos');
-const Usuario = require('../models/Usuario'); // Asegúrate de que el nombre coincida con tu archivo
-const Venta = require('../models/Venta');     // Asegúrate de que el nombre coincida con tu archivo
+const Usuario = require('../models/Usuario');
+const Venta = require('../models/Venta');
 const axios = require('axios');
 
-// --- UTILIDAD: OBTENER TASA DE CAMBIO ---
+// Obtiene la tasa de cambio actual USD -> MXN desde API externa
 const getExchangeRate = async () => {
     try {
         const url = `https://v6.exchangerate-api.com/v6/${process.env.EXCHANGE_API_KEY}/latest/USD`;
@@ -14,7 +14,6 @@ const getExchangeRate = async () => {
     }
 };
 
-// --- OBTENER PRODUCTOS (CATÁLOGO Y PANEL) ---
 exports.obtenerProductos = async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
@@ -32,6 +31,7 @@ exports.obtenerProductos = async (req, res) => {
             Producto.countDocuments(filtro)
         ]);
 
+        // Calcula el precio en MXN en tiempo real para cada producto
         const respuesta = productos.map(p => ({
             ...p,
             precioMXN: p.price_range?.min ? Number((p.price_range.min * tasaMXN).toFixed(2)) : 0
@@ -50,11 +50,9 @@ exports.obtenerProductos = async (req, res) => {
     }
 };
 
-// --- OBTENER DATOS DEL PANEL (USUARIOS Y VENTAS) ---
-// Este endpoint responde a la ruta: /api/admin/panel/:vista
 exports.obtenerDatosPanel = async (req, res) => {
     try {
-        const { vista } = req.params; // Captura 'usuarios' o 'ventas' desde la URL
+        const { vista } = req.params;
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
         const search = req.query.search || '';
@@ -62,7 +60,7 @@ exports.obtenerDatosPanel = async (req, res) => {
         let filtro = {};
         const regex = { $regex: search, $options: 'i' };
 
-        // Definimos el filtro según la vista seleccionada
+        // Selecciona la colección y campos de búsqueda según la vista solicitada
         if (vista === 'usuarios') {
             if (search) {
                 filtro = {
@@ -112,7 +110,6 @@ exports.obtenerDatosPanel = async (req, res) => {
     }
 };
 
-// --- CREAR PRODUCTO ---
 exports.crearProducto = async (req, res) => {
     try {
         const nuevoProducto = new Producto(req.body);
@@ -123,7 +120,6 @@ exports.crearProducto = async (req, res) => {
     }
 };
 
-// --- ACTUALIZAR PRODUCTO ---
 exports.actualizarProducto = async (req, res) => {
     try {
         const producto = await Producto.findByIdAndUpdate(req.params.id, req.body, { new: true });
@@ -133,7 +129,6 @@ exports.actualizarProducto = async (req, res) => {
     }
 };
 
-// --- ELIMINAR PRODUCTO ---
 exports.eliminarProducto = async (req, res) => {
     try {
         await Producto.findByIdAndDelete(req.params.id);

@@ -3,7 +3,6 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const Usuario = require('../models/Usuario');
 
-// --- UTILIDADES DE AUTH ---
 const isDevAuthBypass = () => process.env.DEV_AUTH_BYPASS === 'true';
 const isDbConnected = () => mongoose.connection.readyState === 1;
 
@@ -24,7 +23,6 @@ const resolveDevUserRole = (email, password) => {
     return null;
 };
 
-// --- CONTROLADORES DE AUTH ---
 exports.registrarUsuario = async (req, res) => {
     try {
         const { nombre, apellido, email, password } = req.body;
@@ -69,8 +67,6 @@ exports.iniciarSesion = async (req, res) => {
     }
 };
 
-// --- CONTROLADORES ADMINISTRATIVOS (Requeridos por adminRoutes.js) ---
-
 exports.obtenerBasesDeDatos = async (req, res) => {
     try {
         const admin = mongoose.connection.db.admin();
@@ -100,7 +96,6 @@ exports.obtenerDatosTabla = async (req, res) => {
     }
 };
 
-// Funciones CRUD Universales para MAKIA
 exports.crearDatoUniversal = async (req, res) => {
     try {
         const { tableName } = req.params;

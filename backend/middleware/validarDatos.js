@@ -1,12 +1,10 @@
 const validarProducto = (req, res, next) => {
     const { title, variants } = req.body;
 
-    // Validar que el nombre (title) no esté vacío
     if (!title || typeof title !== 'string' || title.trim() === '') {
         return res.status(400).json({ msg: 'Error: El nombre del producto no puede estar vacío.' });
     }
 
-    // Validar que existan variantes y que el precio no sea negativo
     if (variants && Array.isArray(variants) && variants.length > 0) {
         for (let i = 0; i < variants.length; i++) {
             if (variants[i].price === undefined || variants[i].price < 0) {
@@ -20,7 +18,6 @@ const validarProducto = (req, res, next) => {
          return res.status(400).json({ msg: 'Error: El producto debe tener al menos una variante con precio y talla.' });
     }
 
-    // Si pasa todas las pruebas, continúa al siguiente paso
     next();
 };
 

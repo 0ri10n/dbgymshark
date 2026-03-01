@@ -18,7 +18,6 @@ body {
     overflow-x: hidden;
 }
 
-/* --- HEADER MAKIA --- */
 .client-header-makia {
     display: flex;
     justify-content: space-between;
@@ -65,7 +64,6 @@ body {
     font-weight: bold;
 }
 
-/* --- HERO BANNER --- */
 .hero-banner-full {
     width: 100%;
     height: 450px;
@@ -80,10 +78,9 @@ body {
     display: block;
 }
 
-/* --- LAYOUT: SIDEBAR ESTRECHO Y PRODUCTOS GRANDES --- */
 .store-layout-container {
     display: grid;
-    grid-template-columns: 240px 1fr; /* Sidebar reducido para dar espacio a productos */
+    grid-template-columns: 240px 1fr;
     max-width: 1600px;
     margin: 40px auto;
     padding: 0 4%;
@@ -107,7 +104,6 @@ body {
     margin-bottom: 25px;
 }
 
-/* [ARREGLO] Botón Limpiar: Solo texto neón sin recuadro */
 .clear-filters-btn {
     background: none !important;
     border: none !important;
@@ -132,7 +128,6 @@ body {
     margin-bottom: 20px;
 }
 
-/* CATEGORÍAS */
 .cat-main-label {
     display: flex;
     justify-content: space-between;
@@ -169,7 +164,6 @@ body {
     color: var(--makia-accent);
 }
 
-/* SLIDER DE PRECIO: FIX VSC */
 .price-slider {
     width: 100%;
     height: 6px;
@@ -177,7 +171,7 @@ body {
     border-radius: 5px;
     outline: none;
     -webkit-appearance: none;
-    appearance: none; /* Propiedad estándar corregida */
+    appearance: none;
     margin-top: 15px;
 }
 
@@ -192,7 +186,6 @@ body {
     border: 3px solid #000;
 }
 
-/* --- MAIN CONTENT Y GRID DE 3 --- */
 .white-search-box {
     display: flex;
     align-items: center;
@@ -207,7 +200,7 @@ body {
 
 .white-search-box i {
     color: #000;
-    font-size: 18px; /* Lupa recuperada */
+    font-size: 18px;
 }
 
 .white-search-box input {
@@ -221,11 +214,10 @@ body {
 
 .fixed-grid-3 {
     display: grid;
-    grid-template-columns: repeat(3, 1fr) !important; /* */
+    grid-template-columns: repeat(3, 1fr) !important;
     gap: 30px;
 }
 
-/* --- TARJETA MAKIA: IMAGEN COMPLETA --- */
 .makia-product-card {
     display: flex;
     flex-direction: column;
@@ -238,7 +230,7 @@ body {
 
 .img-frame {
     width: 100%;
-    height: 480px; /* Tamaño portrait para impacto visual */
+    height: 480px;
     overflow: hidden;
     background: #000;
 }
@@ -246,7 +238,7 @@ body {
 .p-img {
     width: 100%;
     height: 100%;
-    object-fit: cover !important; /* [SOLUCIÓN] Llena la tarjeta sin franjas */
+    object-fit: cover !important;
     display: block;
 }
 
@@ -270,7 +262,6 @@ body {
     margin-bottom: 20px;
 }
 
-/* [ARREGLO] Círculos de colores desplazables */
 .swatch-row-carrusel {
     display: flex;
     gap: 10px;
@@ -286,7 +277,7 @@ body {
 .swatch-circle {
     width: 22px;
     height: 22px;
-    border-radius: 50% !important; /* Círculos perfectos */
+    border-radius: 50% !important;
     border: 1px solid rgba(255,255,255,0.2);
     cursor: pointer;
     flex-shrink: 0;
@@ -334,7 +325,6 @@ body {
     box-shadow: 0 0 20px rgba(217, 251, 86, 0.3);
 }
 
-/* --- BOLSA LATERAL INTERACTIVA --- */
 .cart-modal-overlay {
     position: fixed;
     inset: 0;
@@ -376,7 +366,6 @@ body {
     border-bottom: 1px solid #111;
 }
 
-/* CONTROLES DENTRO DE LA BOLSA */
 .mini-dropdown {
     background: #111;
     color: #fff;
@@ -432,7 +421,6 @@ body {
     background: var(--makia-accent);
 }
 
-/* --- MISSING CLASS DEFINITIONS USED IN JSX --- */
 .client-view {
     width: 100%;
     min-height: 100vh;
@@ -674,7 +662,6 @@ body {
     color: var(--makia-accent);
 }
 
-/* --- RESPONSIVE --- */
 @media (max-width: 1200px) {
     .store-layout-container {
         grid-template-columns: 220px 1fr;

@@ -1,6 +1,5 @@
 const jwt = require('jsonwebtoken');
 
-// 1. Middleware de Autenticación
 const auth = function (req, res, next) {
     const token = req.header('x-auth-token');
 
@@ -19,16 +18,12 @@ const auth = function (req, res, next) {
     }
 };
 
-// 2: Middleware de Autorización 
 const admin = function (req, res, next) {
-    // Comprobamos si el usuario existe en la request y si su rol es 'admin'
     if (req.usuario && req.usuario.rol === 'admin') {
-        next(); // Si el usuario tiene permiso, la petición continúa
+        next();
     } else {
-        // 403 Forbidden es el código HTTP correcto cuando sabemos quién es el usuario pero no tiene permisos
         res.status(403).json({ msg: 'Acceso denegado: Privilegios de administrador requeridos' }); 
     }
 };
 
-// Exportamos ambas funciones para poder usarlas en las rutas
 module.exports = { auth, admin };

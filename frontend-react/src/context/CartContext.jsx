@@ -5,13 +5,13 @@ export const CartContext = createContext();
 export const CartProvider = ({ children }) => {
     const [cart, setCart] = useState([]);
 
-    // Cargar carrito desde localStorage para que no se borre al refrescar
+    // Recupera el carrito guardado al iniciar la aplicación
     useEffect(() => {
         const savedCart = localStorage.getItem('makia_cart');
         if (savedCart) setCart(JSON.parse(savedCart));
     }, []);
 
-    // Guardar en localStorage cada vez que cambie
+    // Sincroniza el estado del carrito con localStorage
     useEffect(() => {
         localStorage.setItem('makia_cart', JSON.stringify(cart));
     }, [cart]);
