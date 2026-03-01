@@ -307,7 +307,23 @@ const AdminPanel = () => {
                                             </div>
                                             <div className="field-group" style={{ gridColumn: 'span 2' }}>
                                                 <label>URL Imagen</label>
-                                                <input type="text" placeholder="URL de la imagen..." value={variante.image || ''} onChange={e => actualizarVariante(index, 'image', e.target.value)} />
+                                                <input type="text" placeholder="URL de la imagen..." value={variante.image || ''} onChange={e => actualizarVariante(index, 'image', e.target.value)}/>
+                                                {variante.image && (
+                                            <div className="preview-mini-wrapper">
+                                                <img 
+                                                    src={variante.image} 
+                                                    alt="preview" 
+                                                    style={{ 
+                                                        width: '45px', 
+                                                        height: '45px', 
+                                                        objectFit: 'cover', 
+                                                        borderRadius: '4px',
+                                                        border: '1px solid #444' 
+                                                    }} 
+                                                    onError={(e) => e.target.src = "/placeholder.png"} // Por si la URL está rota
+                                                />
+                                                </div>
+                                            )}
                                             </div>
                                             <div className="field-group" style={{ gridColumn: 'span 2' }}>
                                                 <button type="button" className="btn-x-red" onClick={() => eliminarVariante(index)}>✕ Eliminar Variante</button>
