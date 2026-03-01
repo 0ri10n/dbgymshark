@@ -6,7 +6,7 @@ import './AdminPanel.css';
 
 const AdminPanel = () => {
     const { user, logout } = useAuth();
-    
+   
     // --- ESTADOS ---
     const [vistaActiva, setVistaActiva] = useState('productos');
     const [cargando, setCargando] = useState(false);
@@ -19,7 +19,7 @@ const AdminPanel = () => {
     const [productos, setProductos] = useState([]);
     const [pagProductos, setPagProductos] = useState(1);
     const [totalPagProductos, setTotalPagProductos] = useState(1);
-    const [totalProductosCount, setTotalProductosCount] = useState(0); 
+    const [totalProductosCount, setTotalProductosCount] = useState(0);
 
     const [listaUsuarios, setListaUsuarios] = useState([]);
     const [pagUsuarios, setPagUsuarios] = useState(1);
@@ -33,10 +33,11 @@ const AdminPanel = () => {
 
     const [modalAbierto, setModalAbierto] = useState(false);
     const [editandoId, setEditandoId] = useState(null);
-    
-    const [formData, setFormData] = useState({ 
-        title: '', product_type: '', vendor: 'Gymshark | Be a visionary.', 
-        variants: [], image_principal: '' 
+   
+    // MOLDE LIMPIO
+    const [formData, setFormData] = useState({
+        title: '', product_type: '', vendor: 'Gymshark | Be a visionary.',
+        variants: [], image_principal: ''
     });
 
     const [modalUsuarioAbierto, setModalUsuarioAbierto] = useState(false);
@@ -47,8 +48,8 @@ const AdminPanel = () => {
 
     const getAuthHeaders = () => {
         const token = localStorage.getItem('token') || '';
-        return { 
-            'x-auth-token': token, 
+        return {
+            'x-auth-token': token,
             'Authorization': `Bearer ${token}`,
             'Cache-Control': 'no-cache'
         };
@@ -61,7 +62,7 @@ const AdminPanel = () => {
             if (res.data) {
                 setProductos(res.data.productos || []);
                 setTotalPagProductos(res.data.pagination?.pages || 1);
-                setTotalProductosCount(res.data.pagination?.total || 0); 
+                setTotalProductosCount(res.data.pagination?.total || 0);
             }
         } catch (error) { console.error("Error productos:", error); }
     };
@@ -90,12 +91,13 @@ const AdminPanel = () => {
     // --- DATALISTS ---
     const categoriasExistentes = useMemo(() => [...new Set(productos.map(p => p.product_type))].filter(Boolean), [productos]);
     const coloresExistentes = useMemo(() => [...new Set(productos.flatMap(p => p.colors_available || []))].filter(Boolean), [productos]);
+    const tallasExistentes = useMemo(() => [...new Set(productos.flatMap(p => p.sizes_available || []))].filter(Boolean), [productos]);
 
-    // --- LÓGICA DE VARIANTES ---
+    // --- LÓGICA DE VARIANTES (REFACTORIZADA) ---
     const agregarVariante = () => {
-        setFormData({ 
-            ...formData, 
-            variants: [...formData.variants, { color: '', size: '', price: 0, inventory_quantity: 0, sku: '', image: '' }] 
+        setFormData({
+            ...formData,
+            variants: [...formData.variants, { color: '', size: '', price: 0, inventory_quantity: 0, sku: '', image: '' }]
         });
     };
 
@@ -106,16 +108,16 @@ const AdminPanel = () => {
     };
 
     const eliminarVariante = (index) => {
-        setFormData({ 
-            ...formData, 
-            variants: formData.variants.filter((_, i) => i !== index) 
+        setFormData({
+            ...formData,
+            variants: formData.variants.filter((_, i) => i !== index)
         });
     };
 
-    const generarSKU = (categoria) => {
-        const marca = "MAK"; 
+    const generarSKU = (categoria, titulo) => {
+        const marca = "MAK";
         const cat = (categoria || "GEN").substring(0, 3).toUpperCase();
-        const idUnico = Date.now().toString().slice(-5); 
+        const idUnico = Date.now().toString().slice(-5);
         return `${marca}-${cat}-${idUnico}`;
     };
 
@@ -123,13 +125,14 @@ const AdminPanel = () => {
     const handleGuardar = async (e) => {
         e.preventDefault();
         if (!formData.variants || formData.variants.length === 0) {
-            alert("Debes agregar al menos una variante");
+            alert("Debes agregar al menos una variante (Color/Talla)");
             return;
         }
 
         try {
+            // Limpiamos los textos de forma segura
             const variantesLimpias = formData.variants.map(v => ({
-                ...v, 
+                ...v,
                 color: (v.color || '').trim(),
                 size: (v.size || '').trim()
             }));
@@ -139,7 +142,7 @@ const AdminPanel = () => {
 
             const variantesProcesadas = variantesLimpias.map((v, i) => ({
                 ...v,
-                sku: (v.sku && v.sku.trim() !== '') ? v.sku.trim() : `${generarSKU(formData.product_type)}-V${i + 1}`,
+                sku: (v.sku && v.sku.trim() !== '') ? v.sku.trim() : `${generarSKU(formData.product_type, formData.title)}-V${i + 1}`,
                 price: Number(v.price) || 0,
                 inventory_quantity: Number(v.inventory_quantity) || 0
             }));
@@ -147,30 +150,33 @@ const AdminPanel = () => {
             const precioPrincipal = variantesProcesadas[0]?.price || 0;
             const imagenPrincipal = variantesProcesadas[0]?.image || '';
 
-            const payload = { 
-                ...formData, 
+            const payload = {
+                ...formData,
                 handle: formData.title ? formData.title.toLowerCase().replace(/ /g, '-') : '',
                 variants: variantesProcesadas,
                 colors_available: coloresExtraidos,
                 sizes_available: tallasExtraidas,
-                precioMXN: precioPrincipal, 
+                precioMXN: precioPrincipal,
                 price: precioPrincipal,
-                image_principal: imagenPrincipal 
+                image_principal: imagenPrincipal
             };
 
-            delete payload._id; delete payload.__v; delete payload.createdAt; delete payload.updatedAt;
-            
+            delete payload._id;
+            delete payload.__v;
+            delete payload.createdAt;
+            delete payload.updatedAt;
+           
             if (editandoId) {
                 await axios.put(`${baseURL}/productos/${editandoId}`, payload, { headers: getAuthHeaders() });
             } else {
                 await axios.post(`${baseURL}/productos`, payload, { headers: getAuthHeaders() });
             }
-            setModalAbierto(false); 
-            cargarProductos(); 
+            setModalAbierto(false);
+            cargarProductos();
             alert("¡Producto guardado con éxito!");
-        } catch (error) { 
-            console.error("Error:", error.response?.data || error);
-            alert("Error al guardar producto"); 
+        } catch (error) {
+            console.error("Detalle del error:", error.response?.data || error);
+            alert(`Error al guardar: ${error.response?.data?.mensaje || error.response?.data?.msg || "Revisa la consola"}`);
         }
     };
 
@@ -184,26 +190,28 @@ const AdminPanel = () => {
 
     return (
         <div className="admin-container">
-            {/* Datalists Globales */}
+            {/* PÉGALO AL PRINCIPIO DEL RETURN, ABAJO DE <div className="admin-container"> */}
             <datalist id="lista-categorias">
                 {categoriasExistentes.map(cat => <option key={`cat-${cat}`} value={cat} />)}
-                <option value="T-Shirts" /><option value="Shorts" /><option value="Hoodies" /><option value="Accessories" />
             </datalist>
             <datalist id="lista-colores">
                 {coloresExistentes.map(col => <option key={`col-${col}`} value={col} />)}
-                <option value="Black" /><option value="White" /><option value="Grey" /><option value="Red" /><option value="Blue" />
             </datalist>
-
+            <datalist id="lista-tallas">
+                {tallasExistentes.map(talla => <option key={`tal-${talla}`} value={talla} />)}
+            </datalist>
+            
             <header className="admin-header">
                 <img src="/logo-makia-pages.png" alt="Logo" className="brand-logo-img" />
                 <div className="admin-user-panel">
                     <div className="user-welcome-info">
                         <span className="welcome-text">¡Nos alegra verte de nuevo!</span>
-                        <span className="user-name-blue-header">{user?.nombre || 'Admin'}</span>
+                        <span className="user-name-blue-header">{user?.nombre || 'Administrador'}</span>
                     </div>
                     <button onClick={logout} className="admin-logout-btn">Cerrar Sesión</button>
                 </div>
             </header>
+            <div className="header-divider-sutil"></div>
 
             <main className="admin-main">
                 <section className="admin-stats">
@@ -221,8 +229,8 @@ const AdminPanel = () => {
                 <div className="admin-controls-row">
                     <div className="search-bar-makia">
                         <i className="fas fa-search"></i>
-                        <input type="text" placeholder="Buscar..." 
-                            value={vistaActiva === 'productos' ? busquedaProd : vistaActiva === 'usuarios' ? busquedaUsr : busquedaVen} 
+                        <input type="text" placeholder="Buscar..."
+                            value={vistaActiva === 'productos' ? busquedaProd : vistaActiva === 'usuarios' ? busquedaUsr : busquedaVen}
                             onChange={(e) => {
                                 if(vistaActiva === 'productos') setBusquedaProd(e.target.value);
                                 else if(vistaActiva === 'usuarios') setBusquedaUsr(e.target.value);
@@ -230,7 +238,7 @@ const AdminPanel = () => {
                             }} />
                     </div>
                     {vistaActiva === 'productos' && (
-                        <button className="admin-add-btn" onClick={() => { setEditandoId(null); setFormData({title:'', product_type:'', vendor:'Gymshark', variants:[], image_principal:''}); setModalAbierto(true); }}>
+                        <button className="admin-add-btn" onClick={() => { setEditandoId(null); setFormData({title:'', product_type:'', vendor:'Gymshark', sku:'', price:0, inventory_quantity:0, variants:[], image_principal:''}); setModalAbierto(true); }}>
                             + NUEVO PRODUCTO
                         </button>
                     )}
@@ -240,26 +248,56 @@ const AdminPanel = () => {
                     <table className="admin-table-fixed">
                         <thead>
                             {vistaActiva === 'productos' && <tr><th>Imagen</th><th>Título</th><th>Tipo</th><th className="center">Acciones</th></tr>}
-                            {vistaActiva === 'usuarios' && <tr><th>Nombre</th><th>Email</th><th>Rol</th><th className="center">Acciones</th></tr>}
+                            {vistaActiva === 'usuarios' && <tr><th>Nombre Completo</th><th>Email</th><th>Rol</th><th className="center">Acciones</th></tr>}
                             {vistaActiva === 'ventas' && <tr><th>Orden</th><th>Cliente</th><th>Fecha</th><th>Total</th><th className="center">Estado</th></tr>}
                         </thead>
                         <tbody>
-                            {vistaActiva === 'productos' && productos.map(p => (
-                                <tr key={p._id}>
-                                    <td className="center"><img src={p.image_principal || "/placeholder.png"} className="table-thumb" alt="p" /></td>
-                                    <td>{p.title}</td><td>{p.product_type}</td>
+                            {vistaActiva === 'productos' && productos.map(p => {
+                                const imgURL = p.image_principal || (p.image_src?.split(',')[0]) || p.variants?.[0]?.image || "/placeholder.png";
+                                return (
+                                    <tr key={p._id}>
+                                        <td className="center"><img src={imgURL} className="table-thumb" alt="p" /></td>
+                                        <td>{p.title}</td><td>{p.product_type}</td>
+                                        <td className="col-actions center">
+                                            <button className="btn-table btn-edit" onClick={() => {
+                                                setEditandoId(p._id);
+                                                setFormData({...p});
+                                                setModalAbierto(true);
+                                            }}>Editar</button>
+                                            <button className="btn-table btn-delete" onClick={() => { if(window.confirm("¿Eliminar?")) axios.delete(`${baseURL}/productos/${p._id}`, {headers:getAuthHeaders()}).then(cargarProductos) }}>Eliminar</button>
+                                        </td>
+                                    </tr>
+                                );
+                            })}
+                            {vistaActiva === 'usuarios' && listaUsuarios.map(u => (
+                                <tr key={u._id}>
+                                    <td>{u.nombre} {u.apellido}</td><td>{u.email}</td><td className="center"><span className="role-badge">{u.rol}</span></td>
                                     <td className="col-actions center">
-                                        <button className="btn-table btn-edit" onClick={() => { setEditandoId(p._id); setFormData({...p}); setModalAbierto(true); }}>Editar</button>
-                                        <button className="btn-table btn-delete" onClick={() => { if(window.confirm("¿Eliminar?")) axios.delete(`${baseURL}/productos/${p._id}`, {headers:getAuthHeaders()}).then(cargarProductos) }}>Eliminar</button>
+                                        <button className="btn-table btn-edit" onClick={() => { setEditandoUsuarioId(u._id); setFormDataUsuario({...u}); setModalUsuarioAbierto(true); }}>Editar</button>
+                                        <button className="btn-table btn-delete" onClick={() => { if(window.confirm("¿Eliminar?")) axios.delete(`${baseURL}/admin/panel/usuarios/${u._id}`, {headers:getAuthHeaders()}).then(() => cargarDatosExtra('usuarios')) }}>Eliminar</button>
                                     </td>
                                 </tr>
                             ))}
+                            {vistaActiva === 'ventas' && listaVentas.map(v => {
+                                const rawDate = v.fechaPedido?.$date || v.fechaPedido || v.createdAt;
+                                const dateObj = rawDate ? new Date(rawDate) : null;
+                                const displayDate = (dateObj && !isNaN(dateObj.getTime())) ? dateObj.toLocaleDateString() : "Sin fecha";
+                                return (
+                                    <tr key={v._id}>
+                                        <td>#{v.numeroOrden || (v._id?.$oid || v._id).substring(0,8)}</td>
+                                        <td>{v.nombreCliente || v.usuario?.nombre || 'Anónimo'}</td>
+                                        <td>{displayDate}</td>
+                                        <td>${v.total?.toFixed(2)}</td>
+                                        <td className="center"><span className="role-badge">{v.estado || 'Pagado'}</span></td>
+                                    </tr>
+                                );
+                            })}
                         </tbody>
                     </table>
                 </div>
-                <PaginationControls 
-                    page={vistaActiva === 'productos' ? pagProductos : vistaActiva === 'usuarios' ? pagUsuarios : pagVentas} 
-                    totalPages={vistaActiva === 'productos' ? totalPagProductos : vistaActiva === 'usuarios' ? totalPagUsuarios : totalPagVentas} 
+                <PaginationControls
+                    page={vistaActiva === 'productos' ? pagProductos : vistaActiva === 'usuarios' ? pagUsuarios : pagVentas}
+                    totalPages={vistaActiva === 'productos' ? totalPagProductos : vistaActiva === 'usuarios' ? totalPagUsuarios : totalPagVentas}
                     onPageChange={vistaActiva === 'productos' ? setPagProductos : vistaActiva === 'usuarios' ? setPagUsuarios : setPagVentas} />
             </main>
 
@@ -268,6 +306,20 @@ const AdminPanel = () => {
                 <div className="modal-overlay">
                     <div className="modal-content modal-xl">
                         <h2>{editandoId ? 'Editar' : 'Nuevo'} Producto</h2>
+
+                        {/* DATALISTS MOVIDOS AQUÍ ADENTRO Y BLINDADOS */}
+                        <datalist id="lista-categorias">
+                            {categoriasExistentes.map(cat => <option key={`cat-${cat}`} value={cat} />)}
+                            <option value="T-Shirts" /><option value="Shorts" /><option value="Hoodies" /><option value="Accessories" />
+                        </datalist>
+                        <datalist id="lista-colores">
+                            {coloresExistentes.map(col => <option key={`col-${col}`} value={col} />)}
+                            <option value="Black" /><option value="White" /><option value="Grey" /><option value="Red" /><option value="Blue" />
+                        </datalist>
+                        <datalist id="lista-tallas">
+                            {tallasExistentes.map(talla => <option key={`tal-${talla}`} value={talla} />)}
+                            <option value="S" /><option value="M" /><option value="L" /><option value="XL" /><option value="XXL" />
+                        </datalist>
                         <form onSubmit={handleGuardar} className="admin-form-vertical">
                             <div className="form-grid-2-cols">
                                 <div className="field-group">
@@ -279,10 +331,9 @@ const AdminPanel = () => {
                                     <input type="text" list="lista-categorias" value={formData.product_type || ''} onChange={e => setFormData({...formData, product_type: e.target.value})} />
                                 </div>
                             </div>
-
                             <div className="variants-section">
                                 <div className="section-header-variants">
-                                    <h3>Variantes</h3>
+                                    <h3>Variantes del Producto</h3>
                                     <button type="button" className="btn-makia-save" onClick={agregarVariante}>+ Agregar Variante</button>
                                 </div>
 
@@ -291,42 +342,65 @@ const AdminPanel = () => {
                                         <div className="form-grid-2-cols">
                                             <div className="field-group">
                                                 <label>Color</label>
-                                                <input type="text" list="lista-colores" placeholder="Ej. Black" value={variante.color || ''} onChange={e => actualizarVariante(index, 'color', e.target.value)} />
+                                                <input
+                                                    type="text"
+                                                    list="lista-colores"
+                                                    placeholder="Ej. Black"
+                                                    value={variante.color || ''}
+                                                    onChange={e => actualizarVariante(index, 'color', e.target.value)}
+                                                />
                                             </div>
                                             <div className="field-group">
-                                                <label>Talla (Manual)</label>
-                                                <input type="text" placeholder="Ej. M" value={variante.size || ''} onChange={e => actualizarVariante(index, 'size', e.target.value)} />
+                                                <label>Talla</label>
+                                                <input
+                                                    type="text"
+                                                    list="lista-tallas"
+                                                    placeholder="Ej. M"
+                                                    value={variante.size || ''}
+                                                    onChange={e => actualizarVariante(index, 'size', e.target.value)}
+                                                />
                                             </div>
                                             <div className="field-group">
                                                 <label>Precio (MXN)</label>
-                                                <input type="number" value={variante.price || 0} onChange={e => actualizarVariante(index, 'price', Number(e.target.value))} />
+                                                <input
+                                                    type="number"
+                                                    value={variante.price || 0}
+                                                    onChange={e => actualizarVariante(index, 'price', Number(e.target.value))}
+                                                />
                                             </div>
                                             <div className="field-group">
                                                 <label>Stock</label>
-                                                <input type="number" value={variante.inventory_quantity || 0} onChange={e => actualizarVariante(index, 'inventory_quantity', Number(e.target.value))} />
-                                            </div>
-                                            <div className="field-group" style={{ gridColumn: 'span 2' }}>
-                                                <label>URL Imagen</label>
-                                                <input type="text" placeholder="URL de la imagen..." value={variante.image || ''} onChange={e => actualizarVariante(index, 'image', e.target.value)}/>
-                                                {variante.image && (
-                                            <div className="preview-mini-wrapper">
-                                                <img 
-                                                    src={variante.image} 
-                                                    alt="preview" 
-                                                    style={{ 
-                                                        width: '45px', 
-                                                        height: '45px', 
-                                                        objectFit: 'cover', 
-                                                        borderRadius: '4px',
-                                                        border: '1px solid #444' 
-                                                    }} 
-                                                    onError={(e) => e.target.src = "/placeholder.png"} // Por si la URL está rota
+                                                <input
+                                                    type="number"
+                                                    value={variante.inventory_quantity || 0}
+                                                    onChange={e => actualizarVariante(index, 'inventory_quantity', Number(e.target.value))}
                                                 />
-                                                </div>
-                                            )}
                                             </div>
-                                            <div className="field-group" style={{ gridColumn: 'span 2' }}>
-                                                <button type="button" className="btn-x-red" onClick={() => eliminarVariante(index)}>✕ Eliminar Variante</button>
+                                            <div className="field-group url-input-expanded" style={{ gridColumn: 'span 2' }}>
+                                                <label>URL Imagen</label>
+                                                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Pegar URL aquí..."
+                                                        value={variante.image || ''}
+                                                        onChange={e => actualizarVariante(index, 'image', e.target.value)}
+                                                        style={{ flex: 1 }}
+                                                    />
+                                                    {variante.image && <img src={variante.image} alt="preview" style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px' }} />}
+                                                </div>
+                                            </div>
+                                            <div className="field-group sku-field" style={{ gridColumn: 'span 2' }}>
+                                                <label>SKU (Opcional)</label>
+                                                <div style={{ display: 'flex', gap: '10px' }}>
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Auto-generado"
+                                                        value={variante.sku || ""}
+                                                        onChange={e => actualizarVariante(index, 'sku', e.target.value)}
+                                                        style={{ flex: 1 }}
+                                                    />
+                                                    <button type="button" className="btn-x-red" style={{ position: 'static', padding: '0 15px' }} onClick={() => eliminarVariante(index)}>✕ Eliminar</button>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -336,6 +410,29 @@ const AdminPanel = () => {
                                 <button type="button" className="btn-makia-cancel" onClick={() => setModalAbierto(false)}>Cancelar</button>
                                 <button type="submit" className="btn-makia-save">Guardar Cambios</button>
                             </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* MODAL USUARIOS */}
+            {modalUsuarioAbierto && (
+                <div className="modal-overlay">
+                    <div className="modal-content">
+                        <h2>Editar Usuario</h2>
+                        <form onSubmit={handleGuardarUsuario} className="admin-form-vertical">
+                            <div className="form-grid-2-cols">
+                                <div className="field-group"><label>Nombre</label><input type="text" value={formDataUsuario.nombre} onChange={e => setFormDataUsuario({...formDataUsuario, nombre: e.target.value})} /></div>
+                                <div className="field-group"><label>Apellido</label><input type="text" value={formDataUsuario.apellido} onChange={e => setFormDataUsuario({...formDataUsuario, apellido: e.target.value})} /></div>
+                                <div className="field-group"><label>Email</label><input type="email" value={formDataUsuario.email} onChange={e => setFormDataUsuario({...formDataUsuario, email: e.target.value})} /></div>
+                                <div className="field-group"><label>Rol</label>
+                                    <select value={formDataUsuario.rol} onChange={e => setFormDataUsuario({...formDataUsuario, rol: e.target.value})}>
+                                        <option value="cliente">Cliente</option>
+                                        <option value="admin">Administrador</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div className="modal-footer"><button type="button" className="btn-makia-cancel" onClick={() => setModalUsuarioAbierto(false)}>Cancelar</button><button type="submit" className="btn-makia-save">Actualizar Usuario</button></div>
                         </form>
                     </div>
                 </div>
