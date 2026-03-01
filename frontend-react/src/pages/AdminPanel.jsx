@@ -253,10 +253,6 @@ const AdminPanel = () => {
 
     return (
         <div className="admin-container">
-            <datalist id="lista-categorias">{categoriasExistentes.map(cat => <option key={cat} value={cat} />)}</datalist>
-            <datalist id="lista-colores">{coloresExistentes.map(col => <option key={col} value={col} />)}</datalist>
-            <datalist id="lista-tallas">{tallasExistentes.map(talla => <option key={talla} value={talla} />)}</datalist>
-
             <header className="admin-header">
                 <img src="/logo-makia-pages.png" alt="Logo" className="brand-logo-img" />
                 <div className="admin-user-panel">
@@ -315,7 +311,17 @@ const AdminPanel = () => {
                                         <td className="center"><img src={imgURL} className="table-thumb" alt="p" /></td>
                                         <td>{p.title}</td><td>{p.product_type}</td>
                                         <td className="col-actions center">
-                                            <button className="btn-table btn-edit" onClick={() => { setEditandoId(p._id); setFormData({...p}); setModalAbierto(true); }}>Editar</button>
+                                             {/* BÚSCALO Y REEMPLÁZALO POR ESTO */}
+                                            <button className="btn-table btn-edit" onClick={() => { 
+                                                setEditandoId(p._id); 
+                                                // TRUCO MAESTRO: Si la variante no tiene imagen en la BD, "jalamos" la imagen principal
+                                                const variantesReparadas = (p.variants || []).map(v => ({
+                                                    ...v,
+                                                    image: v.image || p.image_principal || (p.image_src ? p.image_src.split(',')[0] : '')
+                                                }));
+                                                setFormData({...p, variants: variantesReparadas}); 
+                                                setModalAbierto(true); 
+                                                }}>Editar</button>
                                             <button className="btn-table btn-delete" onClick={() => { if(window.confirm("¿Eliminar?")) axios.delete(`${baseURL}/productos/${p._id}`, {headers:getAuthHeaders()}).then(cargarProductos) }}>Eliminar</button>
                                         </td>
                                     </tr>
@@ -358,6 +364,20 @@ const AdminPanel = () => {
                 <div className="modal-overlay">
                     <div className="modal-content modal-xl">
                         <h2>{editandoId ? 'Editar' : 'Nuevo'} Producto</h2>
+
+                        {/* DATALISTS MOVIDOS AQUÍ ADENTRO Y BLINDADOS */}
+                        <datalist id="lista-categorias">
+                            {categoriasExistentes.map(cat => <option key={`cat-${cat}`} value={cat} />)}
+                            <option value="T-Shirts" /><option value="Shorts" /><option value="Hoodies" /><option value="Accessories" />
+                        </datalist>
+                        <datalist id="lista-colores">
+                            {coloresExistentes.map(col => <option key={`col-${col}`} value={col} />)}
+                            <option value="Black" /><option value="White" /><option value="Grey" /><option value="Red" /><option value="Blue" />
+                        </datalist>
+                        <datalist id="lista-tallas">
+                            {tallasExistentes.map(talla => <option key={`tal-${talla}`} value={talla} />)}
+                            <option value="S" /><option value="M" /><option value="L" /><option value="XL" /><option value="XXL" />
+                        </datalist>
                         <form onSubmit={handleGuardar} className="admin-form-vertical">
                             <div className="form-grid-2-cols">
                                 <div className="field-group">
