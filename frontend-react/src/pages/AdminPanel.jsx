@@ -94,9 +94,28 @@ const AdminPanel = () => {
     const tallasExistentes = useMemo(() => [...new Set(productos.flatMap(p => p.sizes_available || []))].filter(Boolean), [productos]);
 
     // --- LÓGICA DE VARIANTES (REFACTORIZADA) ---
+    const agregarVariante = () => {
+        setFormData({ 
+            ...formData, 
+            variants: [...formData.variants, { color: '', size: '', price: 0, inventory_quantity: 0, sku: '', image: '' }] 
+        });
+    };
+
+    const actualizarVariante = (index, campo, valor) => {
+        const nuevasVariantes = [...formData.variants];
+        nuevasVariantes[index][campo] = valor;
+        setFormData({ ...formData, variants: nuevasVariantes });
+    };
+
+    const eliminarVariante = (index) => {
+        setFormData({ 
+            ...formData, 
+            variants: formData.variants.filter((_, i) => i !== index) 
+        });
+    };
     // Ya no agrupamos por color en un objeto complejo. Manejamos el array plano directamente.
     
-    // Para renderizar, sí necesitamos saber qué colores existen para poner la cabecera de la "tarjeta"
+    /* Para renderizar, sí necesitamos saber qué colores existen para poner la cabecera de la "tarjeta"
     const coloresAgrupadosParaVista = useMemo(() => {
         const coloresUnicos = [...new Set(formData.variants.map(v => v.color))];
         return coloresUnicos.map(colorName => {
@@ -156,7 +175,7 @@ const AdminPanel = () => {
             // Guarda la URL en TODAS las variantes que tengan este color
             variants: formData.variants.map(v => v.color === colorName ? { ...v, image: newUrl } : v) 
         });
-    };
+    };*/
 
     const generarSKU = (categoria, titulo) => {
         const marca = "MAK"; 
@@ -174,8 +193,12 @@ const AdminPanel = () => {
         }
 
         try {
-            // Limpiamos espacios invisibles usados para separar colores vacíos nuevos
-            const variantesLimpias = formData.variants.map(v => ({...v, color: v.color.trim()}));
+            // Limpiamos los textos de forma segura
+            const variantesLimpias = formData.variants.map(v => ({
+                ...v, 
+                color: (v.color || '').trim(),
+                size: (v.size || '').trim()
+            }));
 
             const coloresExtraidos = [...new Set(variantesLimpias.map(v => v.color))].filter(Boolean);
             const tallasExtraidas = [...new Set(variantesLimpias.map(v => v.size))].filter(Boolean);
@@ -346,85 +369,77 @@ const AdminPanel = () => {
                                     <input type="text" list="lista-categorias" value={formData.product_type || ''} onChange={e => setFormData({...formData, product_type: e.target.value})} />
                                 </div>
                             </div>
-
                             <div className="variants-section">
                                 <div className="section-header-variants">
-                                    <h3>Configuración de Variantes</h3>
-                                    <button type="button" className="btn-makia-save" onClick={addEmptyColorGroup}>+ Agregar Color</button>
+                                    <h3>Variantes del Producto</h3>
+                                    <button type="button" className="btn-makia-save" onClick={agregarVariante}>+ Agregar Variante</button>
                                 </div>
 
-                                {coloresAgrupadosParaVista.map((group, idx) => (
-                                    <div key={idx} className="color-group-card">
-                                        <div className="color-header-row">
-                                            <div className="field-group color-input-fixed">
+                                {formData.variants.map((variante, index) => (
+                                    <div key={index} className="color-group-card" style={{ padding: '15px', marginBottom: '15px', border: '1px solid #222', borderRadius: '8px' }}>
+                                        <div className="form-grid-2-cols">
+                                            <div className="field-group">
                                                 <label>Color</label>
                                                 <input 
                                                     type="text" 
                                                     list="lista-colores" 
-                                                    value={group.colorName.trim() || ''} 
-                                                    onChange={e => updateColorName(group.colorName, e.target.value)} 
+                                                    placeholder="Ej. Black"
+                                                    value={variante.color || ''} 
+                                                    onChange={e => actualizarVariante(index, 'color', e.target.value)} 
                                                 />
                                             </div>
-                                            <div className="field-group url-input-expanded">
-                                                <label>URL Imagen del Color</label>
+                                            <div className="field-group">
+                                                <label>Talla</label>
                                                 <input 
                                                     type="text" 
-                                                    placeholder="Pegar URL aquí..."
-                                                    value={group.image || ''} 
-                                                    onChange={e => updateColorImage(group.colorName, e.target.value)} 
+                                                    list="lista-tallas" 
+                                                    placeholder="Ej. M"
+                                                    value={variante.size || ''} 
+                                                    onChange={e => actualizarVariante(index, 'size', e.target.value)} 
                                                 />
                                             </div>
-                                            <div className="mini-preview-box">
-                                                {group.image ? <img src={group.image} alt="Preview" /> : <span className="preview-placeholder">URL</span>}
+                                            <div className="field-group">
+                                                <label>Precio (MXN)</label>
+                                                <input 
+                                                    type="number" 
+                                                    value={variante.price || 0} 
+                                                    onChange={e => actualizarVariante(index, 'price', Number(e.target.value))} 
+                                                />
                                             </div>
-                                        </div>
-
-                                        <div className="sizes-grid">
-                                            {group.items.map(item => (
-                                                <div key={item.originalIndex} className="size-row-container">
-                                                    <div className="size-row-inputs">
-                                                        <div className="field-group">
-                                                            <label>Talla</label>
-                                                            <input 
-                                                                type="text" 
-                                                                list="lista-tallas" 
-                                                                value={item.size || ''} 
-                                                                onChange={e => { 
-                                                                    const nv = [...formData.variants]; 
-                                                                    nv[item.originalIndex].size = e.target.value; 
-                                                                    setFormData({...formData, variants: nv}); 
-                                                                }} 
-                                                            />
-                                                        </div>
-                                                        <div className="field-group">
-                                                            <label>Precio (MXN)</label>
-                                                            <input type="number" value={item.price || 0} onChange={e => { 
-                                                                const nv = [...formData.variants]; 
-                                                                nv[item.originalIndex].price = Number(e.target.value); 
-                                                                setFormData({...formData, variants: nv}); 
-                                                            }} />
-                                                        </div>
-                                                        <div className="field-group">
-                                                            <label>Stock</label>
-                                                            <input type="number" value={item.inventory_quantity || 0} onChange={e => { 
-                                                                const nv = [...formData.variants]; 
-                                                                nv[item.originalIndex].inventory_quantity = Number(e.target.value); 
-                                                                setFormData({...formData, variants: nv}); 
-                                                            }} />
-                                                        </div>
-                                                        <div className="field-group sku-field">
-                                                            <label>SKU (Opcional)</label>
-                                                            <input type="text" placeholder="Auto-generado" value={item.sku || ""} onChange={e => { 
-                                                                const nv = [...formData.variants]; 
-                                                                nv[item.originalIndex].sku = e.target.value; 
-                                                                setFormData({...formData, variants: nv}); 
-                                                            }} />
-                                                        </div>
-                                                    </div>
-                                                    <button type="button" className="btn-x-red" onClick={() => setFormData({...formData, variants: formData.variants.filter((_, i) => i !== item.originalIndex)})}>✕</button>
+                                            <div className="field-group">
+                                                <label>Stock</label>
+                                                <input 
+                                                    type="number" 
+                                                    value={variante.inventory_quantity || 0} 
+                                                    onChange={e => actualizarVariante(index, 'inventory_quantity', Number(e.target.value))} 
+                                                />
+                                            </div>
+                                            <div className="field-group url-input-expanded" style={{ gridColumn: 'span 2' }}>
+                                                <label>URL Imagen</label>
+                                                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                                                    <input 
+                                                        type="text" 
+                                                        placeholder="Pegar URL aquí..."
+                                                        value={variante.image || ''} 
+                                                        onChange={e => actualizarVariante(index, 'image', e.target.value)} 
+                                                        style={{ flex: 1 }}
+                                                    />
+                                                    {variante.image && <img src={variante.image} alt="preview" style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px' }} />}
                                                 </div>
-                                            ))}
-                                            <button type="button" className="btn-add-size" onClick={() => addSizeToColor(group.colorName)}>+ Agregar Talla</button>
+                                            </div>
+                                            <div className="field-group sku-field" style={{ gridColumn: 'span 2' }}>
+                                                <label>SKU (Opcional)</label>
+                                                <div style={{ display: 'flex', gap: '10px' }}>
+                                                    <input 
+                                                        type="text" 
+                                                        placeholder="Auto-generado"
+                                                        value={variante.sku || ""} 
+                                                        onChange={e => actualizarVariante(index, 'sku', e.target.value)} 
+                                                        style={{ flex: 1 }}
+                                                    />
+                                                    <button type="button" className="btn-x-red" style={{ position: 'static', padding: '0 15px' }} onClick={() => eliminarVariante(index)}>✕ Eliminar</button>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 ))}
