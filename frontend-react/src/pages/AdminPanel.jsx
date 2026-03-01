@@ -253,6 +253,16 @@ const AdminPanel = () => {
 
     return (
         <div className="admin-container">
+            {/* PÉGALO AL PRINCIPIO DEL RETURN, ABAJO DE <div className="admin-container"> */}
+<datalist id="lista-categorias">
+    {categoriasExistentes.map(cat => <option key={`cat-${cat}`} value={cat} />)}
+</datalist>
+<datalist id="lista-colores">
+    {coloresExistentes.map(col => <option key={`col-${col}`} value={col} />)}
+</datalist>
+<datalist id="lista-tallas">
+    {tallasExistentes.map(talla => <option key={`tal-${talla}`} value={talla} />)}
+</datalist>
             <header className="admin-header">
                 <img src="/logo-makia-pages.png" alt="Logo" className="brand-logo-img" />
                 <div className="admin-user-panel">
@@ -314,14 +324,9 @@ const AdminPanel = () => {
                                              {/* BÚSCALO Y REEMPLÁZALO POR ESTO */}
                                             <button className="btn-table btn-edit" onClick={() => { 
                                                 setEditandoId(p._id); 
-                                                // TRUCO MAESTRO: Si la variante no tiene imagen en la BD, "jalamos" la imagen principal
-                                                const variantesReparadas = (p.variants || []).map(v => ({
-                                                    ...v,
-                                                    image: v.image || p.image_principal || (p.image_src ? p.image_src.split(',')[0] : '')
-                                                }));
-                                                setFormData({...p, variants: variantesReparadas}); 
+                                                setFormData({...p}); 
                                                 setModalAbierto(true); 
-                                                }}>Editar</button>
+                                            }}>Editar</button>
                                             <button className="btn-table btn-delete" onClick={() => { if(window.confirm("¿Eliminar?")) axios.delete(`${baseURL}/productos/${p._id}`, {headers:getAuthHeaders()}).then(cargarProductos) }}>Eliminar</button>
                                         </td>
                                     </tr>
