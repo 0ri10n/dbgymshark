@@ -5,6 +5,7 @@ import Login from './pages/Login';
 import Registro from './pages/Registro';
 import Catalogo from './pages/Catalogo';
 import AdminPanel from './pages/AdminPanel';
+import CartPage from './pages/CartPage';
 
 const ProtectedRoute = ({ children }) => {
   const { user } = useAuth();
@@ -18,24 +19,25 @@ const ProtectedRoute = ({ children }) => {
 
 function App() {
   return (
-    <AuthProvider> 
+    <AuthProvider>
       <CartProvider>
         <Router>
           <Routes>
             <Route path="/" element={<Catalogo />} />
+            <Route path="/cart" element={<CartPage />} />
             <Route path="/clientview/client.html" element={<Catalogo />} />
             <Route path="/login" element={<Login />} />
             <Route path="/login/login.html" element={<Login />} />
             <Route path="/registro" element={<Registro />} />
             <Route path="/registro/registro.html" element={<Registro />} />
 
-            <Route 
-              path="/admin" 
+            <Route
+              path="/admin"
               element={
                 <ProtectedRoute>
                   <AdminPanel />
                 </ProtectedRoute>
-              } 
+              }
             />
             <Route
               path="/adminview/admin.html"
@@ -45,7 +47,7 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            
+
             <Route path="*" element={
               <div className="not-found-page">
                 <h1 className="not-found-title">404</h1>

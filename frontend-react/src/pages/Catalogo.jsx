@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { CartContext } from '../context/CartContext';
 import PaginationControls from '../components/PaginationControls';
+import { useNavigate } from 'react-router-dom';
 import './Catalogo.css';
 
 const CATEGORIAS_LIMPIAS = [
@@ -31,7 +32,7 @@ const getColorHex = (name = "") => {
     if (n.includes('purple') || n.includes('plum') || n.includes('orchid')) return "#6b21a8";
     if (n.includes('orange') || n.includes('apricot') || n.includes('peach')) return "#f97316";
     if (n.includes('yellow') || n.includes('lemon')) return "#facc15";
-    return "#374151"; 
+    return "#374151";
 };
 
 const getPrimaryImage = (p = {}) => {
@@ -43,18 +44,19 @@ const getPrimaryImage = (p = {}) => {
 const Catalogo = () => {
     const { user, logout } = useAuth();
     const { cart, addToCart, removeFromCart, updateCartItem, clearCart } = useContext(CartContext);
-    
+    const navigate = useNavigate();
+
     const [productos, setProductos] = useState([]);
     const [busqueda, setBusqueda] = useState('');
     const [cargando, setCargando] = useState(true);
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [pagina, setPagina] = useState(1);
     const [totalPaginas, setTotalPaginas] = useState(1);
-    
+
     const [catFiltro, setCatFiltro] = useState(null);
     const [dropdownAbierto, setDropdownAbierto] = useState(false);
-    const [rangoPrecio, setRangoPrecio] = useState(5000); 
-    
+    const [rangoPrecio, setRangoPrecio] = useState(5000);
+
     const [tallasSeleccionadas, setTallasSeleccionadas] = useState({});
     const [colorVisual, setColorVisual] = useState({});
 
@@ -71,7 +73,7 @@ const Catalogo = () => {
             finally { setCargando(false); }
         };
         cargarData();
-    }, [baseURL]); 
+    }, [baseURL]);
 
     // Reinicia a la primera página cuando cambian los filtros
     useEffect(() => {
@@ -80,49 +82,12 @@ const Catalogo = () => {
 
     const granTotal = cart.reduce((acc, item) => acc + ((item.precioMXN || item.price) * item.quantity), 0);
 
-    // Procesa la compra enviando la orden al backend
-    const handleFinalizarCompra = async () => {
-        if (!user) {
-            alert("Inicia sesión para finalizar tu compra.");
-            return;
-        }
-        if (cart.length === 0) return;
-
-        try {
-            const token = localStorage.getItem('token');
-            const nombreFinal = `${user.nombre || ''} ${user.apellido || ''}`.trim();
-
-            const ordenData = {
-                nombreCliente: nombreFinal || "Cliente Registrado",
-                productos: cart.map(item => ({
-                    nombre: item.title,
-                    talla: item.selectedSize || "N/A",
-                    color: item.selectedColor || "N/A",
-                    precio: Number(item.precioMXN || item.price),
-                    cantidad: Number(item.quantity)
-                })),
-                total: Number(granTotal.toFixed(2))
-            };
-
-            await axios.post(`${baseURL}/admin/panel/ventas`, ordenData, {
-                headers: { 'x-auth-token': token }
-            });
-            
-            alert("¡Compra finalizada con éxito!");
-            clearCart();
-            setIsCartOpen(false);
-        } catch (error) {
-            console.error("Error 500:", error.response?.data);
-            alert("Error en el servidor al procesar la venta.");
-        }
-    };
-
     // Lógica de filtrado en memoria (Categoría, Precio, Búsqueda)
     const productosFiltrados = productos.filter(p => {
         const tipoProductoDB = p.product_type ? String(p.product_type).trim().toLowerCase() : "";
         const categoriaSeleccionada = catFiltro ? String(catFiltro).trim().toLowerCase() : "";
         const cumpleCat = !catFiltro || tipoProductoDB === categoriaSeleccionada;
-        
+
         const precioReal = Number(p.precioMXN || p.price || 0);
         const cumplePrecio = precioReal <= rangoPrecio;
 
@@ -148,7 +113,7 @@ const Catalogo = () => {
                         <i className="fas fa-shopping-bag"></i>
                         <span id="cartCount">{cart.length}</span>
                     </div>
-                    <div className="user-icon" onClick={logout} style={{cursor:'pointer'}}><i className="far fa-user"></i></div>
+                    <div className="user-icon" onClick={logout} style={{ cursor: 'pointer' }}><i className="far fa-user"></i></div>
                 </div>
             </header>
 
@@ -159,23 +124,23 @@ const Catalogo = () => {
             <div className="store-layout-container">
                 <aside className="sidebar-filter-box">
                     <div className="sidebar-sticky-wrapper">
-                        
+
                         <h2 className="sidebar-section-title">CATEGORÍA</h2>
                         <div className="filter-group-stack">
                             <div className="filter-item-accordion">
-                                <button 
+                                <button
                                     className={`accordion-header ${dropdownAbierto ? 'active' : ''} ${catFiltro ? 'selected-glow' : ''}`}
                                     onClick={() => setDropdownAbierto(!dropdownAbierto)}
                                 >
                                     <span>{catFiltro || "Categories"}</span>
                                     <i className={`fas fa-chevron-down ${dropdownAbierto ? 'rotate' : ''}`}></i>
                                 </button>
-                                
+
                                 {dropdownAbierto && (
                                     <div className="category-scroll-menu">
                                         {CATEGORIAS_LIMPIAS.map((cat) => (
-                                            <div 
-                                                key={cat} 
+                                            <div
+                                                key={cat}
                                                 className={`category-option ${catFiltro === cat ? 'active-opt' : ''}`}
                                                 onClick={() => {
                                                     setCatFiltro(cat);
@@ -193,14 +158,14 @@ const Catalogo = () => {
                         <div className="price-filter-section-new">
                             <h2 className="sidebar-section-title">PRESUPUESTO: ${rangoPrecio}</h2>
                             <div className="slider-container">
-                                <input 
-                                    type="range" 
-                                    min="0" 
-                                    max="5000" 
-                                    step="50" 
-                                    value={rangoPrecio} 
-                                    onChange={(e) => setRangoPrecio(Number(e.target.value))} 
-                                    className="makia-custom-slider" 
+                                <input
+                                    type="range"
+                                    min="0"
+                                    max="5000"
+                                    step="50"
+                                    value={rangoPrecio}
+                                    onChange={(e) => setRangoPrecio(Number(e.target.value))}
+                                    className="makia-custom-slider"
                                 />
                             </div>
                         </div>
@@ -290,7 +255,7 @@ const Catalogo = () => {
                         </div>
                         <div className="cart-footer-totals">
                             <div className="total-row"><span>TOTAL:</span><span className="total-amount">${granTotal.toLocaleString()} MXN</span></div>
-                            <button className="btn-checkout-makia" onClick={handleFinalizarCompra}>FINALIZAR COMPRA</button>
+                            <button className="btn-checkout-makia" onClick={() => { setIsCartOpen(false); navigate('/cart'); }}>IR AL CHECKOUT</button>
                         </div>
                     </div>
                 </div>
